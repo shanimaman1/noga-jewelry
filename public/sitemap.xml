@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Static sitemap for the demo. In production, generate this at build time
+     from the product data so it can't drift. Update the domain on deploy. -->
+<urlset xmlns="http://www.sitemap.org/schemas/sitemap/0.9">
+  <url><loc>https://noga-demo.vercel.app/</loc><priority>1.0</priority></url>
+  <url><loc>https://noga-demo.vercel.app/catalog</loc><priority>0.9</priority></url>
+  <url><loc>https://noga-demo.vercel.app/gift-guide</loc><priority>0.8</priority></url>
+  <url><loc>https://noga-demo.vercel.app/story</loc><priority>0.6</priority></url>
+  <url><loc>https://noga-demo.vercel.app/custom</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/size-care</loc><priority>0.4</priority></url>
+  <url><loc>https://noga-demo.vercel.app/accessibility</loc><priority>0.3</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/solitaire-classic</loc><priority>0.8</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/fine-diamond-band</loc><priority>0.8</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/thin-band-daily</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/stacking-rings</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/single-diamond-necklace</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/heart-pendant-necklace</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/gold-pendant</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/pearl-drop-necklace</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/layered-necklace</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/bezel-chain-necklace</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/floral-chain-necklace</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/mini-hoop-earrings</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/tiny-stud-earrings</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/fine-chain-bracelet</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/beaded-bracelet</loc><priority>0.7</priority></url>
+  <url><loc>https://noga-demo.vercel.app/product/slim-bangle</loc><priority>0.7</priority></url>
+</urlset>

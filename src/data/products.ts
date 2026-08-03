@@ -1,0 +1,271 @@
+import type { Product } from '@/types/catalog';
+
+// Placeholder catalogue for the demo. Prices span the brand range ₪890–₪12,000.
+// Copy follows the brand voice: plain, restrained, no superlatives.
+//
+// Photography: real studio shots, curated for the brand aesthetic — delicate,
+// dainty, classic, understated. See scripts/build-catalog-images.mjs.
+//
+// METAL RULE: `metals` lists only metals we hold a real photograph of, and each
+// variant points at its own file. Metal colour is never simulated with a tint.
+// Most pieces therefore offer a single metal — that is correct, not a gap.
+// To add a metal: source and visually verify a real photo of that piece in that
+// colour first, then add the variant.
+export const products: Product[] = [
+  // ── Rings ──────────────────────────────────────────────────────────────
+  {
+    slug: 'solitaire-classic',
+    name: 'סוליטר קלאסי',
+    shortDescription: 'אבן בודדת על רצועה מחורצת דקה. הטבעת שלא יוצאת מהאופנה.',
+    price: 8900,
+    category: 'rings',
+    // The only product the ring.glb model genuinely depicts → live 360° viewer.
+    has3D: true,
+    // Genuinely matched pair: same milgrain-band solitaire, two real metals.
+    metals: [
+      {
+        id: 'yellow',
+        image: 'ring-solitaire-yellow',
+        imageAlt: 'טבעת סוליטר בזהב צהוב עם רצועה מחורצת, על בד כהה',
+      },
+      {
+        id: 'rose',
+        image: 'ring-solitaire-rose',
+        imageAlt: 'טבעת סוליטר בזהב אדום עם רצועה מחורצת, על בד קרם',
+      },
+    ],
+    featured: true,
+  },
+  {
+    slug: 'fine-diamond-band',
+    name: 'טבעת יהלומים דקה',
+    shortDescription: 'שורת יהלומים זעירים על רצועה דקה, לענידה לבד או בשכבות.',
+    price: 4200,
+    category: 'rings',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'ring-fine-band',
+        imageAlt: 'טבעות זהב צהוב דקות משובצות יהלומים זעירים, על רקע קרם',
+      },
+    ],
+    featured: true,
+  },
+  {
+    slug: 'thin-band-daily',
+    name: 'טבעת יומיום דקה',
+    shortDescription: 'רצועה דקה בעבודת יד, נוחה לענידה רצופה.',
+    price: 1290,
+    category: 'rings',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'ring-thin-stack',
+        imageAlt: 'טבעות זהב צהוב דקות מונחות על אבן בהירה לצד בד משי',
+      },
+    ],
+  },
+  {
+    slug: 'stacking-rings',
+    name: 'טבעות שכבות',
+    shortDescription: 'שלוש רצועות דקות שנענדות יחד או בנפרד.',
+    price: 2600,
+    category: 'rings',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'ring-worn-stack',
+        imageAlt: 'ידיים ענודות בטבעות זהב צהוב דקות ובצמיד עדין',
+      },
+    ],
+  },
+
+  // ── Necklaces ──────────────────────────────────────────────────────────
+  {
+    slug: 'single-diamond-necklace',
+    name: 'שרשרת יהלום בודד',
+    shortDescription: 'תליון קטן על שרשרת עדינה, באורך מתכוונן.',
+    price: 2450,
+    category: 'necklaces',
+    metals: [
+      {
+        id: 'white',
+        image: 'necklace-small-pendant',
+        imageAlt: 'תליון יהלומים קטן בזהב לבן על שרשרת דקה, על רקע בהיר',
+      },
+    ],
+    featured: true,
+  },
+  {
+    slug: 'heart-pendant-necklace',
+    name: 'תליון לב',
+    shortDescription: 'קו לב פתוח משובץ יהלומים, על שרשרת כדורים דקה.',
+    price: 3100,
+    category: 'necklaces',
+    metals: [
+      {
+        id: 'white',
+        image: 'necklace-heart-white',
+        imageAlt: 'תליון לב משובץ יהלומים בזהב לבן על שרשרת כדורים דקה',
+      },
+    ],
+  },
+  {
+    slug: 'gold-pendant',
+    name: 'תליון זהב',
+    shortDescription: 'תליון בחיתוך ידני על שרשרת דקה, לענידה יומיומית.',
+    price: 1890,
+    category: 'necklaces',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'necklace-gold-pendant',
+        imageAlt: 'אישה עונדת תליון זהב צהוב על שרשרת דקה',
+      },
+    ],
+  },
+  {
+    slug: 'pearl-drop-necklace',
+    name: 'שרשרת פנינה',
+    shortDescription: 'פנינה בודדת על שרשרת זהב דקה. קלאסי, בלי עודף.',
+    price: 1650,
+    category: 'necklaces',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'necklace-pearl-drop',
+        imageAlt: 'פנינה בודדת תלויה על שרשרת זהב צהוב דקה',
+      },
+    ],
+    featured: true,
+  },
+  {
+    slug: 'layered-necklace',
+    name: 'שרשרת שכבות',
+    shortDescription: 'שלוש שרשראות דקות באורכים שונים, נענדות יחד.',
+    price: 2100,
+    category: 'necklaces',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'necklace-layered-fine',
+        imageAlt: 'שלוש שרשראות זהב צהוב דקות באורכים שונים, ענודות יחד',
+      },
+    ],
+  },
+  {
+    slug: 'bezel-chain-necklace',
+    name: 'שרשרת נקודות',
+    shortDescription: 'אבנים זעירות משובצות לאורך שרשרת דקה.',
+    price: 2950,
+    category: 'necklaces',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'necklace-bezel-chain',
+        imageAlt: 'שרשרת זהב צהוב דקה עם אבנים זעירות משובצות, על בד פשתן',
+      },
+    ],
+  },
+  {
+    slug: 'floral-chain-necklace',
+    name: 'שרשרת פרחים',
+    shortDescription: 'פרחים זעירים לאורך שרשרת עדינה במיוחד.',
+    price: 1490,
+    category: 'necklaces',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'necklace-floral-chain',
+        imageAlt: 'שרשרת זהב צהוב עדינה עם פרחים זעירים, על בד לבן',
+      },
+    ],
+  },
+
+  // ── Earrings ───────────────────────────────────────────────────────────
+  {
+    slug: 'mini-hoop-earrings',
+    name: 'עגילי חישוק קטנים',
+    shortDescription: 'חישוק בקוטר 10 מ"מ עם יהלומי בגט, קל מספיק לשכוח שהוא שם.',
+    price: 2200,
+    category: 'earrings',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'earrings-fine-hoops',
+        imageAlt: 'עגילי חישוק קטנים מזהב צהוב משובצים יהלומי בגט',
+      },
+    ],
+  },
+  {
+    slug: 'tiny-stud-earrings',
+    name: 'עגילים צמודים זעירים',
+    shortDescription: 'כדור זהב קטן. העגיל שנשאר באוזן גם בלילה.',
+    price: 890,
+    category: 'earrings',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'earrings-tiny-studs',
+        imageAlt: 'זוג עגילים צמודים זעירים בצורת כדור זהב צהוב',
+      },
+    ],
+  },
+
+  // ── Bracelets ──────────────────────────────────────────────────────────
+  {
+    slug: 'fine-chain-bracelet',
+    name: 'צמיד חוליות דק',
+    shortDescription: 'חוליות מוארכות בזהב מלא, עם סוגר בטחון.',
+    price: 2100,
+    category: 'bracelets',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'bracelet-fine-chain',
+        imageAlt: 'צמיד חוליות זהב צהוב דק ענוד על פרק היד',
+      },
+    ],
+  },
+  {
+    slug: 'beaded-bracelet',
+    name: 'צמיד חרוזים',
+    shortDescription: 'שני צמידים דקים בעבודת חרוזים זעירים.',
+    price: 1350,
+    category: 'bracelets',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'bracelet-thin-beaded',
+        imageAlt: 'שני צמידי זהב צהוב דקים עשויים חרוזים זעירים, על פרק היד',
+      },
+    ],
+  },
+  {
+    slug: 'slim-bangle',
+    name: 'צמיד קשיח דק',
+    shortDescription: 'צמיד קשיח בקו נקי, עם שורת אבנים עדינה.',
+    price: 3800,
+    category: 'bracelets',
+    metals: [
+      {
+        id: 'yellow',
+        image: 'bracelet-slim-bangle',
+        imageAlt: 'צמיד קשיח דק מזהב צהוב עם שורת אבנים, על בד לבן',
+      },
+    ],
+  },
+];
+
+export const featuredProducts = products.filter((p) => p.featured).slice(0, 4);
+
+export function getProduct(slug: string): Product | undefined {
+  return products.find((p) => p.slug === slug);
+}
+
+/** The photograph shown by default in listings. */
+export const defaultVariant = (product: Product) => product.metals[0];
+
+/** Card-size image (600px square). */
+export const productImage = (name: string, size: '600' | 'full' = '600') =>
+  size === '600' ? `/products/${name}@600.webp` : `/products/${name}.webp`;

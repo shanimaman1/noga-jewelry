@@ -1,0 +1,82 @@
+@import 'tailwindcss';
+
+/*
+  NOGA design tokens (Tailwind v4 CSS-first config).
+  Palette: charcoal / cream / gold(accent only).
+  Typography: David Libre 400 (headings, Hebrew serif) + Assistant (body).
+  Self-hosted via @fontsource (imported in main.tsx).
+  Luxury in Hebrew = thin weights + wide letter-spacing + whitespace.
+*/
+@theme {
+  --color-charcoal: #0a0908;
+  --color-cream: #f7f4ef;
+  --color-gold: #c9a227;
+
+  /* Supporting neutrals derived from the palette (kept subtle). */
+  --color-ink: #1a1917; /* softer near-black for large surfaces */
+  --color-mist: #e7e2d9; /* hairline borders / dividers on cream */
+  --color-stone: #6b6559; /* secondary text — passes 4.5:1 on cream */
+
+  /* Headings: David Libre — a light Hebrew serif (chosen via /styleguide). */
+  --font-heading: 'David Libre', Georgia, 'Times New Roman', serif;
+  --font-body: 'Assistant Variable', system-ui, sans-serif;
+
+  /* Wide luxury tracking for headings. */
+  --tracking-luxury: 0.08em;
+}
+
+@layer base {
+  html {
+    /* Lenis drives smooth scroll; keep native behavior instant to avoid conflict. */
+    scroll-behavior: auto;
+  }
+
+  body {
+    @apply bg-cream font-body text-charcoal antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Headings are never bold — bold reads as "SALE!" in Hebrew.
+     David Libre's lightest cut is 400, which is the intended heading weight. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading;
+    font-weight: 400;
+    letter-spacing: var(--tracking-luxury);
+  }
+
+  /* Visible keyboard focus (IS 5568 / WCAG AA). */
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 3px;
+  }
+
+  /* Respect users who reduce motion — site-wide safety net. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Lenis smooth-scroll helper styles (from the Lenis docs). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}

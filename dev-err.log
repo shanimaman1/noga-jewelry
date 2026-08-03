@@ -1,0 +1,584 @@
+12:52:10 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChild (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:10338:19)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6864:7)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6976:5)
+    at commitMutationEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:7203:14)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6986:103)
+12:52:10 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChild (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:10338:19)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6864:7)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6976:5)
+    at commitMutationEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:7203:14)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6986:103)
+12:52:10 [vite] (client) [console.error] NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChild (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:10338:19)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6864:7)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6976:5)
+    at commitMutationEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:7203:14)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6986:103)
+
+The above error occurred in the <section> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+12:52:10 [vite] (client) [console.error] React Router caught the following error during render NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChild (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:10338:19)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6864:7)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6976:5)
+    at commitMutationEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:7203:14)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6986:103)
+12:52:30 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChild (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:10338:19)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6864:7)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6976:5)
+    at commitMutationEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:7203:14)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6986:103)
+12:52:30 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChild (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:10338:19)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6864:7)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6976:5)
+    at commitMutationEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:7203:14)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6986:103)
+12:52:30 [vite] (client) [console.error] NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChild (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:10338:19)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6864:7)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6976:5)
+    at commitMutationEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:7203:14)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6986:103)
+
+The above error occurred in the <section> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+12:52:30 [vite] (client) [console.error] React Router caught the following error during render NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at removeChild (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:10338:19)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6864:7)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseDeletionEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6826:50)
+    at commitDeletionEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6887:6)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6976:5)
+    at commitMutationEffectsOnFiber (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:7203:14)
+    at recursivelyTraverseMutationEffects (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:6986:103)
+12:55:26 [vite] (client) [console.error] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
+12:55:26 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: Cannot read properties of null (reading 'useContext')
+    at exports.useContext (http://localhost:5173/node_modules/.vite/deps/react.js?v=67e5bd71:706:22)
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=a0baf35c:10646:35)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:3966:19)
+    at updateForwardRef (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5149:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5957:21)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8062:6)
+12:55:26 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: Cannot read properties of null (reading 'useContext')
+    at exports.useContext (http://localhost:5173/node_modules/.vite/deps/react.js?v=67e5bd71:706:22)
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=a0baf35c:10646:35)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:3966:19)
+    at updateForwardRef (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5149:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5957:21)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8062:6)
+12:55:26 [vite] (client) [console.error] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
+12:55:26 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: Cannot read properties of null (reading 'useContext')
+    at exports.useContext (http://localhost:5173/node_modules/.vite/deps/react.js?v=67e5bd71:706:22)
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=a0baf35c:10646:35)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:3966:19)
+    at updateForwardRef (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5149:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5957:21)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8062:6)
+12:55:26 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: Cannot read properties of null (reading 'useContext')
+    at exports.useContext (http://localhost:5173/node_modules/.vite/deps/react.js?v=67e5bd71:706:22)
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=a0baf35c:10646:35)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:3966:19)
+    at updateForwardRef (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5149:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5957:21)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8062:6)
+12:55:26 [vite] (client) [console.error] TypeError: Cannot read properties of null (reading 'useContext')
+    at exports.useContext (http://localhost:5173/node_modules/.vite/deps/react.js?v=67e5bd71:706:22)
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=a0baf35c:10646:35)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:3966:19)
+    at updateForwardRef (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5149:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5957:21)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8062:6)
+
+The above error occurred in the <ForwardRef(motion.div)> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+12:55:26 [vite] (client) [console.error] React Router caught the following error during render TypeError: Cannot read properties of null (reading 'useContext')
+    at exports.useContext (http://localhost:5173/node_modules/.vite/deps/react.js?v=67e5bd71:706:22)
+    at MotionDOMComponent (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=a0baf35c:10646:35)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:3966:19)
+    at updateForwardRef (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5149:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:5957:21)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=6f8b2226:8062:6)
+12:56:02 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: ReferenceError: useEffect is not defined
+    at WhyNoga (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664562722:101:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7710:181)
+12:56:02 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: ReferenceError: useEffect is not defined
+    at WhyNoga (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664562722:101:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7710:181)
+12:56:02 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: ReferenceError: useEffect is not defined
+    at WhyNoga (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664562722:101:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7747:27)
+12:56:02 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: ReferenceError: useEffect is not defined
+    at WhyNoga (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664562722:101:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7747:27)
+12:56:02 [vite] (client) [console.error] ReferenceError: useEffect is not defined
+    at WhyNoga (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664562722:101:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7747:27)
+
+The above error occurred in the <WhyNoga> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+12:56:02 [vite] (client) [console.error] React Router caught the following error during render ReferenceError: useEffect is not defined
+    at WhyNoga (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664562722:101:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7747:27)
+12:56:30 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:56:30 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:56:30 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:56:30 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:56:30 [vite] (client) [console.error] TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+
+The above error occurred in the <PinnedReason> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+12:56:30 [vite] (client) [console.error] React Router caught the following error during render TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:56:46 [vite] (client) Pre-transform error: Failed to load url /src/hooks/useScrollTriggerRefresh.ts (resolved id: C:/Users/shani/OneDrive/שולחן העבודה/בניית אתרים לעסקים/jewelry store/src/hooks/useScrollTriggerRefresh.ts) in C:/Users/shani/OneDrive/שולחן העבודה/בניית אתרים לעסקים/jewelry store/src/components/layout/RootLayout.tsx. Does the file exist?
+12:56:46 [vite] (client) [console.error] [vite] Failed to reload /src/components/layout/RootLayout.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+12:56:46 [vite] (client) [console.error] [vite] Failed to reload /src/components/layout/RootLayout.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+12:56:51 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: ReferenceError: useScrollTriggerRefresh is not defined
+    at RootLayout (http://localhost:5173/src/components/layout/RootLayout.tsx?t=1785664611771:18:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7710:181)
+12:56:51 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: ReferenceError: useScrollTriggerRefresh is not defined
+    at RootLayout (http://localhost:5173/src/components/layout/RootLayout.tsx?t=1785664611771:18:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7710:181)
+12:56:51 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: ReferenceError: useScrollTriggerRefresh is not defined
+    at RootLayout (http://localhost:5173/src/components/layout/RootLayout.tsx?t=1785664611771:18:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7747:27)
+12:56:51 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: ReferenceError: useScrollTriggerRefresh is not defined
+    at RootLayout (http://localhost:5173/src/components/layout/RootLayout.tsx?t=1785664611771:18:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7747:27)
+12:56:51 [vite] (client) [console.error] ReferenceError: useScrollTriggerRefresh is not defined
+    at RootLayout (http://localhost:5173/src/components/layout/RootLayout.tsx?t=1785664611771:18:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7747:27)
+
+The above error occurred in the <RootLayout> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+12:56:51 [vite] (client) [console.error] React Router caught the following error during render ReferenceError: useScrollTriggerRefresh is not defined
+    at RootLayout (http://localhost:5173/src/components/layout/RootLayout.tsx?t=1785664611771:18:2)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:3966:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5322:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:5893:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:604:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8182:92)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8078:37)
+    at renderRootSync (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:8062:6)
+    at performWorkOnRoot (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:7747:27)
+12:56:56 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:56:56 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:56:56 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:56:56 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:56:56 [vite] (client) [console.error] TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+
+The above error occurred in the <PinnedReason> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+12:56:56 [vite] (client) [console.error] React Router caught the following error during render TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:57:11 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:57:11 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:57:11 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:57:11 [vite] (client) [console.error] Error handled by React Router default ErrorBoundary: TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+12:57:11 [vite] (client) [console.error] TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+
+The above error occurred in the <PinnedReason> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+12:57:11 [vite] (client) [console.error] React Router caught the following error during render TypeError: a is not a function
+    at Array.<anonymous> (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:115:72)
+    at interpolator (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1326:19)
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:1328:26
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:119
+    at http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12910:10
+    at useCombineMotionValues (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12804:31)
+    at useListTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12906:9)
+    at useTransform (http://localhost:5173/node_modules/.vite/deps/motion_react.js?v=67e5bd71:12893:79)
+    at PinnedReason (http://localhost:5173/src/components/home/WhyNoga.tsx?t=1785664590173:205:18)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=67e5bd71:12619:12)
+18:39:25 [vite] (client) [console.warn] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+18:39:25 [vite] (client) [console.warn] THREE.WebGLProgram: Program Info Log: (210,81-129): warning X4122: sum of 0.996094 and -2.98545e-017 cannot be represented accurately in double precision
+(209,37-61): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision
+(210,82-106): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision
+(209,37-61): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision
+(210,82-106): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision
+
+
+ 
+18:39:59 [vite] (client) [console.warn] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+18:43:12 [vite] Internal server error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] [0mUnexpected token
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/components/layout/RootLayout.tsx:26:13 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m26 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249mh[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249mf[0m=[38;5;249m"[0m[38;5;249m#[0m[38;5;249mm[0m[38;5;249ma[0m[38;5;249mi[0m[38;5;249mn[0m[38;5;249m"[0m
+ [38;5;240m   │[0m             ┬  
+ [38;5;240m   │[0m             ╰── 
+[38;5;246m────╯[0m
+
+  Plugin: vite:oxc
+  File: C:/Users/shani/OneDrive/שולחן העבודה/בניית אתרים לעסקים/jewelry store/src/components/layout/RootLayout.tsx
+      at transformWithOxc (file:///C:/Users/shani/OneDrive/%D7%A9%D7%95%D7%9C%D7%97%D7%9F%20%D7%94%D7%A2%D7%91%D7%95%D7%93%D7%94/%D7%91%D7%A0%D7%99%D7%99%D7%AA%20%D7%90%D7%AA%D7%A8%D7%99%D7%9D%20%D7%9C%D7%A2%D7%A1%D7%A7%D7%99%D7%9D/jewelry%20store/node_modules/vite/dist/node/chunks/node.js:4033:19)
+      at TransformPluginContext.transform (file:///C:/Users/shani/OneDrive/%D7%A9%D7%95%D7%9C%D7%97%D7%9F%20%D7%94%D7%A2%D7%91%D7%95%D7%93%D7%94/%D7%91%D7%A0%D7%99%D7%99%D7%AA%20%D7%90%D7%AA%D7%A8%D7%99%D7%9D%20%D7%9C%D7%A2%D7%A1%D7%A7%D7%99%D7%9D/jewelry%20store/node_modules/vite/dist/node/chunks/node.js:4104:26)
+      at EnvironmentPluginContainer.transform (file:///C:/Users/shani/OneDrive/%D7%A9%D7%95%D7%9C%D7%97%D7%9F%20%D7%94%D7%A2%D7%91%D7%95%D7%93%D7%94/%D7%91%D7%A0%D7%99%D7%99%D7%AA%20%D7%90%D7%AA%D7%A8%D7%99%D7%9D%20%D7%9C%D7%A2%D7%A1%D7%A7%D7%99%D7%9D/jewelry%20store/node_modules/vite/dist/node/chunks/node.js:30201:51)
+      at async loadAndTransform (file:///C:/Users/shani/OneDrive/%D7%A9%D7%95%D7%9C%D7%97%D7%9F%20%D7%94%D7%A2%D7%91%D7%95%D7%93%D7%94/%D7%91%D7%A0%D7%99%D7%99%D7%AA%20%D7%90%D7%AA%D7%A8%D7%99%D7%9D%20%D7%9C%D7%A2%D7%A1%D7%A7%D7%99%D7%9D/jewelry%20store/node_modules/vite/dist/node/chunks/node.js:20124:26)
+18:43:12 [vite] Internal server error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] [0mUnexpected token
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/components/layout/RootLayout.tsx:26:13 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m26 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249mh[0m[38;5;249mr[0m[38;5;249me[0m[38;5;249mf[0m=[38;5;249m"[0m[38;5;249m#[0m[38;5;249mm[0m[38;5;249ma[0m[38;5;249mi[0m[38;5;249mn[0m[38;5;249m"[0m
+ [38;5;240m   │[0m             ┬  
+ [38;5;240m   │[0m             ╰── 
+[38;5;246m────╯[0m
+
+  Plugin: vite:oxc
+  File: C:/Users/shani/OneDrive/שולחן העבודה/בניית אתרים לעסקים/jewelry store/src/components/layout/RootLayout.tsx
+      at transformWithOxc (file:///C:/Users/shani/OneDrive/%D7%A9%D7%95%D7%9C%D7%97%D7%9F%20%D7%94%D7%A2%D7%91%D7%95%D7%93%D7%94/%D7%91%D7%A0%D7%99%D7%99%D7%AA%20%D7%90%D7%AA%D7%A8%D7%99%D7%9D%20%D7%9C%D7%A2%D7%A1%D7%A7%D7%99%D7%9D/jewelry%20store/node_modules/vite/dist/node/chunks/node.js:4033:19)
+      at TransformPluginContext.transform (file:///C:/Users/shani/OneDrive/%D7%A9%D7%95%D7%9C%D7%97%D7%9F%20%D7%94%D7%A2%D7%91%D7%95%D7%93%D7%94/%D7%91%D7%A0%D7%99%D7%99%D7%AA%20%D7%90%D7%AA%D7%A8%D7%99%D7%9D%20%D7%9C%D7%A2%D7%A1%D7%A7%D7%99%D7%9D/jewelry%20store/node_modules/vite/dist/node/chunks/node.js:4104:26)
+      at EnvironmentPluginContainer.transform (file:///C:/Users/shani/OneDrive/%D7%A9%D7%95%D7%9C%D7%97%D7%9F%20%D7%94%D7%A2%D7%91%D7%95%D7%93%D7%94/%D7%91%D7%A0%D7%99%D7%99%D7%AA%20%D7%90%D7%AA%D7%A8%D7%99%D7%9D%20%D7%9C%D7%A2%D7%A1%D7%A7%D7%99%D7%9D/jewelry%20store/node_modules/vite/dist/node/chunks/node.js:30201:51)
+      at async loadAndTransform (file:///C:/Users/shani/OneDrive/%D7%A9%D7%95%D7%9C%D7%97%D7%9F%20%D7%94%D7%A2%D7%91%D7%95%D7%93%D7%94/%D7%91%D7%A0%D7%99%D7%99%D7%AA%20%D7%90%D7%AA%D7%A8%D7%99%D7%9D%20%D7%9C%D7%A2%D7%A1%D7%A7%D7%99%D7%9D/jewelry%20store/node_modules/vite/dist/node/chunks/node.js:20124:26)
+18:43:12 [vite] (client) [console.error] [vite] Failed to reload /src/components/layout/RootLayout.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+18:43:12 [vite] (client) [console.error] [vite] Failed to reload /src/components/layout/RootLayout.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+23:10:52 [vite] (client) [console.warn] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+23:11:07 [vite] (client) [console.warn] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+23:11:10 [vite] (client) [console.warn] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.

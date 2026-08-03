@@ -1,0 +1,151 @@
+{
+  "generated": "2026-07-30T14:03:57.439Z",
+  "images": [
+    {
+      "name": "ring-fine-band",
+      "id": "photo-1708222170603-12471477b1d9"
+    },
+    {
+      "name": "ring-thin-stack",
+      "id": "photo-1608042314453-ae338d80c427"
+    },
+    {
+      "name": "ring-worn-stack",
+      "id": "photo-1596944924616-7b38e7cfac36"
+    },
+    {
+      "name": "necklace-small-pendant",
+      "id": "photo-1589128777073-263566ae5e4d"
+    },
+    {
+      "name": "necklace-gold-pendant",
+      "id": "photo-1620656798579-1984d9e87df7"
+    },
+    {
+      "name": "necklace-pearl-drop",
+      "id": "photo-1611085583191-a3b181a88401"
+    },
+    {
+      "name": "necklace-layered-fine",
+      "id": "photo-1675113495242-09e2616a4aa2"
+    },
+    {
+      "name": "necklace-bezel-chain",
+      "id": "photo-1631050165155-421c47e306f7"
+    },
+    {
+      "name": "necklace-floral-chain",
+      "id": "photo-1625792508553-5e66a81659fa"
+    },
+    {
+      "name": "earrings-fine-hoops",
+      "id": "photo-1777999763640-b228fe3192de"
+    },
+    {
+      "name": "earrings-tiny-studs",
+      "id": "photo-1761479267937-4c5c7a903760"
+    },
+    {
+      "name": "bracelet-fine-chain",
+      "id": "photo-1744472457504-f99a96ecbd3e"
+    },
+    {
+      "name": "bracelet-thin-beaded",
+      "id": "photo-1740567389909-b36e9cadbef9"
+    },
+    {
+      "name": "bracelet-slim-bangle",
+      "id": "photo-1655707063513-a08dad26440e"
+    },
+    {
+      "name": "editorial-necklace-onbody",
+      "id": "photo-1611652022419-a9419f74343d"
+    },
+    {
+      "name": "ring-solitaire-yellow",
+      "id": "photo-1716511956048-e0532bd9746e"
+    },
+    {
+      "name": "ring-solitaire-rose",
+      "id": "photo-1726256677740-dfd61fa1af26"
+    },
+    {
+      "name": "necklace-heart-white",
+      "id": "photo-1588444837495-c6cfeb53f32d"
+    }
+  ],
+  "results": [
+    {
+      "name": "ring-fine-band",
+      "kb": 23
+    },
+    {
+      "name": "ring-thin-stack",
+      "kb": 36
+    },
+    {
+      "name": "ring-worn-stack",
+      "kb": 29
+    },
+    {
+      "name": "necklace-small-pendant",
+      "kb": 36
+    },
+    {
+      "name": "necklace-gold-pendant",
+      "kb": 64
+    },
+    {
+      "name": "necklace-pearl-drop",
+      "kb": 48
+    },
+    {
+      "name": "necklace-layered-fine",
+      "kb": 70
+    },
+    {
+      "name": "necklace-bezel-chain",
+      "kb": 193
+    },
+    {
+      "name": "necklace-floral-chain",
+      "kb": 85
+    },
+    {
+      "name": "earrings-fine-hoops",
+      "kb": 15
+    },
+    {
+      "name": "earrings-tiny-studs",
+      "kb": 7
+    },
+    {
+      "name": "bracelet-fine-chain",
+      "kb": 36
+    },
+    {
+      "name": "bracelet-thin-beaded",
+      "kb": 56
+    },
+    {
+      "name": "bracelet-slim-bangle",
+      "kb": 72
+    },
+    {
+      "name": "editorial-necklace-onbody",
+      "kb": 31
+    },
+    {
+      "name": "ring-solitaire-yellow",
+      "kb": 140
+    },
+    {
+      "name": "ring-solitaire-rose",
+      "kb": 55
+    },
+    {
+      "name": "necklace-heart-white",
+      "kb": 22
+    }
+  ]
+}
