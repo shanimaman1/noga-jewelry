@@ -67,6 +67,22 @@ type MeshEntry = {
   isDiamond: boolean;
 };
 
+/**
+ * How the stone is rendered.
+ *
+ * `transmission` — the CLAUDE.md canon MeshTransmissionMaterial. It refracts
+ *   whatever is BEHIND the mesh, so it only looks like a diamond when there is
+ *   something back there: use it on `/lab`, which has a lit Stage backdrop.
+ *   On a transparent canvas over a dark page it refracts darkness and the
+ *   stone renders black.
+ *
+ * `reflective` — a highly polished MeshPhysicalMaterial that mirrors the
+ *   studio Lightformers instead of refracting the backdrop. Each flat facet
+ *   catches a light strip, which is what reads as sparkle. Used everywhere the
+ *   canvas is transparent (hero, story, product viewer).
+ */
+export type DiamondMode = 'transmission' | 'reflective';
+
 export function Ring({
   gold: goldOverride,
   diamond: diamondOverride,
@@ -75,15 +91,17 @@ export function Ring({
   /** External Y rotation (radians), read every frame — for scroll-driving.
    *  Reading a ref in useFrame avoids a React re-render per frame. */
   rotationRef,
-  /** Mobile downgrade: diamond uses MeshPhysicalMaterial (no transmission
-   *  FBO passes) instead of MeshTransmissionMaterial. */
+  /** Mobile downgrade: fewer lights upstream; also forces `reflective`, which
+   *  skips the transmission FBO passes entirely. */
   mobile = false,
+  diamondMode = 'reflective',
 }: {
   gold?: Partial<GoldParams>;
   diamond?: Partial<DiamondParams>;
   autoRotate?: number;
   rotationRef?: MutableRefObject<number>;
   mobile?: boolean;
+  diamondMode?: DiamondMode;
 }) {
   const spinGroup = useRef<Group>(null);
   const { scene } = useGLTF(MODEL_URL);
@@ -133,21 +151,7 @@ export function Ring({
             scale={entry.scale}
           >
             {entry.isDiamond ? (
-              mobile ? (
-                // No FBO/transmission passes on mobile — a physical glass look
-                // via high ior + clearcoat + slight transparency.
-                <meshPhysicalMaterial
-                  color="#ffffff"
-                  metalness={0}
-                  roughness={0.02}
-                  ior={diamond.ior}
-                  clearcoat={1}
-                  clearcoatRoughness={0}
-                  transparent
-                  opacity={0.55}
-                  flatShading={diamond.flatShading}
-                />
-              ) : (
+              diamondMode === 'transmission' && !mobile ? (
                 <MeshTransmissionMaterial
                   transmission={diamond.transmission}
                   ior={diamond.ior}
@@ -158,6 +162,34 @@ export function Ring({
                   flatShading={diamond.flatShading}
                   samples={6}
                   resolution={512}
+                />
+              ) : (
+                // Mirror-polished, opaque. `envMapIntensity` well above 1 makes
+                // every facet throw back a studio strip — that hard glint is
+                // what the eye reads as "diamond". `iridescence` adds the
+                // rainbow fire along facet edges. No transparency: a see-through
+                // stone over a dark page just looks like a hole.
+                <meshPhysicalMaterial
+                  color="#ffffff"
+                  // Dielectric, not metal. A metal shows ONLY the environment,
+                  // and this environment is a dark room with three light
+                  // strips — so a mirrored stone renders almost black.
+                  metalness={0}
+                  roughness={0}
+                  ior={diamond.ior}
+                  reflectivity={1}
+                  clearcoat={1}
+                  clearcoatRoughness={0}
+                  envMapIntensity={3}
+                  // The emissive floor is the deliberate cheat. A real diamond
+                  // looks bright because it gathers and concentrates light from
+                  // the whole room; we have almost no room to gather from, so a
+                  // soft internal glow stands in for it. Facet glints from the
+                  // studio strips then layer on top. Without this the stone is
+                  // either black (metal) or flat grey (plain dielectric).
+                  emissive="#ffffff"
+                  emissiveIntensity={0.45}
+                  flatShading={diamond.flatShading}
                 />
               )
             ) : (

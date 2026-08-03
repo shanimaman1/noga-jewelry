@@ -200,14 +200,14 @@ export const products: Product[] = [
   {
     slug: 'tiny-stud-earrings',
     name: 'עגילים צמודים זעירים',
-    shortDescription: 'כדור זהב קטן. העגיל שנשאר באוזן גם בלילה.',
+    shortDescription: 'עיגול זהב קטן במרקם עדין. העגיל שנשאר באוזן גם בלילה.',
     price: 890,
     category: 'earrings',
     metals: [
       {
         id: 'yellow',
         image: 'earrings-tiny-studs',
-        imageAlt: 'זוג עגילים צמודים זעירים בצורת כדור זהב צהוב',
+        imageAlt: 'זוג עגילים צמודים עגולים מזהב צהוב, במרקם עדין',
       },
     ],
   },

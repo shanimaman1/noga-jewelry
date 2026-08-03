@@ -30,7 +30,11 @@ export default function HeroCanvas({
       dpr={[1, 1.5]}
       shadows={false}
       frameloop={frameloop}
-      camera={{ position: [0, 0.15, 3.8], fov: 38 }}
+      // The hero canvas is a tall, narrow half-column, so a 38° vertical FOV
+      // leaves very little horizontal room and the ring was cropping at the
+      // bottom. Pulled back and re-centred to frame it like a product shot,
+      // with breathing room on every side.
+      camera={{ position: [0, 0, 5.4], fov: 38 }}
       gl={{ alpha: true, antialias: true }}
       style={{ background: 'transparent' }}
     >

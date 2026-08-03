@@ -29,5 +29,14 @@ export function Ring() {
     rotationSpeed: { value: 0.3, min: 0, max: 2, step: 0.05 },
   });
 
-  return <SharedRing gold={gold} diamond={diamond} autoRotate={rotationSpeed} />;
+  // /lab keeps the canon transmission material: it is the only surface with a
+  // lit Stage backdrop behind the ring for the stone to actually refract.
+  return (
+    <SharedRing
+      gold={gold}
+      diamond={diamond}
+      autoRotate={rotationSpeed}
+      diamondMode="transmission"
+    />
+  );
 }

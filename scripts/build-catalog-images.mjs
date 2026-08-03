@@ -49,7 +49,9 @@ const IMAGES = [
   { name: 'necklace-floral-chain', id: 'photo-1625792508553-5e66a81659fa' },
   // Earrings — small studs, fine huggies
   { name: 'earrings-fine-hoops', id: 'photo-1777999763640-b228fe3192de' },
-  { name: 'earrings-tiny-studs', id: 'photo-1761479267937-4c5c7a903760' },
+  // Replaced photo-1761479267937: the studs sat tiny in a huge grey field, so
+  // the card read as an empty frame even though the image loaded fine.
+  { name: 'earrings-tiny-studs', id: 'photo-1761479271790-c7327d1bc5b3' },
   // Bracelets — thin chains
   { name: 'bracelet-fine-chain', id: 'photo-1744472457504-f99a96ecbd3e' },
   { name: 'bracelet-thin-beaded', id: 'photo-1740567389909-b36e9cadbef9' },

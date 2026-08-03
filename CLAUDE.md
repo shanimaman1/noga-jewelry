@@ -121,9 +121,22 @@ both worlds — the dark atelier and everyday light.
 - metalness `1.0`, roughness `0.28` (0.15 read as glassy plastic;
   real polished gold is slightly less mirror-perfect), envMapIntensity `1.5`
 
-**Diamond — MeshTransmissionMaterial (drei):**
-- transmission `1.0`, ior `2.4`, thickness `0.5`, roughness `0.0`,
-  chromaticAberration `0.06`, dispersion `0.5`
+**Diamond — two modes (`diamondMode` prop on `three/shared/Ring`):**
+- `transmission` — the canon MeshTransmissionMaterial: transmission `1.0`,
+  ior `2.4`, thickness `0.5`, roughness `0.0`, chromaticAberration `0.06`,
+  dispersion `0.5`. **Only valid where something sits BEHIND the stone to
+  refract** — i.e. `/lab`, which has a lit Stage backdrop. Used there only.
+- `reflective` (default, decision 2026-08-03) — MeshPhysicalMaterial:
+  metalness `0`, roughness `0`, ior `2.4`, reflectivity `1`, clearcoat `1`,
+  envMapIntensity `3`, **emissive `#ffffff` at `0.45`**. Used on every
+  transparent canvas (hero, story, product viewer).
+  Why this deviates from canon: over a transparent canvas on a dark page the
+  transmission material refracts darkness and the stone renders **black**.
+  A metallic version renders black too — a mirror can only show the
+  environment, and this environment is a dark room with three light strips.
+  The emissive floor stands in for the light a real diamond gathers from a
+  whole room. User's explicit call: "I'd rather it sparkle than be technically
+  correct and black." Do not remove the emissive without re-checking the hero.
 
 **Lighting — this is 80% of the result:**
 - `<Environment>` built from `<Lightformer>` of `form="rect"`:
