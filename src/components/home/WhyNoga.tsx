@@ -1,10 +1,9 @@
 import { type ReactNode } from 'react';
-import { motion } from 'motion/react';
 import { Container } from '@/components/common/Container';
 import { Reveal } from '@/components/common/Reveal';
 import { SectionHeading } from '@/components/common/SectionHeading';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { VIEWPORT, revealChild, staggerParent } from '@/lib/motion/tokens';
+import { useReveal } from '@/hooks/useReveal';
+import { STAGGER } from '@/lib/motion/tokens';
 
 type Reason = { title: string; text: string; icon: ReactNode };
 
@@ -70,9 +69,6 @@ const reasons: Reason[] = [
  * fully visible with no animation.
  */
 export function WhyNoga() {
-  const reduced = useReducedMotion();
-  const animate = !reduced;
-
   return (
     <section className="bg-cream py-20 sm:py-28" aria-labelledby="why-title">
       <Container>
@@ -84,26 +80,24 @@ export function WhyNoga() {
           />
         </Reveal>
 
-        <motion.ul
-          className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4"
-          variants={animate ? staggerParent : undefined}
-          initial={animate ? 'hidden' : undefined}
-          whileInView={animate ? 'visible' : undefined}
-          viewport={VIEWPORT}
-        >
-          {reasons.map((reason) => (
-            <motion.li
-              key={reason.title}
-              variants={animate ? revealChild : undefined}
-              className="text-center"
-            >
-              <span className="inline-flex text-gold">{reason.icon}</span>
-              <h3 className="mt-4 text-base text-charcoal">{reason.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-stone">{reason.text}</p>
-            </motion.li>
+        <ul className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {reasons.map((reason, i) => (
+            <ReasonItem key={reason.title} reason={reason} index={i} />
           ))}
-        </motion.ul>
+        </ul>
       </Container>
     </section>
+  );
+}
+
+/** One point, revealed in sequence via the fail-open hook. */
+function ReasonItem({ reason, index }: { reason: Reason; index: number }) {
+  const ref = useReveal<HTMLLIElement>(index * STAGGER);
+  return (
+    <li ref={ref} className="text-center">
+      <span className="inline-flex text-gold">{reason.icon}</span>
+      <h3 className="mt-4 text-base text-charcoal">{reason.title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-stone">{reason.text}</p>
+    </li>
   );
 }

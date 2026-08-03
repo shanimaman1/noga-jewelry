@@ -1,18 +1,20 @@
-import { type ReactNode } from 'react';
-import { motion } from 'motion/react';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { DURATION, EASE, VIEWPORT } from '@/lib/motion/tokens';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 /**
- * Editorial image reveal: a mask uncovers the photograph from the bottom
- * upward while the picture itself settles from a slight scale-up.
+ * Editorial image reveal: a mask uncovers the picture from the bottom up.
  *
- * The counter-motion is what makes it read as expensive — the frame opens and
- * the image relaxes into place, rather than a flat fade.
+ * FAIL-OPEN, and deliberately so — an earlier fail-closed version applied
+ * `clip-path: inset(0 0 100% 0)` as the *initial* style, which not only hid
+ * the image when the observer didn't fire but also stopped `loading="lazy"`
+ * images from ever being fetched.
  *
- * `clip-path` and `transform` are both compositor-friendly. Framer Motion
- * writes them as inline styles on nodes React owns; no DOM surgery involved.
+ * The mask is applied only after we have both an observer AND a safety timer
+ * committed to removing it. Never used on catalogue product cards: a product
+ * photo is the content, and must not be gated behind an animation.
  */
+
+const SAFETY_MS = 2500;
+
 export function ImageReveal({
   children,
   delay = 0,
@@ -22,28 +24,52 @@ export function ImageReveal({
   delay?: number;
   className?: string;
 }) {
-  const reduced = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
 
-  if (reduced) {
-    return <div className={`overflow-hidden ${className}`}>{children}</div>;
-  }
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const prefersReduced =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced || typeof IntersectionObserver === 'undefined') return;
+
+    // Already on screen — nothing to uncover, and masking now would flash.
+    if (el.getBoundingClientRect().top < window.innerHeight) return;
+
+    el.style.transitionDelay = delay ? `${delay}s` : '';
+    el.dataset.revealImage = 'armed';
+
+    let released = false;
+    const release = () => {
+      if (released) return;
+      released = true;
+      el.dataset.revealImage = 'in';
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          release();
+          io.disconnect();
+        }
+      },
+      { threshold: 0.12 },
+    );
+    io.observe(el);
+    const safety = window.setTimeout(release, SAFETY_MS);
+
+    return () => {
+      window.clearTimeout(safety);
+      io.disconnect();
+      if (!released) delete el.dataset.revealImage;
+    };
+  }, [delay]);
 
   return (
-    <motion.div
-      className={`overflow-hidden ${className}`}
-      initial={{ clipPath: 'inset(0% 0% 100% 0%)' }}
-      whileInView={{ clipPath: 'inset(0% 0% 0% 0%)' }}
-      viewport={VIEWPORT}
-      transition={{ duration: DURATION.image, ease: EASE, delay }}
-    >
-      <motion.div
-        initial={{ scale: 1.12 }}
-        whileInView={{ scale: 1 }}
-        viewport={VIEWPORT}
-        transition={{ duration: DURATION.image + 0.3, ease: EASE, delay }}
-      >
-        {children}
-      </motion.div>
-    </motion.div>
+    <div ref={ref} className={`overflow-hidden ${className}`}>
+      {children}
+    </div>
   );
 }

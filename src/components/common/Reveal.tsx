@@ -1,26 +1,17 @@
 import { Children, type ReactNode } from 'react';
-import { motion } from 'motion/react';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
-import {
-  VIEWPORT,
-  revealChild,
-  revealTransition,
-  staggerParent,
-  TRAVEL,
-} from '@/lib/motion/tokens';
+import { useReveal } from '@/hooks/useReveal';
+import { STAGGER } from '@/lib/motion/tokens';
 
 /**
  * Fade-and-rise as the element scrolls into view.
  *
- * Implemented with Framer Motion, which only ever writes `style` on elements
- * React already owns — it never inserts, removes or reparents DOM nodes. That
- * is what makes it safe to unmount mid-animation during route changes.
+ * FAIL-OPEN: the rendered markup carries no hiding styles. Content is visible
+ * on first paint and stays visible unless useReveal positively arms it — and
+ * arming is only ever done alongside a guaranteed release (observer + safety
+ * timer). See hooks/useReveal.ts for the four guarantees.
  *
- * With `stagger`, each direct child is wrapped and revealed in sequence, so a
- * section's heading arrives before its body and cards.
- *
- * Under `prefers-reduced-motion` the content renders plainly, with no
- * animation and no leftover transforms.
+ * API is unchanged from the previous Framer Motion version (`delay`,
+ * `stagger`, `className`) so existing call sites need no edits.
  */
 export function Reveal({
   children,
@@ -33,38 +24,47 @@ export function Reveal({
   stagger?: boolean;
   className?: string;
 }) {
-  const reduced = useReducedMotion();
+  if (stagger) return <StaggerReveal delay={delay} className={className}>{children}</StaggerReveal>;
+  return <SingleReveal delay={delay} className={className}>{children}</SingleReveal>;
+}
 
-  if (reduced) return <div className={className}>{children}</div>;
-
-  if (stagger) {
-    return (
-      <motion.div
-        className={className}
-        variants={staggerParent}
-        initial="hidden"
-        whileInView="visible"
-        viewport={VIEWPORT}
-        transition={{ delayChildren: delay }}
-      >
-        {Children.map(children, (child, i) => (
-          <motion.div key={i} variants={revealChild}>
-            {child}
-          </motion.div>
-        ))}
-      </motion.div>
-    );
-  }
-
+function SingleReveal({
+  children,
+  delay,
+  className,
+}: {
+  children: ReactNode;
+  delay: number;
+  className: string;
+}) {
+  const ref = useReveal<HTMLDivElement>(delay);
   return (
-    <motion.div
-      className={className}
-      initial={{ opacity: 0, y: TRAVEL }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={VIEWPORT}
-      transition={{ ...revealTransition, delay }}
-    >
+    <div ref={ref} className={className}>
       {children}
-    </motion.div>
+    </div>
   );
+}
+
+/** Reveals each direct child in sequence, so a heading lands before its body. */
+function StaggerReveal({
+  children,
+  delay,
+  className,
+}: {
+  children: ReactNode;
+  delay: number;
+  className: string;
+}) {
+  return (
+    <div className={className}>
+      {Children.map(children, (child, i) => (
+        <StaggerChild delay={delay + i * STAGGER}>{child}</StaggerChild>
+      ))}
+    </div>
+  );
+}
+
+function StaggerChild({ children, delay }: { children: ReactNode; delay: number }) {
+  const ref = useReveal<HTMLDivElement>(delay);
+  return <div ref={ref}>{children}</div>;
 }

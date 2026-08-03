@@ -4,14 +4,16 @@ import { ROUTES } from '@/lib/constants';
 import { formatPrice } from '@/lib/format';
 import { defaultVariant } from '@/data/products';
 import { CatalogImage } from '@/components/common/CatalogImage';
-import { ImageReveal } from '@/components/motion/ImageReveal';
 
 /** Shared product card — used by the homepage row and the catalog grid. */
 export function ProductCard({ product }: { product: Product }) {
   const variant = defaultVariant(product);
   return (
     <Link to={`${ROUTES.product}/${product.slug}`} className="group block">
-      <ImageReveal className="relative rounded-sm">
+      {/* No reveal mask here on purpose: the product photograph is the content
+          of a jewellery store, so it must never be gated behind an animation
+          (and a hidden ancestor also stops lazy images being fetched at all). */}
+      <div className="relative overflow-hidden rounded-sm">
         <CatalogImage
           name={variant.image}
           alt={variant.imageAlt}
@@ -22,7 +24,7 @@ export function ProductCard({ product }: { product: Product }) {
             {product.badge}
           </span>
         )}
-      </ImageReveal>
+      </div>
 
       <h3 className="mt-4 text-base text-charcoal transition-colors group-hover:text-gold">
         {product.name}

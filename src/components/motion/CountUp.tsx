@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'motion/react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { VIEWPORT } from '@/lib/motion/tokens';
+import { REVEAL_THRESHOLD } from '@/lib/motion/tokens';
 
 /**
  * Counts a number up as it enters view.
@@ -24,7 +24,7 @@ export function CountUp({
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const reduced = useReducedMotion();
-  const inView = useInView(ref, { once: VIEWPORT.once, amount: VIEWPORT.amount });
+  const inView = useInView(ref, { once: true, amount: REVEAL_THRESHOLD });
   const [display, setDisplay] = useState(reduced ? value : 0);
 
   useEffect(() => {

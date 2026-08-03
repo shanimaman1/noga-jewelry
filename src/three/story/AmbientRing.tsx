@@ -15,7 +15,12 @@ export function AmbientRing() {
   const mobile = useMediaQuery('(max-width: 767px)');
 
   return (
-    <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-charcoal">
+    // w-full + an absolutely-positioned canvas: R3F sizes its canvas from the
+    // container, so if the canvas were in normal flow an auto-width grid column
+    // would size itself from the canvas instead — a feedback loop that left the
+    // canvas stuck at its old width and overflowed the page after a resize.
+    // Taking it out of flow means it can never drive layout.
+    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-sm bg-charcoal">
       {/* Warm light pool — also the reduced-motion poster. */}
       <div
         className="absolute inset-0"
@@ -26,7 +31,9 @@ export function AmbientRing() {
       />
       {!reduced && (
         <Suspense fallback={null}>
-          <StoryCanvas mobile={mobile} />
+          <div className="absolute inset-0">
+            <StoryCanvas mobile={mobile} />
+          </div>
         </Suspense>
       )}
     </div>

@@ -43,7 +43,11 @@ export function Gallery({
           <Suspense
             fallback={<div className="absolute inset-0 grid place-items-center text-sm text-stone">טוען תצוגת 360°…</div>}
           >
-            <RingViewer mobile={mobile} />
+            {/* Absolutely positioned so the R3F canvas can never drive the
+                layout width (see AmbientRing for the feedback-loop it avoids). */}
+            <div className="absolute inset-0">
+              <RingViewer mobile={mobile} />
+            </div>
             <span className="pointer-events-none absolute bottom-3 start-1/2 -translate-x-1/2 rounded-full bg-charcoal/70 px-4 py-1.5 text-xs text-cream">
               גררו לסיבוב
             </span>
