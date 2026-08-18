@@ -1,228 +1,290 @@
-# מבנה הפרויקט
+# NOGA Fine Jewelry — Shared Project Guide
 
-מסמך זה מתאר את מצב הקוד בפועל. החלטות מותג, עיצוב, 3D ונגישות נמצאות
-ב־[CLAUDE.md](CLAUDE.md) — כשיש סתירה, CLAUDE.md מנצח.
+Portfolio **demo** site for a fictional luxury jewelry brand. Demo only — no real
+payments or orders — but must look and behave 100% production-grade. Shown to
+prospective clients as proof of capability.
 
-## עץ התיקיות
+> This is the tool-neutral, shared source of truth for brand, design, 3D,
+> accessibility, performance and cross-tool working rules. Codex and Claude Code
+> both read and update this file. Tool-specific instructions live in `AGENTS.md`
+> and `CLAUDE.md`; when either conflicts with this file, this file wins.
 
-```
-src/
-├─ components/
-│  ├─ agent/       ShoppingAssistant, AssistantProductCard
-│  ├─ cart/        CartDrawer, LineItem, FreeShippingBar
-│  ├─ catalog/     ProductCard, FilterBar (CATEGORY_LABELS, PRICE_BANDS)
-│  ├─ checkout/    שלבי צ׳קאאוט מעוצבים
-│  ├─ common/      Container, PageShell, SectionHeading, CatalogImage, Reveal,
-│  │               DemoModeBanner
-│  ├─ home/        סקשנים של דף הבית
-│  ├─ layout/      RootLayout, Header, Footer, FloatingActions, WhatsAppFab,
-│  │               ScrollToTop
-│  ├─ motion/      עוטפי אנימציה
-│  ├─ product/     Gallery, SizeGuideModal, TrustStrip
-│  ├─ seo/         Seo (תגיות head לפי עמוד)
-│  └─ ui/          Modal, Field
-├─ data/           products.ts, collections.ts, sizes.ts, testimonials
-├─ hooks/          useLenis, useMediaQuery, useReducedMotion, useReveal
-├─ lib/
-│  ├─ agent/       types.ts, catalog.ts, wizard.ts, index.ts
-│  ├─ cart/        store.ts (zustand + persist)
-│  ├─ motion/      קבועי אנימציה
-│  ├─ constants.ts BRAND, ROUTES, NAV_LINKS, whatsappUrl
-│  ├─ format.ts    formatPrice, installmentNote
-│  └─ seo.ts       JSON-LD
-├─ pages/          עמוד לכל נתיב
-├─ styles/         index.css — טוקני Tailwind v4 + כללי reveal
-├─ three/          hero/, lab/, product/, shared/, story/
-└─ types/          catalog.ts (Product, Metal, Category, METAL_LABELS)
-```
+The current code structure is documented in [ARCHITECTURE.md](ARCHITECTURE.md),
+setup and commands in [README.md](README.md), and image work in
+[docs/IMAGE_ASSET_REGISTER.md](docs/IMAGE_ASSET_REGISTER.md).
 
-## מקורות אמת לנתונים
-
-| מה | איפה | הערה |
-| --- | --- | --- |
-| פריטים, מחירים, מתכות | `src/data/products.ts` | 16 פריטים, ₪890–₪8,900 |
-| תוויות קטגוריה | `src/components/catalog/FilterBar.tsx` | `CATEGORY_LABELS` |
-| טווחי מחירים | `src/components/catalog/FilterBar.tsx` | `PRICE_BANDS` |
-| תוויות מתכת | `src/types/catalog.ts` | `METAL_LABELS` |
-| מותג, נתיבים, וואטסאפ | `src/lib/constants.ts` | מספר הטלפון פלייסהולדר לא תקין בכוונה |
-
-אין להעתיק נתוני מוצר לשום מקום אחר. כל שכבה שצריכה מחיר או שם קוראת מכאן.
-
-## שכבות (layering)
-
-`pages` → `components` → `hooks`/`lib` → `data`/`types`.
-
-חריגה מכוונת אחת: `src/lib/agent/catalog.ts` מייבא `CATEGORY_LABELS` ו־`PRICE_BANDS`
-מ־`components/catalog/FilterBar.tsx`. הסיבה: אלה אוצר המילים הקיים והמוצג
-למשתמש עבור קטגוריות וטווחי מחירים. עוזר שיציע טווחים *אחרים* מהסינון בקטלוג
-יהיה לא־עקבי, ועותק שני של התוויות בעברית יזלוג עם הזמן. ל־FilterBar אין
-תלויות כבדות, ולכן העלות היא כמה KB.
+## Working rules
+- Every task changes **nothing beyond its stated scope**. No opportunistic edits.
+- **Flag any deviation from this file before acting on it** — do not silently
+  "fix" something that contradicts a decision recorded here; raise it first.
+- Decisions live in this file, not in an external plan file. If a decision is
+  made, record it here so it survives.
 
 ---
 
-## עוזר הבחירה
+## Brand
+- **Name:** NOGA Fine Jewelry / נוגה
+- Tel Aviv atelier, handmade 14/18k gold, natural & lab diamonds
+- **Positioning:** "תכשיט אחד שתלבשי כל יום — לא עשרה נשכחים במגירה"
+- **Founder:** Dana (דנה), Bezalel-trained goldsmith, 12 years' experience
+- **Price range:** ₪890–₪12,000
+- **Language:** Hebrew, full RTL. Prices in ILS (₪).
+- **WhatsApp / contact:** `+972-50-000-0000` — deliberately INVALID placeholder, never a real number.
 
-### ממשק `AgentBrain`
+## Two audiences (drives the IA)
+1. **Self-purchaser** — browsing, curious, wants detail/materials/photos.
+2. **Gift buyer** (often male, time-pressured) — needs help fast: what to buy,
+   what size, when it arrives. Needs "gift guide by price" + WhatsApp.
 
-הווידג'ט מדבר **רק** עם `AgentBrain` (`src/lib/agent/types.ts`). הוא לא מייבא את
-האשף, לא קורא את מצבו, ולא מסתעף לפי סוג המוח שקיבל. זה מה שיאפשר להוסיף מוח
-מבוסס LLM בשלב 2 בלי לגעת בקומפוננטה.
-
-```ts
-interface AgentBrain {
-  readonly id: string;
-  start(): Promise<AgentTurn>;
-  send(input: AgentInput): Promise<AgentTurn>;
-  back(): Promise<AgentTurn>;
-}
-```
-
-שתי החלטות תכנוניות שנועדו לשלב 2:
-
-1. **כל המתודות אסינכרוניות**, גם שהאשף עונה מיידית. מוח LLM ימתין לרשת, ולכן
-   מצב ה־`pending` בממשק כבר קיים.
-2. **תור מחזיר את כל התמליל**, לא דלתא. המוח מחזיק את מצב השיחה; ה־UI הוא רנדרר
-   טהור של התור האחרון.
-
-בחירת המוח נמצאת במקום אחד — `createAgentBrain()` ב־`src/lib/agent/index.ts`.
-
-### הקבצים
-
-| קובץ | תפקיד |
-| --- | --- |
-| `types.ts` | `AgentBrain`, הודעות, בחירות, פעולות, המלצות |
-| `catalog.ts` | חיפוש וסינון טהורים מעל `products.ts` |
-| `wizard.ts` | זרימת השאלות, חוקי ההמלצה, טיפול בטקסט חופשי |
-| `index.ts` | ה־factory — המקום היחיד שבו נבחר מוח |
-| `components/agent/ShoppingAssistant.tsx` | Launcher, פאנל, focus trap, חיווט הפעולות |
-| `components/agent/AssistantProductCard.tsx` | כרטיס המלצה קומפקטי |
-
-### הזרימה
-
-למי התכשיט → טווח מחירים → קטגוריה → מתכת → עד שלוש המלצות.
-
-**כל אפשרות שמוצגת נגזרת מהנתונים בזמן ריצה**, ורק אם יש לה לפחות פריט אחד:
-`availableBands()`, `availableCategories()`, `availableMetals()`. לכן, למשל,
-"עגילים" לא מוצע כשנבחר "מעל ₪3,000" (העגיל היקר הוא ₪2,200), ו"זהב לבן" לא
-מוצע לטבעות (אין טבעת מצולמת בזהב לבן). מכיוון שכל שלב מצמצם מעל השלב הקודם,
-**מסלול מונחה לא יכול להגיע לתוצאה ריקה**.
-
-`relaxationOptions()` הוא רשת ביטחון, לא נתיב רגיל: אם בכל זאת יתקבל סינון ריק
-— אם פריט יוסר מהקטלוג, או אם מוח עתידי יקבע סינון בעצמו — הוא מציע לוותר על
-תנאי אחד, ורק על תנאים שבאמת מייצרים התאמות. אין מסך ריק ללא המשך.
-
-`back()` נשען על מחסנית snapshots: כל שלב שומר גם את המצב וגם את התמליל, כך
-שחזרה משחזרת את שניהם במדויק.
-
-### חוקי תוכן
-
-* שם, מחיר, קטגוריה ומתכת נקראים תמיד מ־`products.ts` — אף אחד מהם לא נכתב
-  כליטרל בקוד העוזר. הכרטיס מקבל `slug` בלבד ופותר את השאר בעצמו; slug שלא
-  קיים לא מרנדר כלום.
-* **אין הצהרות על מלאי, זמני אספקה, מבצעים או דמי משלוח.** אין לפרויקט נתונים
-  כאלה. שאלה בנושא מקבלת תשובה כנה ("אין לי נתון אמיתי... בגרסה החיה זה מתחבר
-  למערכת של החנות") והפניה לוואטסאפ.
-* נימוק ההמלצה נבנה רק ממה שהקונה באמת ביקש. אם לא צומצם כלום, מוצג התיאור
-  מהקטלוג — לא טענה מומצאת על התאמה או פופולריות.
-* קול המותג: מרוסן, בלי סימני קריאה ובלי סופרלטיבים.
-
-### שכבות z
-
-| שכבה | z-index |
-| --- | --- |
-| קבוצת הפעולות הצפות (`FloatingActions` — launcher + WhatsApp FAB) | 30 |
-| Scrim (מובייל בלבד) | 30 |
-| פאנל העוזר | 41 |
-| Header (sticky) | 40 |
-| מגירת עגלה · מודלים | 50 |
-
-הפאנל מעל ה־FAB כדי שלא ייקרע על ידי כפתור צף, ומתחת למגירת העגלה ולמודלים כדי
-שאלה תמיד ינצחו. הפאנל עוגן לתחתית וגובהו `min(82svh, 100svh − 9rem)` במובייל,
-ולכן הוא **לעולם לא מגיע ל־header** — גם במסך נמוך, שבו האיבר השני הוא זה שקובע.
-נמדד: 375×812 משאיר 27px מתחת ל־header, ו־375×500 משאיר 25px.
-
-הלואנצ׳ר וכפתור הוואטסאפ אינם ממוקמים `fixed` בעצמם עוד — שניהם ילדי flex בתוך
-`FloatingActions`, שהיא נקודת העגינה היחידה שלהם (ראו § אלמנטים צפים למטה).
-
-### נגישות
-
-`role="dialog"` עם `aria-modal="true"`, focus trap, ESC סוגר ומחזיר פוקוס
-ל־launcher, ניווט מלא במקלדת, `aria-label` בעברית, `role="log"` עם
-`aria-live="polite"` להכרזת הודעות חדשות.
-
-שתי החלטות מימוש ששווה להכיר:
-
-* **ה־focus trap מוגבל לאלמנט הפאנל**, לא ל־`document`. מגירת העגלה ומודל
-  המידות רושמים מאזיני `document` משלהם, ומאזין שני היה מתנגש בהם. מכיוון
-  שהפוקוס לכוד בפאנל, מאזין על הקונטיינר רואה כל מקש רלוונטי — וברגע שמודל
-  המידות לוקח פוקוס, המאזין הזה משתתק מעצמו.
-* **החזרת הפוקוס היא flag + effect ולא `focus()` ישיר.** ה־launcher לא מרונדר
-  בזמן שהפאנל פתוח, ולכן ה־ref שלו הוא `null` ברגע הסגירה. רק *נטישה* מסמנת
-  את הדגל; סגירה שמעבירה שליטה למגירת העגלה לא מסמנת, כדי שהמגירה תשמור על
-  הפוקוס שקיבלה.
-
-נעילת הגלילה נקראת מתוך ה־effect ומתעדכנת בכל שינוי מדיה, ולא מוחזקת ב־state:
-ערך מיושן שם היה משאיר את העמוד לא־גליל בדסקטופ. ה־scrim מוגדר ב־CSS בלבד
-(`sm:hidden`) מאותה סיבה.
-
-### מה שהעוזר לא עושה
-
-* לא נטען ב־`/lab` — העמוד הזה יושב מחוץ ל־`RootLayout` בכוונה.
-* לא נפתח מעצמו, לא מקפץ ולא פועם. Launcher שקט וסטטי.
-* לא מבצע רכישה. "הוספה לעגלה" קוראת ל־`useCart.add()` הקיימת בלבד.
+## Visual concept — "The Dark Room"
+Land on near-black. A ring floats center, lit by two long narrow light strips.
+On scroll: the spotlight moves, the ring rotates slowly, light rolls across the
+gold, and the background brightens charcoal → cream. Meaning: the piece lives in
+both worlds — the dark atelier and everyday light.
 
 ---
 
-## אלמנטים צפים (`FloatingActions`)
+## Design language
+- **Palette:** charcoal `#0A0908` · cream `#F7F4EF` · gold `#C9A227` (accent ONLY)
+  - Gold is **decorative only** — never body text, never small text. It will
+    likely fail 4.5:1 contrast on cream; that is an **accepted decision, not a
+    bug to "fix" by changing the color.** Use charcoal/stone for readable text.
+- **Headings:** David Libre, weight 400 (Hebrew serif — chosen over Heebo
+  because sans-serif read as generic, not luxury). letter-spacing 0.08em.
+  400 is David Libre's lightest cut — do not request lighter weights on
+  headings (there is no 200/300 face). Controlled by one token: `--font-heading`.
+- **Body:** Assistant, weight 400
+- **CRITICAL:** luxury in Hebrew typography = thin weights, wide letter-spacing,
+  generous whitespace. **Never bold headings** — bold reads as "SALE!" in Hebrew.
+- **Minimal animation.** Luxury is silence, not motion.
+- Fonts are self-hosted via `@fontsource/david-libre` (headings) and
+  `@fontsource-variable/assistant` (body), Hebrew subset. No external font CDN.
+  Heebo & Frank Ruhl Libre were **uninstalled** after the decision — no dead
+  font files in the bundle. `/styleguide` is now a locked type-scale reference.
 
-`src/components/layout/FloatingActions.tsx` הוא נקודת העגינה היחידה של שני
-האלמנטים הצפים בתחתית המסך — הלואנצ׳ר של עוזר הבחירה וכפתור הוואטסאפ. שניהם
-עברו מהצבה עצמאית (`fixed`, כל אחד בפינה משלו) להיות ילדי flex בתוך מיכל אחד,
-כדי שהדברים שהם חייבים להסכים עליהם — באילו נתיבים הם מוסתרים, ולאיזה צד הם
-נצמדים — יוגדרו במקום אחד ולא יזלגו בין קבצים.
+## Hebrew copy voice
+- **Restrained, confident.** No exclamation marks. No marketing clichés.
+  No superlatives ("הכי", "מדהים", "הטוב ביותר"). No hype.
+- Speak plainly about materials, craft, and the everyday piece. Let the product
+  and the whitespace carry the weight. When in doubt, say less.
 
-* **הסתרה בצ׳קאאוט.** `/checkout` לא אמור להכיל שום דבר מלבד הטופס, ושני
-  האלמנטים מוסתרים שם — בדיקה יחידה על `pathname === ROUTES.checkout` בתוך
-  `FloatingActions`, לא משוכפלת. (הבדיקה הנפרדת שמסתירה את כפתור הוואטסאפ
-  בעמודי מוצר — כי לעמוד מוצר יש כבר כפתור וואטסאפ ייעודי משלו — היא כלל
-  שונה לגמרי ונשארה במקומה בתוך `WhatsAppFab.tsx`.)
-* **צד אחד.** שני האלמנטים עוגנים ל־inline-end (משמאל באתר הזה, שהוא RTL)
-  כערימה אנכית — `flex-col`, `items-end`, `gap-3` — במקום בפינות מנוגדות
-  כפי שהיה. בעבר, יחד הם פרשו על פני כל רוחב המסך והיו מובטחים להתנגש בכל
-  שורת תוכן ברוחב מלא; עכשיו הם תופסים פינה אחת.
-* **מרחק מהתחתית.** `--floating-actions-offset` (משתנה CSS חדש ב־
-  `styles/index.css`) משלב `env(safe-area-inset-bottom)` עם רווח קבוע נוסף.
-  `env()` מכסה רק את אזור הבטיחות החומרתי (חריץ המצלמה / פס הבית) — הוא
-  **לא** יודע כלום על פס הכלים הדינמי של Safari מובייל, שאין לו אף סיגנל
-  ב־CSS, ולכן הרווח הנוסף גדול בכוונה. נמדד בדפדפן אמיתי (Playwright,
-  Chromium) ב־375×812: פער של 60px בין קבוצת האלמנטים לשורת ה־CTA של ה־hero
-  בדף הבית. זו סביבת בדיקה בלי toolbar מדומה — ב־Safari אמיתי עם פס הכלים
-  גלוי הפער בפועל יהיה קטן יותר, אך נשאר משמעותי. משתמש ב־`viewport-fit=cover`
-  ב־meta viewport של `index.html` (נוסף לצורך זה) — בלעדיו `env()` תמיד
-  מחזירה 0 גם במכשירים עם חריץ, וכל החישוב הופך חסר משמעות.
-* **בלי JS.** כל ההתנהגות הרספונסיבית ב־CSS גרידא — flex, `env()`, משתנה
-  CSS משותף. אין hook שקורא את גודל המסך כדי להחליט על מיקום.
+## Code / language conventions
+- All explanations, questions, summaries to the user: **Hebrew**.
+- All code and code comments: **English**.
+- RTL is the default. Use CSS logical properties / Tailwind logical utilities
+  (`ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`) — never left/right.
 
+---
 
-## נקודות אינטגרציה מדומות
+## 3D strategy (hybrid — deliberate)
+- **Hero (decision 2026-08-02, supersedes Spline):** a real-time **R3F** scene —
+  "The Dark Room". The Spline scene was removed (`@splinetool/*` uninstalled):
+  it cost +566KB, depended on an external CDN, and couldn't do scroll-driven
+  motion. The hero now reuses the shared ring/materials/lights and is
+  **scroll-driven**: on scroll the ring rotates, the light rolls across the
+  gold, and the backdrop brightens charcoal→cream. Files:
+  `src/three/hero/{HeroExperience,HeroCanvas}.tsx`. Scroll drives the scene via
+  a Framer Motion `useScroll` MotionValue read inside `useFrame` — no per-frame
+  React re-render. `frameloop` pauses when the hero is off-screen or the tab is
+  hidden. Lazy chunk (three never in the entry). Never mounted under
+  `prefers-reduced-motion` — static poster instead.
+  TODO: real poster still → `public/posters/hero-poster.webp` (CSS glow for now).
+- **Shared scene code:** `src/three/shared/{Ring,StudioLights}.tsx` — the single
+  source for the ring geometry/materials and the Lightformer rig. Hero, `/lab`,
+  the product 360° viewer and the story page all consume these. **No leva in
+  `shared/`** — leva stays only in the `/lab` wrappers.
+- **Product page:** true drag-to-rotate. Applies **only to the solitaire**
+  (`solitaire-classic`) — the one product the ring.glb model actually depicts.
+  A live R3F `OrbitControls` (Y-azimuth only) viewer, lazy-loaded. The other 14
+  products keep their photo gallery (truthfulness: don't present a generic model
+  as a specific photographed product). Production-correct alternative would be a
+  pre-rendered image sequence per product.
+- **`/lab`:** stays in the final build as a "behind the scenes" page with live
+  material controls (leva). **leva MUST be code-split + lazy-loaded on `/lab`
+  only** — never in the main bundle, never affecting the homepage's initial JS.
+  Verify in the production build output that leva lands in its own separate chunk.
+- **Additional 3D (decision 2026-08-02, deviation):** one ambient ring moment on
+  the **Story** page. This deviates from the original "everywhere else: no 3D"
+  rule — accepted by the user ("visuals first"). Still limited: no 3D in the
+  catalog or gift guide (those need a fast grid; the gift buyer is time-pressed).
+  One canvas per route only (SPA unmounts the previous — avoids WebGL context loss).
+- All 3D code is isolated under `src/three/`.
 
-בכל נקודה שבה בייצור היה חיבור אמיתי, יש הערה בקוד שאומרת מה מחליף אותה:
+### Performance budget (decision 2026-08-02: RELAXED)
+- The "PageSpeed mobile 80+" budget is **relaxed** by explicit user decision
+  ("visuals first"). Still take free wins: the entry chunk must NOT statically
+  import `three-vendor` (fixed via a dedicated `zustand`→`state` chunk group in
+  vite.config — zustand is shared by fiber and the cart store; without the split
+  three becomes a static dep of every page). `frameloop` must idle off-screen.
+  `prefers-reduced-motion` is NOT relaxed — it fully disables 3D (IS 5568).
 
-| מה | בייצור |
-| --- | --- |
-| תשלום | Cardcom / Grow / Tranzila |
-| טפסים (קשר, עיצוב אישי) | EmailJS / Formspree |
-| מלאי, אספקה, מחירים | מערכת החנות |
-| ניתוב SPA | SSR / pre-rendering לצורכי SEO |
+### 3D material parameters — DO NOT deviate (difference between "gold" and "grey plastic")
+**Gold — MeshStandardMaterial:**
+- color `#E8D9A0` — pale champagne gold (rose variant: `#E8C4B8`).
+  The original `#D4AF37` was rejected: too saturated, "egg-yolk / AI" yellow —
+  wrong for this brand. Do not revert to it.
+- metalness `1.0`, roughness `0.28` (0.15 read as glassy plastic;
+  real polished gold is slightly less mirror-perfect), envMapIntensity `1.5`
 
-## בדיקות
+**Diamond — two modes (`diamondMode` prop on `three/shared/Ring`):**
+- `transmission` — the canon MeshTransmissionMaterial: transmission `1.0`,
+  ior `2.4`, thickness `0.5`, roughness `0.0`, chromaticAberration `0.06`,
+  dispersion `0.5`. **Only valid where something sits BEHIND the stone to
+  refract** — i.e. `/lab`, which has a lit Stage backdrop. Used there only.
+- `reflective` (default, decision 2026-08-03) — MeshPhysicalMaterial:
+  metalness `0`, roughness `0`, ior `2.4`, reflectivity `1`, clearcoat `1`,
+  envMapIntensity `3`, **emissive `#ffffff` at `0.45`**. Used on every
+  transparent canvas (hero, story, product viewer).
+  Why this deviates from canon: over a transparent canvas on a dark page the
+  transmission material refracts darkness and the stone renders **black**.
+  A metallic version renders black too — a mirror can only show the
+  environment, and this environment is a dark room with three light strips.
+  The emissive floor stands in for the light a real diamond gathers from a
+  whole room. User's explicit call: "I'd rather it sparkle than be technically
+  correct and black." Do not remove the emissive without re-checking the hero.
 
-אין ריצת יחידה. הבדיקה היא `npm run verify` — Playwright מול דפדפן אמיתי —
-בתוספת `npm run build` (שמריץ `tsc --noEmit`). עוזר הבחירה נבדק ידנית בדפדפן
-ב־375×812, 375×500 ו־1280×800: יישור בועות ב־RTL, מראות אייקונים, שלמות
-מחירים, ניווט מקלדת מקצה לקצה, ESC והחזרת פוקוס, ואפס שגיאות קונסול.
+**Lighting — this is 80% of the result:**
+- `<Environment>` built from `<Lightformer>` of `form="rect"`:
+  two long/narrow at the sides, one wide above. Studio softbox mimicry.
+- Build the environment ENTIRELY from Lightformers — **no HDRI file** and
+  **no preset** (`city`/`sunset` contaminate the gold with color casts).
 
-קבוצת האלמנטים הצפים נבדקה באותה שיטה, ב־375×812: מדידת הפער בפיקסלים בין
-הקבוצה לשורת ה־CTA של ה־hero (60px, אפס חפיפה), אימות שדף `/checkout` אינו
-מרנדר אף אחד מהם, ושכל שאר הנתיבים (`/cart`, `/catalog`, עמוד מוצר) עדיין
-מציגים את שניהם כמצופה. נבדק גם מול ה־build לפרודקשן, לא רק מול שרת הפיתוח.
+### Mobile 3D downgrade (measured decision, not a static poster)
+- Keep **gold real-time** on mobile (cheap; ~85% of what's visible).
+- Diamond → `MeshPhysicalMaterial` (no FBO/transmission passes).
+- 2 Lightformers instead of 3. `dpr={[1, 1.5]}`. No real-time shadows.
+- **Static poster** only for: no-WebGL devices, or `prefers-reduced-motion`.
+- If PageSpeed mobile is still < 80 after this, STOP and report numbers before
+  degrading further.
+
+---
+
+## Site map (all pages)
+- **Home** `/` — hero (3D) → collections (3–4 blocks) → featured products (4) →
+  Dana's story → why NOGA (handmade / diamond certificate / 30-day exchange /
+  gift wrapping) → testimonials → gift guide by price → instagram + newsletter →
+  rich footer.
+- **Catalog** `/catalog` — filters (metal / price / category); gift guide by
+  price is a filtered view (`/catalog?gift=1`).
+- **Product** `/product/:slug` — the most important page (see requirements below).
+- **Custom design** `/custom` — lead form.
+- **Story** `/story` — Dana / the atelier.
+- **Size & care guide** `/size-care`.
+- **Cart** `/cart`.
+- **Checkout** `/checkout` — designed, non-functional demo.
+- **Order confirmation** `/order-confirmation`.
+- **Accessibility statement** `/accessibility`.
+- **Lab** `/lab` — "behind the scenes" 3D material controls (leva, lazy-loaded).
+
+## Product page requirements (most important page)
+- Image gallery: **4–5 angles + an on-body shot**, plus the **360° sequence**.
+- Name, price, installment note.
+- **Metal selector that actually swaps the images** (yellow / rose / white).
+- **Size selector** + **size-guide modal** (focus-trapped, keyboard-closable).
+- **Sticky add-to-cart on mobile**.
+- Trust strip (handmade / certificate / exchange / wrapping).
+- Shipping & returns.
+- Related products.
+
+## SEO (dedicated phase)
+- Per-page **Hebrew** `<title>` and meta description.
+- **Open Graph** tags (title, description, image, type).
+- **JSON-LD**: `Product` (on product pages) and `LocalBusiness` (site-wide).
+- `sitemap.xml`, `robots.txt`, canonical URLs.
+- Reminder: SPA is fine for the demo, but production needs SSR / pre-rendering —
+  client-rendered product pages index poorly.
+
+## Non-negotiable constraints
+- **Full RTL, Hebrew-first.** Verify no layout breaks in RTL.
+- **Accessibility — IS 5568 / WCAG 2.0 AA:** 4.5:1 contrast, full keyboard nav,
+  visible focus, alt text, honor `prefers-reduced-motion`, accessibility
+  statement page.
+- **Performance budget:** GLB < 2MB (Draco), first load < 2.5s, PageSpeed mobile
+  **80+ WITH the 3D present**.
+- **Mobile:** no real-time shadows, `dpr` capped `[1, 1.5]`, scroll-driven only.
+
+## Stack (client-side only — no backend)
+React 19 + Vite + TypeScript + Tailwind **v4** + @react-three/fiber +
+@react-three/drei + motion (framer-motion) + lenis + zustand.
+Cart in `localStorage`. Checkout is a designed, non-functional demo.
+
+### Shopping assistant — STAGE 1 ONLY (decision 2026-08-17)
+`src/lib/agent/` + `src/components/agent/`. A guided shopping assistant that
+narrows the catalogue by four questions and recommends up to three pieces.
+
+**Stage 1 is fully client-side, so the "client-side only — no backend"
+constraint above still holds.** No LLM, no API key, no network call: every
+answer is computed from `src/data/products.ts` at runtime. Mounted once in
+`RootLayout` (so it is absent from `/lab`, which sits outside that layout).
+
+- The chat UI talks ONLY to the `AgentBrain` interface (`lib/agent/types.ts`).
+  It never imports the wizard and never branches on which brain it got. Brain
+  selection lives in exactly one place: `createAgentBrain()` in
+  `lib/agent/index.ts`. Keep it that way — it is what makes stage 2 additive.
+- Every option offered is derived from the data at runtime and only when it has
+  at least one matching product, so a guided path cannot reach an empty result.
+  `relaxationOptions()` is the safety net, not a normal path.
+- **Content rule, non-negotiable:** the assistant never states stock,
+  delivery time, discounts or shipping cost — this project has no such data.
+  Those questions get an honest "not in this demo" answer plus WhatsApp. Product
+  names, prices, metals and categories are never written as literals in the
+  assistant code; they are read from `products.ts`.
+- Layering: launcher/scrim z-30, panel z-41 (above the WhatsApp FAB's z-40 so it
+  is not pierced, below the cart drawer / modals at z-50). The panel is
+  bottom-anchored at `min(82svh, 100svh - 9rem)` so it never reaches the header.
+- One deliberate layering exception: `lib/agent/catalog.ts` imports
+  `CATEGORY_LABELS` and `PRICE_BANDS` from `components/catalog/FilterBar.tsx`.
+  Those are the app's existing user-facing vocabulary — offering different tiers
+  than the catalog filters would be inconsistent, and a second copy of the
+  Hebrew labels would drift. Do not duplicate them.
+
+**Stage 2 (an `llmBrain`) is NOT approved.** A real LLM needs a serverless
+function to hold the API key (a key in the client bundle is public), which would
+break the no-backend constraint and require updating this file. Do not add
+`api/`, a server function, or any external network call without that approval.
+Cost and abuse-protection analysis was done on 2026-08-17: a hybrid design with
+a daily cap and a fallback to this deterministic wizard was the agreed shape if
+it is ever approved.
+
+### Pinned versions (3D-related = EXACT, no caret) — verified vs npm 2026-07-24
+- `react` **19.2.8**, `react-dom` **19.2.8** (inside fiber peer `>=19 <19.3`)
+- `three` **0.185.1**
+- `@react-three/fiber` **9.6.1**
+- `@react-three/drei` **10.7.7**
+- `@react-three/postprocessing` **3.0.4** (bloom — desktop-only; peers: fiber ^9, react ^19)
+- `@splinetool/*` — **REMOVED** (2026-08-02). Hero is now R3F; do not reinstall.
+- `zustand` — split into its own `state` chunk in vite.config (priority 25, above
+  three-vendor's 10). Do NOT remove that group: zustand is shared by
+  `@react-three/fiber` and the cart store, and without the split the entry chunk
+  statically imports (and preloads) the 1.1MB three-vendor chunk on every page.
+- Everything else may use caret. Do NOT bump the pinned 3D packages without
+  re-checking peer ranges and re-testing the hero.
+
+## Accepted advisories / non-issues (do not "fix")
+- `npm audit` reports 2 high from **react-router** (GHSA-qwww-vcr4-c8h2, "RSC Mode
+  CSRF Bypass"). It applies only to **RSC mode + server actions**, which this
+  client-only SPA does not use. The offered fix is a **downgrade** to 7.11.0 —
+  do NOT run `npm audit fix --force`. Kept `react-router-dom` at 7.18.1.
+- Toolchain majors in use: **Vite 8**, **TypeScript 7** (native compiler — note:
+  TS7 removed `baseUrl`; path aliases use relative `./src/*`).
+
+## Demo integrity
+- A dismissible **"מצב הדגמה"** indicator is always present so no visitor thinks
+  a real purchase happened.
+- At every simulated integration point, a code comment states EXACTLY what
+  replaces it in production:
+  - Payment → Cardcom / Grow / Tranzila
+  - Forms (contact / custom-design lead) → EmailJS / Formspree
+  - Booking (if used) → Arbox-style
+- SPA routing is fine for the demo, but note in code that production needs
+  SSR / pre-rendering for SEO (client-rendered product pages index poorly).
+
+## Deploy
+- Target **Vercel**. Prepare the build; do NOT deploy without explicit go-ahead.
+
+---
+
+## Build phases (see plan file for detail)
+0 Foundation & design system · 1a 3D materials+lighting (static `/lab`, timeboxed
+~2 days) · 2 Home · 3 Catalog+data · 4 Product page · 5 Cart/checkout · 6 Secondary
+pages · 1b ScrollRig+hero integration · SEO · 7 A11y+perf hardening · 8 Polish/QA/Vercel.

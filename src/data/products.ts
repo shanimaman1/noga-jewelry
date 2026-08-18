@@ -3,14 +3,15 @@ import type { Product } from '@/types/catalog';
 // Placeholder catalogue for the demo. Prices span the brand range ₪890–₪12,000.
 // Copy follows the brand voice: plain, restrained, no superlatives.
 //
-// Photography: real studio shots, curated for the brand aesthetic — delicate,
-// dainty, classic, understated. See scripts/build-catalog-images.mjs.
+// Imagery: visually verified assets for the exact demo product — licensed real
+// photography or an explicitly approved AI image backed by a canonical spec.
+// The original curated photo set is documented in build-catalog-images.mjs.
 //
-// METAL RULE: `metals` lists only metals we hold a real photograph of, and each
-// variant points at its own file. Metal colour is never simulated with a tint.
-// Most pieces therefore offer a single metal — that is correct, not a gap.
-// To add a metal: source and visually verify a real photo of that piece in that
-// colour first, then add the variant.
+// METAL RULE: `metals` lists only metals backed by a visually verified image of
+// that exact design and colour, and each variant points at its own file. Metal
+// colour is never simulated with a tint. Most pieces therefore offer a single
+// metal — that is correct, not a gap. To add a metal, first source and verify a
+// licensed photo or obtain explicit approval for a spec-matched AI demo asset.
 export const products: Product[] = [
   // ── Rings ──────────────────────────────────────────────────────────────
   {
@@ -57,11 +58,12 @@ export const products: Product[] = [
     shortDescription: 'רצועה דקה בעבודת יד, נוחה לענידה רצופה.',
     price: 1290,
     category: 'rings',
+    stonesDescription: 'ללא אבנים.',
     metals: [
       {
         id: 'yellow',
-        image: 'ring-thin-stack',
-        imageAlt: 'טבעות זהב צהוב דקות מונחות על אבן בהירה לצד בד משי',
+        image: 'ring-thin-daily-main-v1',
+        imageAlt: 'טבעת יומיום דקה מזהב צהוב על רקע אבן בגוון קרם',
       },
     ],
   },

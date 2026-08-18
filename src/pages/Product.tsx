@@ -245,7 +245,8 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">אבנים</dt>
                     <dd className="text-charcoal">
-                      יהלומים טבעיים בליטוש מבריק, דירוג צבע G–H, ניקיון VS.
+                      {product.stonesDescription ??
+                        'יהלומים טבעיים בליטוש מבריק, דירוג צבע G–H, ניקיון VS.'}
                     </dd>
                   </div>
                   <div className="flex gap-3">

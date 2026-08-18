@@ -3,11 +3,12 @@ export type Metal = 'yellow' | 'rose' | 'white';
 export type Category = 'rings' | 'necklaces' | 'earrings' | 'bracelets';
 
 /**
- * A metal a piece is genuinely offered in — and can only exist when we hold a
- * REAL photograph of that piece in that metal. Never simulate a metal by
- * tinting another photo: the colour shown must be the colour photographed.
- * A product with one truthful photo gets one variant, and the selector hides
- * itself rather than offering options we cannot back.
+ * A metal a piece is genuinely offered in. Every variant must have a truthful,
+ * visually verified image for that exact design and metal: either a licensed
+ * real photograph or an explicitly approved AI asset for this fictional demo.
+ * Never simulate a metal by tinting another image. A product with one truthful
+ * image gets one variant, and the selector hides itself rather than offering
+ * options we cannot back.
  */
 export type MetalVariant = {
   id: Metal;
@@ -23,6 +24,8 @@ export type Product = {
   shortDescription: string;
   price: number;
   category: Category;
+  /** Product-specific stone disclosure. Falls back to the catalogue default. */
+  stonesDescription?: string;
   /** Ordered; the first is the default view. At least one. */
   metals: MetalVariant[];
   /** Marks the piece for the "featured" row on the homepage. */

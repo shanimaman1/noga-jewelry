@@ -1,4 +1,4 @@
-# Claude Code working instructions
+# Codex working instructions
 
 Read [PROJECT.md](PROJECT.md) at the start of every task. It is the shared,
 tool-neutral source of truth and overrides this file if there is a conflict.
@@ -10,7 +10,7 @@ Also read the documents relevant to the task:
 - [CHANGELOG.md](CHANGELOG.md) for project history.
 - [docs/IMAGE_ASSET_REGISTER.md](docs/IMAGE_ASSET_REGISTER.md) for image work.
 
-Claude-specific rules:
+Codex-specific rules:
 
 - Explain decisions, questions and summaries to the user in Hebrew.
 - Keep code and code comments in English.
