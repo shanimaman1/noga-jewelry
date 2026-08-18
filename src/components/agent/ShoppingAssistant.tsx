@@ -34,10 +34,14 @@ const MOBILE_QUERY = '(max-width: 639px)';
  * got. Swapping in a stage-2 LLM brain is a change to the factory in
  * `@/lib/agent`, not to this file.
  *
- * Layering: launcher and panel sit at z-30/31 — deliberately below the sticky
- * header (z-40) and the cart drawer / size-guide modal (z-50), so the assistant
+ * Layering: the panel sits at z-41 — deliberately above the WhatsApp FAB
+ * (z-40) and below the cart drawer / size-guide modal (z-50), so the assistant
  * can never cover them. Adding to the cart closes this panel and hands over to
  * the drawer, which keeps exactly one focus trap alive at a time.
+ *
+ * The launcher button carries no positioning classes: it is mounted as a flex
+ * item inside FloatingActions, which owns the fixed placement, the pairing
+ * with the WhatsApp FAB, and the checkout route hide.
  */
 export function ShoppingAssistant() {
   const [open, setOpen] = useState(false);
@@ -445,7 +449,7 @@ export function ShoppingAssistant() {
           type="button"
           onClick={openPanel}
           aria-label="פתיחת עוזר בחירה"
-          className={`fixed bottom-5 end-5 z-30 rounded-full border border-mist bg-cream px-4 py-2.5 text-sm text-charcoal shadow-md print:hidden ${
+          className={`z-30 rounded-full border border-mist bg-cream px-4 py-2.5 text-sm text-charcoal shadow-md print:hidden ${
             reduced ? '' : 'transition-colors'
           } hover:border-stone`}
         >

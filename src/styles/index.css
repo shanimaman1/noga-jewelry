@@ -47,6 +47,16 @@
     letter-spacing: var(--tracking-luxury);
   }
 
+  /* Bottom clearance for the floating action stack (WhatsApp FAB + shopping
+     assistant launcher, grouped in FloatingActions.tsx): iOS safe-area inset
+     plus a fixed buffer. Mobile Safari's bottom toolbar is not accounted for
+     by env(safe-area-inset-bottom) — that only covers the hardware safe area
+     (notch / home indicator) — so the buffer is sized generously to clear the
+     toolbar too, verified against the hero CTA row at 375x812. */
+  :root {
+    --floating-actions-offset: calc(env(safe-area-inset-bottom, 0px) + 9rem);
+  }
+
   /* Visible keyboard focus (IS 5568 / WCAG AA). */
   :focus-visible {
     outline: 2px solid var(--color-gold);
