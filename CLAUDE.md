@@ -203,6 +203,44 @@ React 19 + Vite + TypeScript + Tailwind **v4** + @react-three/fiber +
 @react-three/drei + motion (framer-motion) + lenis + zustand.
 Cart in `localStorage`. Checkout is a designed, non-functional demo.
 
+### Shopping assistant — STAGE 1 ONLY (decision 2026-08-17)
+`src/lib/agent/` + `src/components/agent/`. A guided shopping assistant that
+narrows the catalogue by four questions and recommends up to three pieces.
+
+**Stage 1 is fully client-side, so the "client-side only — no backend"
+constraint above still holds.** No LLM, no API key, no network call: every
+answer is computed from `src/data/products.ts` at runtime. Mounted once in
+`RootLayout` (so it is absent from `/lab`, which sits outside that layout).
+
+- The chat UI talks ONLY to the `AgentBrain` interface (`lib/agent/types.ts`).
+  It never imports the wizard and never branches on which brain it got. Brain
+  selection lives in exactly one place: `createAgentBrain()` in
+  `lib/agent/index.ts`. Keep it that way — it is what makes stage 2 additive.
+- Every option offered is derived from the data at runtime and only when it has
+  at least one matching product, so a guided path cannot reach an empty result.
+  `relaxationOptions()` is the safety net, not a normal path.
+- **Content rule, non-negotiable:** the assistant never states stock,
+  delivery time, discounts or shipping cost — this project has no such data.
+  Those questions get an honest "not in this demo" answer plus WhatsApp. Product
+  names, prices, metals and categories are never written as literals in the
+  assistant code; they are read from `products.ts`.
+- Layering: launcher/scrim z-30, panel z-41 (above the WhatsApp FAB's z-40 so it
+  is not pierced, below the cart drawer / modals at z-50). The panel is
+  bottom-anchored at `min(82svh, 100svh - 9rem)` so it never reaches the header.
+- One deliberate layering exception: `lib/agent/catalog.ts` imports
+  `CATEGORY_LABELS` and `PRICE_BANDS` from `components/catalog/FilterBar.tsx`.
+  Those are the app's existing user-facing vocabulary — offering different tiers
+  than the catalog filters would be inconsistent, and a second copy of the
+  Hebrew labels would drift. Do not duplicate them.
+
+**Stage 2 (an `llmBrain`) is NOT approved.** A real LLM needs a serverless
+function to hold the API key (a key in the client bundle is public), which would
+break the no-backend constraint and require updating this file. Do not add
+`api/`, a server function, or any external network call without that approval.
+Cost and abuse-protection analysis was done on 2026-08-17: a hybrid design with
+a daily cap and a fallback to this deterministic wizard was the agreed shape if
+it is ever approved.
+
 ### Pinned versions (3D-related = EXACT, no caret) — verified vs npm 2026-07-24
 - `react` **19.2.8**, `react-dom` **19.2.8** (inside fiber peer `>=19 <19.3`)
 - `three` **0.185.1**

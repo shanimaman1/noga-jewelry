@@ -3,13 +3,15 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useLenis } from '@/hooks/useLenis';
 import { DemoModeBanner } from '@/components/common/DemoModeBanner';
 import { CartDrawer } from '@/components/cart/CartDrawer';
+import { ShoppingAssistant } from '@/components/agent/ShoppingAssistant';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { WhatsAppFab } from './WhatsAppFab';
 import { ScrollToTop } from './ScrollToTop';
 import { localBusinessJsonLd } from '@/lib/seo';
 
-/** App shell: smooth scroll, demo banner, header, page outlet, footer, FAB. */
+/** App shell: smooth scroll, demo banner, header, page outlet, footer, FAB,
+ *  shopping assistant, cart drawer. */
 export function RootLayout() {
   const reduced = useReducedMotion();
   useLenis(!reduced); // native scrolling when the user prefers reduced motion
@@ -39,6 +41,7 @@ export function RootLayout() {
 
       <Footer />
       <WhatsAppFab />
+      <ShoppingAssistant />
       <CartDrawer />
     </>
   );
