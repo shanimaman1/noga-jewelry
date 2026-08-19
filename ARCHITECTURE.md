@@ -11,7 +11,8 @@ src/
 ├─ components/
 │  ├─ agent/       ShoppingAssistant, AssistantProductCard
 │  ├─ cart/        CartDrawer, LineItem, FreeShippingBar
-│  ├─ catalog/     ProductCard, FilterBar (CATEGORY_LABELS, PRICE_BANDS)
+│  ├─ catalog/     ProductCard, AvailabilityStatus, FilterBar
+│  │               (CATEGORY_LABELS, PRICE_BANDS)
 │  ├─ checkout/    שלבי צ׳קאאוט מעוצבים
 │  ├─ common/      Container, PageShell, SectionHeading, CatalogImage, Reveal,
 │  │               DemoModeBanner
@@ -30,24 +31,38 @@ src/
 │  ├─ motion/      קבועי אנימציה
 │  ├─ constants.ts BRAND, ROUTES, NAV_LINKS, whatsappUrl
 │  ├─ format.ts    formatPrice, installmentNote
+│  ├─ fulfillment.ts תוויות זמינות וזמני מסירה משותפים
 │  └─ seo.ts       JSON-LD
 ├─ pages/          עמוד לכל נתיב
 ├─ styles/         index.css — טוקני Tailwind v4 + כללי reveal
 ├─ three/          hero/, lab/, product/, shared/, story/
-└─ types/          catalog.ts (Product, Metal, Category, METAL_LABELS)
+└─ types/          catalog.ts (Product, Availability, Metal, Category, METAL_LABELS)
 ```
 
 ## מקורות אמת לנתונים
 
 | מה | איפה | הערה |
 | --- | --- | --- |
-| פריטים, מחירים, מתכות | `src/data/products.ts` | 16 פריטים, ₪890–₪8,900 |
+| פריטים, מחירים, מתכות וזמינות | `src/data/products.ts` | 16 פריטים, ₪890–₪8,900 |
+| תוויות זמינות וזמני מסירה | `src/lib/fulfillment.ts` | מוצר, צ׳קאאוט ועוזר קוראים מאותו מקור |
 | תוויות קטגוריה | `src/components/catalog/FilterBar.tsx` | `CATEGORY_LABELS` |
 | טווחי מחירים | `src/components/catalog/FilterBar.tsx` | `PRICE_BANDS` |
 | תוויות מתכת | `src/types/catalog.ts` | `METAL_LABELS` |
 | מותג, נתיבים, וואטסאפ | `src/lib/constants.ts` | מספר הטלפון פלייסהולדר לא תקין בכוונה |
 
 אין להעתיק נתוני מוצר לשום מקום אחר. כל שכבה שצריכה מחיר או שם קוראת מכאן.
+
+### זמינות ומסירה
+
+לכל `Product` יש `availability` חובה: `ready`,‏ `made-to-order` או
+`out-of-stock`. `AvailabilityStatus` מציג אותו בעמוד ובכרטיסים;
+`lib/fulfillment.ts` מחזיק את התוויות ואת זמני המסירה המשותפים. פריט מוכן
+ופרט בהזמנה נכנסים לאותה עגלה; האחרון מוסיף כשבועיים לייצור. פריט שאזל אינו
+נוסף לעגלה, ובעמוד שלו מוצג טופס אימייל מדומה שמאמת ומאשר מקומית בלבד.
+
+בצ׳קאאוט יש שתי אפשרויות קבלה: משלוח עד הבית בתוך 3–5 ימי עסקים, ואיסוף
+מהסטודיו בתוך 2 ימי עסקים ובמחיר אפס. אם יש בעגלה פריט בהזמנה, זמן הייצור
+מוצג לפני זמן המסירה. אין כאן קריאת רשת או מערכת מלאי חיצונית.
 
 ## שכבות (layering)
 
@@ -120,9 +135,9 @@ interface AgentBrain {
 * שם, מחיר, קטגוריה ומתכת נקראים תמיד מ־`products.ts` — אף אחד מהם לא נכתב
   כליטרל בקוד העוזר. הכרטיס מקבל `slug` בלבד ופותר את השאר בעצמו; slug שלא
   קיים לא מרנדר כלום.
-* **אין הצהרות על מלאי, זמני אספקה, מבצעים או דמי משלוח.** אין לפרויקט נתונים
-  כאלה. שאלה בנושא מקבלת תשובה כנה ("אין לי נתון אמיתי... בגרסה החיה זה מתחבר
-  למערכת של החנות") והפניה לוואטסאפ.
+* זמינות נקראת תמיד משדה `availability` של המוצר, וזמני המסירה נקראים מ־
+  `lib/fulfillment.ts`. העוזר עונה על שני הנושאים מנתונים אלה בלבד. דמי משלוח,
+  מבצעים והחזרות אינם ידועים ומקבלים תשובה כנה והפניה לוואטסאפ.
 * נימוק ההמלצה נבנה רק ממה שהקונה באמת ביקש. אם לא צומצם כלום, מוצג התיאור
   מהקטלוג — לא טענה מומצאת על התאמה או פופולריות.
 * קול המותג: מרוסן, בלי סימני קריאה ובלי סופרלטיבים.
@@ -210,11 +225,13 @@ interface AgentBrain {
     קבוע) עם threshold יחיד של 10%: "כמעט יצא מהמסך" מוגדר כפחות מ־10% ממנו
     עדיין גלוי. הדפדפן מחשב את היחס הזה מדי פריים ומפעיל את ה־callback בדיוק
     ברגע החצייה, בלי קשר למהירות הגלילה.
+    גם `Home` וגם `Visit` מחברים את ה־hook ל־hero שלהם, ולכן ההתנהגות נשמרת
+    בעמוד הביקור החדש ולא משוכפלת בקומפוננטת האלמנטים הצפים.
   * **`heroVisibility`** (`src/lib/heroVisibility.ts`) הוא store zustand זעיר
-    ולא-persisted עם דגל בוליאני יחיד. נחוץ כי `Home` (שמחזיק את רפרנס
-    ה־hero) ו־`FloatingActions` (שמוגדר ב־`RootLayout`) הם אחים באותו עץ,
+    ולא-persisted עם דגל בוליאני יחיד. נחוץ כי העמוד הפעיל (`Home` או `Visit`,
+    שמחזיק את רפרנס ה־hero) ו־`FloatingActions` (שמוגדר ב־`RootLayout`) הם אחים באותו עץ,
     לא הורה־ילד — אין דרך להעביר ref ישירות ביניהם. בדפים בלי hero (כל
-    נתיב חוץ מ־`/`) איש לא נוגע ב־store, ולכן הדגל נשאר `false` ושני
+    נתיב חוץ מ־`/` ו־`/visit`) איש לא נוגע ב־store, ולכן הדגל נשאר `false` ושני
     האלמנטים מוצגים מיד. יוצא מהעץ (unmount) מאפס את הדגל ל־`false`, כדי
     שניווט מ־`/` לדף אחר לא ישאיר את האלמנטים תקועים מוסתרים.
   * **הסתרה: `inert` + opacity, לא opacity לבד.** ה־`inert` מוגדר
@@ -249,7 +266,7 @@ interface AgentBrain {
 | --- | --- |
 | תשלום | Cardcom / Grow / Tranzila |
 | טפסים (קשר, עיצוב אישי) | EmailJS / Formspree |
-| מלאי, אספקה, מחירים | מערכת החנות |
+| הרשמה לעדכון חזרה למלאי | מערכת מלאי/CRM + EmailJS / Formspree |
 | ניתוב SPA | SSR / pre-rendering לצורכי SEO |
 
 ## בדיקות
@@ -258,6 +275,13 @@ interface AgentBrain {
 בתוספת `npm run build` (שמריץ `tsc --noEmit`). עוזר הבחירה נבדק ידנית בדפדפן
 ב־375×812, 375×500 ו־1280×800: יישור בועות ב־RTL, מראות אייקונים, שלמות
 מחירים, ניווט מקלדת מקצה לקצה, ESC והחזרת פוקוס, ואפס שגיאות קונסול.
+
+זמינות, מסירה ועמוד הביקור נבדקו ב־Chrome אמיתי ב־375×812: 12/3/1 מצבי
+הזמינות בקטלוג, שלושת מצבי עמוד המוצר, טופס אימייל שגוי ותקין, עגלה עם פריט
+בהזמנה, שתי אפשרויות הקבלה בצ׳קאאוט, הסתרת שני האלמנטים הצפים בצ׳קאאוט,
+עמוד הביקור לפני ואחרי ה־hero, מפת iframe, Waze, היפוך חצים ב־RTL, ותשובות
+העוזר לזמינות, זמן מסירה ועלות משלוח בלתי ידועה. לא נמצאו חפיפות בתוכן
+הקריטי, גלישה אופקית או שגיאות קונסול.
 
 קבוצת האלמנטים הצפים נבדקה באותה שיטה, כולל עם `reducedMotion: 'reduce'`.
 ב־375×812: כל עוד ה־hero על המסך — `opacity:0`, `inert` נוכח, `aria-hidden="true"`,

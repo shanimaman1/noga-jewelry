@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Metal } from '@/types/catalog';
 import { METAL_LABELS } from '@/types/catalog';
@@ -10,13 +10,21 @@ import { useCart } from '@/lib/cart/store';
 import { Container } from '@/components/common/Container';
 import { Reveal } from '@/components/common/Reveal';
 import { ProductCard } from '@/components/catalog/ProductCard';
+import { AvailabilityStatus } from '@/components/catalog/AvailabilityStatus';
 import { Gallery } from '@/components/product/Gallery';
 import { TrustStrip } from '@/components/product/TrustStrip';
 import { SizeGuideModal } from '@/components/product/SizeGuideModal';
 import { Seo } from '@/components/seo/Seo';
 import { productImage } from '@/data/products';
 import { SITE_URL } from '@/lib/seo';
+import {
+  DELIVERY_TIMES,
+  availabilityDetail,
+  schemaAvailability,
+} from '@/lib/fulfillment';
 import { NotFound } from './NotFound';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function Product() {
   const { slug } = useParams();
@@ -34,6 +42,12 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
   const [sizeError, setSizeError] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [added, setAdded] = useState(false);
+  const [restockOpen, setRestockOpen] = useState(false);
+  const [restockEmail, setRestockEmail] = useState('');
+  const [restockError, setRestockError] = useState('');
+  const [restockSent, setRestockSent] = useState(false);
+  const restockAreaRef = useRef<HTMLDivElement>(null);
+  const restockInputRef = useRef<HTMLInputElement>(null);
 
   // Size options depend on the category; earrings have none.
   const sizeOptions = useMemo(() => {
@@ -55,6 +69,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
     .slice(0, 4);
 
   const handleAdd = () => {
+    if (product.availability === 'out-of-stock') return;
     if (needsSize && !size) {
       setSizeError(true);
       return;
@@ -71,6 +86,30 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
     setAdded(true);
   };
 
+  const openRestock = (scroll = false) => {
+    setRestockOpen(true);
+    window.requestAnimationFrame(() => {
+      if (scroll) restockAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      restockInputRef.current?.focus();
+    });
+  };
+
+  const handleRestock = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const email = restockEmail.trim();
+    if (!EMAIL_RE.test(email)) {
+      setRestockError('כתובת המייל לא נראית תקינה');
+      restockInputRef.current?.focus();
+      return;
+    }
+
+    // DEMO ONLY — no request leaves the browser. In production this would
+    // subscribe the shopper through the store inventory system, with EmailJS
+    // / Formspree or a server endpoint delivering the confirmation.
+    setRestockError('');
+    setRestockSent(true);
+  };
+
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -83,7 +122,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
       '@type': 'Offer',
       price: product.price,
       priceCurrency: 'ILS',
-      availability: 'https://schema.org/InStock',
+      availability: schemaAvailability[product.availability],
       url: `${SITE_URL}${ROUTES.product}/${product.slug}`,
     },
   };
@@ -130,6 +169,12 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
               <h1 className="text-3xl sm:text-4xl">{product.name}</h1>
               <p className="mt-4 text-xl text-charcoal">{formatPrice(product.price)}</p>
               <p className="mt-1 text-sm text-stone">{installmentNote(product.price)}</p>
+              <div className="mt-4">
+                <AvailabilityStatus availability={product.availability} prominent />
+                <p className="mt-2 text-sm leading-relaxed text-stone">
+                  {availabilityDetail(product.availability)}
+                </p>
+              </div>
 
               <p className="mt-6 leading-relaxed text-stone">{product.shortDescription}</p>
 
@@ -207,26 +252,113 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                 </fieldset>
               )}
 
-              {/* Add to cart */}
-              <div className="mt-8">
-                <button
-                  type="button"
-                  onClick={handleAdd}
-                  className="w-full rounded-full bg-charcoal px-8 py-4 text-sm tracking-wide text-cream transition-colors hover:bg-charcoal/90"
-                >
-                  הוסף לעגלה
-                </button>
-                <p role="status" className="mt-3 min-h-5 text-center text-sm text-stone">
-                  {added && (
+              {/* Purchase / restock action */}
+              <div ref={restockAreaRef} className="mt-8">
+                {product.availability === 'out-of-stock' ? (
+                  restockSent ? (
+                    <p
+                      role="status"
+                      className="rounded-sm border border-gold/50 p-4 text-sm leading-relaxed text-charcoal"
+                    >
+                      קיבלנו את הכתובת. זו הדגמה בלבד, ולא נשלח מייל בפועל.
+                    </p>
+                  ) : (
                     <>
-                      הפריט נוסף לעגלה.{' '}
-                      <Link to={ROUTES.cart} className="text-charcoal underline underline-offset-4">
-                        למעבר לעגלה
-                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => openRestock()}
+                        aria-expanded={restockOpen}
+                        className="w-full rounded-full border border-charcoal px-8 py-4 text-sm tracking-wide text-charcoal transition-colors hover:bg-charcoal hover:text-cream"
+                      >
+                        עדכנו אותי כשחוזר למלאי
+                      </button>
+                      {restockOpen && (
+                        <form onSubmit={handleRestock} noValidate className="mt-4">
+                          <label htmlFor="restock-email" className="block text-sm text-charcoal">
+                            אימייל לעדכון
+                          </label>
+                          <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+                            <input
+                              id="restock-email"
+                              ref={restockInputRef}
+                              type="email"
+                              inputMode="email"
+                              autoComplete="email"
+                              dir="ltr"
+                              value={restockEmail}
+                              onChange={(event) => {
+                                setRestockEmail(event.target.value);
+                                setRestockError('');
+                              }}
+                              aria-invalid={restockError ? true : undefined}
+                              aria-describedby={restockError ? 'restock-error' : undefined}
+                              placeholder="your@email.com"
+                              className={`min-w-0 flex-1 rounded-md border bg-transparent px-4 py-3 text-charcoal placeholder:text-stone/50 focus:outline-none ${
+                                restockError ? 'border-red-700' : 'border-mist focus:border-gold'
+                              }`}
+                            />
+                            <button
+                              type="submit"
+                              className="rounded-full bg-charcoal px-7 py-3 text-sm text-cream transition-colors hover:bg-charcoal/90"
+                            >
+                              שמירת כתובת
+                            </button>
+                          </div>
+                          {restockError && (
+                            <p id="restock-error" role="alert" className="mt-2 text-xs text-red-800">
+                              {restockError}
+                            </p>
+                          )}
+                          <p className="mt-2 text-xs text-stone">
+                            מצב הדגמה — הכתובת אינה נשלחת ולא נשמרת.
+                          </p>
+                        </form>
+                      )}
                     </>
-                  )}
-                </p>
+                  )
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleAdd}
+                      className="w-full rounded-full bg-charcoal px-8 py-4 text-sm tracking-wide text-cream transition-colors hover:bg-charcoal/90"
+                    >
+                      הוסף לעגלה
+                    </button>
+                    <p role="status" className="mt-3 min-h-5 text-center text-sm text-stone">
+                      {added && (
+                        <>
+                          הפריט נוסף לעגלה.{' '}
+                          <Link to={ROUTES.cart} className="text-charcoal underline underline-offset-4">
+                            למעבר לעגלה
+                          </Link>
+                        </>
+                      )}
+                    </p>
+                  </>
+                )}
               </div>
+
+              <section className="mt-8 border-t border-mist pt-6" aria-labelledby="delivery-times-title">
+                <h2 id="delivery-times-title" className="text-base text-charcoal">
+                  מסירה ואיסוף
+                </h2>
+                <dl className="mt-4 space-y-3 text-sm">
+                  <div className="flex gap-3">
+                    <dt className="w-28 shrink-0 text-stone">משלוח לבית</dt>
+                    <dd className="text-charcoal">{DELIVERY_TIMES.home}</dd>
+                  </div>
+                  <div className="flex gap-3">
+                    <dt className="w-28 shrink-0 text-stone">איסוף מהסטודיו</dt>
+                    <dd className="text-charcoal">{DELIVERY_TIMES.collection}</dd>
+                  </div>
+                </dl>
+                {product.availability === 'made-to-order' && (
+                  <p className="mt-4 text-sm leading-relaxed text-stone">
+                    לפריט זה יש להוסיף {DELIVERY_TIMES.madeToOrder}; לאחר מכן חל זמן המסירה שבחרת.
+                  </p>
+                )}
+              </section>
 
               <div className="mt-4">
                 <TrustStrip />
@@ -252,7 +384,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">ייצור</dt>
                     <dd className="text-charcoal">
-                      עבודת יד באטלייה בתל אביב. זמן אספקה 7–14 ימי עסקים.
+                      עבודת יד בסטודיו בתל אביב. {availabilityDetail(product.availability)}
                     </dd>
                   </div>
                   <div className="flex gap-3">
@@ -297,13 +429,23 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
             <p className="truncate text-sm text-charcoal">{product.name}</p>
             <p className="text-sm text-stone">{formatPrice(product.price)}</p>
           </div>
-          <button
-            type="button"
-            onClick={handleAdd}
-            className="shrink-0 rounded-full bg-charcoal px-7 py-3 text-sm tracking-wide text-cream"
-          >
-            הוסף לעגלה
-          </button>
+          {product.availability === 'out-of-stock' ? (
+            <button
+              type="button"
+              onClick={() => openRestock(true)}
+              className="shrink-0 rounded-full border border-charcoal px-5 py-3 text-sm text-charcoal"
+            >
+              עדכנו אותי
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="shrink-0 rounded-full bg-charcoal px-7 py-3 text-sm tracking-wide text-cream"
+            >
+              הוסף לעגלה
+            </button>
+          )}
         </div>
       </div>
 

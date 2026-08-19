@@ -196,6 +196,11 @@ export function ShoppingAssistant() {
       case 'add-to-cart': {
         const product = getProduct(action.slug);
         if (!product) return;
+        if (product.availability === 'out-of-stock') {
+          setOpen(false);
+          navigate(`${ROUTES.product}/${product.slug}`);
+          return;
+        }
         const variant = defaultVariant(product);
         addLine({
           slug: product.slug,
@@ -277,7 +282,7 @@ export function ShoppingAssistant() {
                 viewBox="0 0 16 16"
                 fill="none"
                 aria-hidden="true"
-                className="rtl:-scale-x-100"
+                style={{ transform: 'scaleX(-1)' }}
               >
                 <path
                   d="M10 3l-5 5 5 5"
@@ -425,7 +430,7 @@ export function ShoppingAssistant() {
               viewBox="0 0 16 16"
               fill="none"
               aria-hidden="true"
-              className="rtl:-scale-x-100"
+              style={{ transform: 'scaleX(-1)' }}
             >
               <path
                 d="M10 3l-5 5 5 5"

@@ -23,9 +23,11 @@ const ROUTES = [
   ['gift-guide', '/gift-guide'],
   ['product-solitaire', '/product/solitaire-classic'],
   ['product-pearl', '/product/pearl-drop-necklace'],
+  ['product-out-of-stock', '/product/floral-chain-necklace'],
   ['cart', '/cart'],
   ['checkout', '/checkout'],
   ['story', '/story'],
+  ['visit', '/visit'],
   ['size-care', '/size-care'],
   ['custom', '/custom'],
   ['accessibility', '/accessibility'],
@@ -33,6 +35,17 @@ const ROUTES = [
 
 const failures = [];
 const fail = (route, msg) => failures.push(`${route}: ${msg}`);
+
+async function launchBrowser() {
+  try {
+    return await chromium.launch();
+  } catch (error) {
+    if (!String(error).includes("Executable doesn't exist")) throw error;
+    // Local fallback only: Codex desktop may have system Chrome without the
+    // Playwright-managed Chromium bundle. CI keeps using the bundled browser.
+    return chromium.launch({ channel: 'chrome' });
+  }
+}
 
 /** Scroll the whole page so lazy images load and every reveal is triggered. */
 async function scrollThrough(page) {
@@ -183,7 +196,7 @@ async function checkNoJs(browser) {
 
 async function main() {
   await mkdir(SHOTS, { recursive: true });
-  const browser = await chromium.launch();
+  const browser = await launchBrowser();
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
 

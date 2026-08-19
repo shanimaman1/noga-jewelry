@@ -4,6 +4,7 @@ import { ROUTES } from '@/lib/constants';
 import { formatPrice } from '@/lib/format';
 import { defaultVariant } from '@/data/products';
 import { CatalogImage } from '@/components/common/CatalogImage';
+import { AvailabilityStatus } from './AvailabilityStatus';
 
 /** Shared product card — used by the homepage row and the catalog grid. */
 export function ProductCard({ product }: { product: Product }) {
@@ -29,6 +30,9 @@ export function ProductCard({ product }: { product: Product }) {
       <h3 className="mt-4 text-base text-charcoal transition-colors group-hover:text-gold">
         {product.name}
       </h3>
+      <div className="mt-2">
+        <AvailabilityStatus availability={product.availability} />
+      </div>
       <p className="mt-1 text-sm leading-relaxed text-stone">{product.shortDescription}</p>
       <p className="mt-2 text-sm text-charcoal">{formatPrice(product.price)}</p>
     </Link>

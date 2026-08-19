@@ -20,6 +20,7 @@ export const ROUTES = {
   giftGuide: '/gift-guide',
   custom: '/custom',
   story: '/story',
+  visit: '/visit',
   sizeCare: '/size-care',
   cart: '/cart',
   checkout: '/checkout',
@@ -33,8 +34,18 @@ export const NAV_LINKS: { to: string; label: string }[] = [
   { to: ROUTES.catalog, label: 'קטלוג' },
   { to: ROUTES.giftGuide, label: 'מדריך מתנות' },
   { to: ROUTES.story, label: 'הסיפור' },
+  { to: ROUTES.visit, label: 'ביקור בסטודיו' },
   { to: ROUTES.custom, label: 'עיצוב אישי' },
 ];
+
+export const STUDIO = {
+  address: 'שבזי 45, נווה צדק, תל אביב',
+  hours: [
+    { days: 'ראשון–חמישי', hours: '10:00–19:00' },
+    { days: 'שישי', hours: '10:00–14:00' },
+    { days: 'שבת', hours: 'סגור' },
+  ],
+} as const;
 
 // wa.me link. Number is intentionally invalid (demo) — link is illustrative.
 export const whatsappUrl = (message = 'היי, אשמח לעזרה בבחירת תכשיט') =>

@@ -20,6 +20,7 @@ export const products: Product[] = [
     shortDescription: 'אבן בודדת על רצועה מחורצת דקה. הטבעת שלא יוצאת מהאופנה.',
     price: 8900,
     category: 'rings',
+    availability: 'made-to-order',
     // The only product the ring.glb model genuinely depicts → live 360° viewer.
     has3D: true,
     // Matched pair: the same verified milgrain-band design in two metal colours.
@@ -43,6 +44,7 @@ export const products: Product[] = [
     shortDescription: 'שורת יהלומים זעירים על רצועה דקה, לענידה לבד או בשכבות.',
     price: 4200,
     category: 'rings',
+    availability: 'made-to-order',
     metals: [
       {
         id: 'yellow',
@@ -58,6 +60,7 @@ export const products: Product[] = [
     shortDescription: 'רצועה דקה בעבודת יד, נוחה לענידה רצופה.',
     price: 1290,
     category: 'rings',
+    availability: 'ready',
     stonesDescription: 'ללא אבנים.',
     metals: [
       {
@@ -73,6 +76,7 @@ export const products: Product[] = [
     shortDescription: 'שלוש רצועות דקות שנענדות יחד או בנפרד.',
     price: 2600,
     category: 'rings',
+    availability: 'ready',
     metals: [
       {
         id: 'yellow',
@@ -89,6 +93,7 @@ export const products: Product[] = [
     shortDescription: 'תליון קטן על שרשרת עדינה, באורך מתכוונן.',
     price: 2450,
     category: 'necklaces',
+    availability: 'ready',
     metals: [
       {
         id: 'white',
@@ -104,6 +109,7 @@ export const products: Product[] = [
     shortDescription: 'קו לב פתוח משובץ יהלומים, על שרשרת כדורים דקה.',
     price: 3100,
     category: 'necklaces',
+    availability: 'ready',
     metals: [
       {
         id: 'white',
@@ -118,6 +124,7 @@ export const products: Product[] = [
     shortDescription: 'תליון בחיתוך ידני על שרשרת דקה, לענידה יומיומית.',
     price: 1890,
     category: 'necklaces',
+    availability: 'ready',
     metals: [
       {
         id: 'yellow',
@@ -132,6 +139,7 @@ export const products: Product[] = [
     shortDescription: 'פנינה בודדת על שרשרת זהב דקה. קלאסי, בלי עודף.',
     price: 1650,
     category: 'necklaces',
+    availability: 'ready',
     metals: [
       {
         id: 'yellow',
@@ -147,6 +155,7 @@ export const products: Product[] = [
     shortDescription: 'שלוש שרשראות דקות באורכים שונים, נענדות יחד.',
     price: 2100,
     category: 'necklaces',
+    availability: 'ready',
     metals: [
       {
         id: 'yellow',
@@ -161,6 +170,7 @@ export const products: Product[] = [
     shortDescription: 'אבנים זעירות משובצות לאורך שרשרת דקה.',
     price: 2950,
     category: 'necklaces',
+    availability: 'ready',
     metals: [
       {
         id: 'yellow',
@@ -175,6 +185,7 @@ export const products: Product[] = [
     shortDescription: 'פרחים זעירים לאורך שרשרת עדינה במיוחד.',
     price: 1490,
     category: 'necklaces',
+    availability: 'out-of-stock',
     metals: [
       {
         id: 'yellow',
@@ -191,6 +202,7 @@ export const products: Product[] = [
     shortDescription: 'חישוק בקוטר 10 מ"מ עם יהלומי בגט, קל מספיק לשכוח שהוא שם.',
     price: 2200,
     category: 'earrings',
+    availability: 'ready',
     metals: [
       {
         id: 'yellow',
@@ -205,6 +217,7 @@ export const products: Product[] = [
     shortDescription: 'עיגול זהב קטן במרקם עדין. העגיל שנשאר באוזן גם בלילה.',
     price: 890,
     category: 'earrings',
+    availability: 'ready',
     metals: [
       {
         id: 'yellow',
@@ -221,6 +234,7 @@ export const products: Product[] = [
     shortDescription: 'חוליות מוארכות בזהב מלא, עם סוגר בטחון.',
     price: 2100,
     category: 'bracelets',
+    availability: 'ready',
     metals: [
       {
         id: 'yellow',
@@ -235,6 +249,7 @@ export const products: Product[] = [
     shortDescription: 'שני צמידים דקים בעבודת חרוזים זעירים.',
     price: 1350,
     category: 'bracelets',
+    availability: 'ready',
     metals: [
       {
         id: 'yellow',
@@ -249,6 +264,7 @@ export const products: Product[] = [
     shortDescription: 'צמיד קשיח בקו נקי, עם שורת אבנים עדינה.',
     price: 3800,
     category: 'bracelets',
+    availability: 'made-to-order',
     metals: [
       {
         id: 'yellow',

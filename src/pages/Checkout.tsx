@@ -17,18 +17,26 @@ import {
   type CardState,
   type CardErrors,
 } from '@/components/checkout/PaymentFields';
-import { productImage } from '@/data/products';
+import { getProduct, productImage } from '@/data/products';
 import { METAL_LABELS } from '@/types/catalog';
+import { DELIVERY_TIMES } from '@/lib/fulfillment';
 import { Cart } from './Cart';
 
 type Errors = Record<string, string>;
 
-const DELIVERY = {
-  courier: { label: 'שליח עד הבית', price: STANDARD_SHIPPING },
-  pickup: { label: 'איסוף עצמי מהאטלייה בתל אביב', price: 0 },
-  post: { label: 'דואר רשום', price: 25 },
+const FULFILLMENT = {
+  courier: {
+    label: 'משלוח עד הבית',
+    price: STANDARD_SHIPPING,
+    time: DELIVERY_TIMES.home,
+  },
+  pickup: {
+    label: 'איסוף מהסטודיו',
+    price: 0,
+    time: DELIVERY_TIMES.collection,
+  },
 } as const;
-type DeliveryKey = keyof typeof DELIVERY;
+type FulfillmentKey = keyof typeof FULFILLMENT;
 
 // Israeli mobile: 05X followed by 7 digits, with optional separators.
 const PHONE_RE = /^0(5\d|[2-489])[-\s]?\d{7}$/;
@@ -40,7 +48,7 @@ export function Checkout() {
   const clear = useCart((s) => s.clear);
   const subtotal = useCartSubtotal();
 
-  const [delivery, setDelivery] = useState<DeliveryKey>('courier');
+  const [delivery, setDelivery] = useState<FulfillmentKey>('courier');
   const [payment, setPayment] = useState('card');
   const [giftWrap, setGiftWrap] = useState(false);
   const [card, setCard] = useState<CardState>({ number: '', holder: '', expiry: '', cvv: '' });
@@ -51,11 +59,14 @@ export function Checkout() {
   const shipping = useMemo(() => {
     if (delivery === 'pickup') return 0;
     if (delivery === 'courier' && subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
-    return DELIVERY[delivery].price;
+    return FULFILLMENT[delivery].price;
   }, [delivery, subtotal]);
 
   const total = subtotal + shipping;
   const needsAddress = delivery !== 'pickup';
+  const hasMadeToOrder = lines.some(
+    (line) => getProduct(line.slug)?.availability === 'made-to-order',
+  );
 
   // An empty cart has nothing to check out — show the empty cart view.
   if (lines.length === 0) return <Cart />;
@@ -130,7 +141,7 @@ export function Checkout() {
       subtotal,
       shipping,
       total,
-      delivery: DELIVERY[delivery].label,
+      delivery: `${FULFILLMENT[delivery].label} · ${FULFILLMENT[delivery].time}`,
       giftWrap,
     };
 
@@ -175,26 +186,42 @@ export function Checkout() {
               </div>
             </section>
 
-            {/* Delivery method */}
+            {/* Fulfilment method */}
             <section aria-labelledby="delivery-title">
               <h2 id="delivery-title" className="text-lg">
-                אופן המשלוח
+                אופן קבלת ההזמנה
               </h2>
+              <p className="mt-2 text-sm leading-relaxed text-stone">
+                משלוח עד הבית בתוך {DELIVERY_TIMES.home}, או איסוף מהסטודיו בתוך{' '}
+                {DELIVERY_TIMES.collection} וללא עלות.
+              </p>
+              {hasMadeToOrder && (
+                <p className="mt-3 rounded-sm border border-mist p-4 text-sm leading-relaxed text-charcoal">
+                  בהזמנה יש פריט שנוצר בהזמנה. יש להוסיף {DELIVERY_TIMES.madeToOrder},
+                  ולאחר מכן חל זמן המסירה שבחרת.
+                </p>
+              )}
               <div className="mt-5">
                 <OptionCards
-                  legend="בחירת שיטת משלוח"
+                  legend="בחירת אופן קבלת ההזמנה"
                   name="delivery"
                   value={delivery}
-                  onChange={(v) => setDelivery(v as DeliveryKey)}
-                  options={(Object.keys(DELIVERY) as DeliveryKey[]).map((k) => ({
+                  onChange={(v) => setDelivery(v as FulfillmentKey)}
+                  options={(Object.keys(FULFILLMENT) as FulfillmentKey[]).map((k) => ({
                     value: k,
-                    label: DELIVERY[k].label,
-                    note:
-                      k === 'courier' && subtotal >= FREE_SHIPPING_THRESHOLD
-                        ? 'חינם'
-                        : DELIVERY[k].price === 0
-                          ? 'חינם'
-                          : formatPrice(DELIVERY[k].price),
+                    label: FULFILLMENT[k].label,
+                    note: (
+                      <span className="text-end leading-relaxed">
+                        <span className="block">{FULFILLMENT[k].time}</span>
+                        <span className="block text-xs">
+                          {k === 'courier' && subtotal >= FREE_SHIPPING_THRESHOLD
+                            ? 'חינם'
+                            : FULFILLMENT[k].price === 0
+                              ? 'חינם'
+                              : formatPrice(FULFILLMENT[k].price)}
+                        </span>
+                      </span>
+                    ),
                   }))}
                 />
               </div>

@@ -1,4 +1,4 @@
-import { BRAND } from './constants';
+import { BRAND, STUDIO } from './constants';
 
 /**
  * Canonical site origin. DEMO placeholder — update to the real domain on
@@ -24,6 +24,7 @@ export const localBusinessJsonLd = {
   priceRange: '₪₪₪',
   address: {
     '@type': 'PostalAddress',
+    streetAddress: STUDIO.address,
     addressLocality: 'תל אביב',
     addressCountry: 'IL',
   },

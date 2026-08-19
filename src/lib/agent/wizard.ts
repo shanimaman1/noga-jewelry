@@ -5,9 +5,9 @@
  * Content rules enforced here, not left to chance:
  *   • Product names, prices, categories and metals are never written as
  *     literals — they are read from the catalogue (see `./catalog`).
- *   • The assistant never claims stock, delivery time, discounts or shipping
- *     cost. That data does not exist in this project, so questions about it get
- *     an honest "not in this demo" answer plus a WhatsApp handoff.
+ *   • Availability and delivery timing are answered only from the catalogue
+ *     and fulfilment constants. Discounts, returns and shipping cost remain
+ *     unknown and get an honest WhatsApp handoff.
  *   • A search with no results never dead-ends: it offers to drop exactly the
  *     filters that would genuinely produce matches.
  *
@@ -15,6 +15,13 @@
  */
 
 import type { Category, Metal, Product } from '@/types/catalog';
+import { products } from '@/data/products';
+import {
+  AVAILABILITY_LABELS,
+  DELIVERY_TIMES,
+  availabilityDetail,
+  productDeliveryText,
+} from '@/lib/fulfillment';
 import type { AgentBrain, AgentChoice, AgentInput, AgentMessage, AgentTurn } from './types';
 import {
   CATEGORY_LABELS,
@@ -51,11 +58,18 @@ const AUDIENCES: { id: Audience; label: string; prefer: readonly Category[] }[] 
 
 const audienceById = (id: Audience) => AUDIENCES.find((a) => a.id === id);
 
-/** Topics this project has no data for. Answered honestly, never guessed. */
+const AVAILABILITY_PATTERN =
+  /מלאי|במלאי|זמין|זמינה|זמינות|נשאר|אזל|יש לכם.*(?:במלאי|זמין|זמינה)/;
+const DELIVERY_TIME_PATTERN = /משלוח|שילוח|אספקה|מתי יגיע|מתי זה מגיע|כמה זמן לוקח|איסוף/;
+
+/** Topics this project still has no data for. Answered honestly, never guessed. */
 const UNSUPPORTED_TOPICS: { pattern: RegExp; topic: string }[] = [
-  { pattern: /מלאי|במלאי|זמין|זמינות|נשאר|יש לכם|אזל/, topic: 'מלאי' },
-  { pattern: /משלוח|שילוח|אספקה|מתי יגיע|מתי זה מגיע|כמה זמן לוקח|דואר/, topic: 'משלוחים' },
+  {
+    pattern: /דמי משלוח|עלות משלוח|מחיר משלוח|כמה.*(?:עולה|עולים).*(?:משלוח|שילוח)/,
+    topic: 'עלות משלוח',
+  },
   { pattern: /הנחה|הנחות|מבצע|מבצעים|קופון|סייל|זול יותר/, topic: 'מבצעים ומחירים מיוחדים' },
+  { pattern: /החזר|החזרה|החזרות|מדיניות החזר|ביטול הזמנה/, topic: 'החזרות וביטולים' },
 ];
 
 const SIZE_PATTERN = /מידה|מידות|סייז|למדוד|קוטר/;
@@ -121,6 +135,41 @@ function buildReason(product: Product, filters: CatalogFilters): string {
   // Nothing was narrowed — describe the piece in the catalogue's own words.
   if (bits.length === 0) return product.shortDescription;
   return `${bits.join(', ')}.`;
+}
+
+function mentionedProduct(text: string): Product | undefined {
+  const normalized = text.toLocaleLowerCase('he-IL');
+  return [...products]
+    .sort((a, b) => b.name.length - a.name.length)
+    .find(
+      (product) =>
+        normalized.includes(product.name.toLocaleLowerCase('he-IL')) ||
+        normalized.includes(product.slug.toLowerCase()),
+    );
+}
+
+function availabilityReply(text: string): AgentMessage {
+  const product = mentionedProduct(text);
+  if (product) {
+    return assistant(
+      `${product.name}: ${AVAILABILITY_LABELS[product.availability]}. ${availabilityDetail(product.availability)}`,
+    );
+  }
+
+  const count = (availability: Product['availability']) =>
+    products.filter((item) => item.availability === availability).length;
+  return assistant(
+    `לפי נתוני הקטלוג כרגע: ${AVAILABILITY_LABELS.ready} — ${count('ready')}; ${AVAILABILITY_LABELS['made-to-order']} — ${count('made-to-order')}; ${AVAILABILITY_LABELS['out-of-stock']} — ${count('out-of-stock')}. אפשר לשאול גם בשם מוצר מלא.`,
+  );
+}
+
+function deliveryReply(text: string): AgentMessage {
+  const product = mentionedProduct(text);
+  if (product) return assistant(`${product.name}: ${productDeliveryText(product)}`);
+
+  return assistant(
+    `משלוח עד הבית אורך ${DELIVERY_TIMES.home}, ואיסוף מהסטודיו אפשרי בתוך ${DELIVERY_TIMES.collection}. לפריט שנוצר בהזמנה יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ואז חל זמן המסירה שנבחר.`,
+  );
 }
 
 /* ── the questions ───────────────────────────────────────────────────────── */
@@ -254,6 +303,10 @@ function freeTextReply(text: string): AgentMessage[] {
     ];
   }
 
+  if (AVAILABILITY_PATTERN.test(text)) return [availabilityReply(text)];
+
+  if (DELIVERY_TIME_PATTERN.test(text)) return [deliveryReply(text)];
+
   if (SIZE_PATTERN.test(text)) {
     return [
       assistant('מדריך המידות פתוח כאן, עם דרך למדוד בבית.', {
@@ -284,8 +337,8 @@ export function createWizardBrain(): AgentBrain {
   const turn = (): AgentTurn => ({
     messages: current().messages,
     canGoBack: history.length > 1,
-    // Always open: a question about sizing or stock should land at any point,
-    // and it is answered honestly rather than guessed at.
+    // Always open: sizing, availability and delivery questions can land at
+    // any point and are answered from their real sources of truth.
     acceptsText: true,
   });
 

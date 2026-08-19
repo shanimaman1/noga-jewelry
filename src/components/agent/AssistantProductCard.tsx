@@ -2,6 +2,7 @@ import type { AgentRecommendation } from '@/lib/agent';
 import { defaultVariant, getProduct } from '@/data/products';
 import { formatPrice } from '@/lib/format';
 import { CatalogImage } from '@/components/common/CatalogImage';
+import { AvailabilityStatus } from '@/components/catalog/AvailabilityStatus';
 
 /**
  * Compact recommendation card inside the assistant panel.
@@ -39,6 +40,9 @@ export function AssistantProductCard({
           <p className="mt-0.5 text-sm text-charcoal">
             <bdi>{formatPrice(product.price)}</bdi>
           </p>
+          <div className="mt-1">
+            <AvailabilityStatus availability={product.availability} />
+          </div>
           <p className="mt-1 text-xs leading-relaxed text-stone">{recommendation.reason}</p>
         </div>
       </div>
@@ -52,14 +56,25 @@ export function AssistantProductCard({
         >
           צפייה במוצר
         </button>
-        <button
-          type="button"
-          onClick={() => onAdd(product.slug)}
-          aria-label={`הוספת ${product.name} לעגלה`}
-          className="flex-1 rounded-full bg-charcoal px-3 py-1.5 text-xs text-cream hover:bg-ink"
-        >
-          הוספה לעגלה
-        </button>
+        {product.availability === 'out-of-stock' ? (
+          <button
+            type="button"
+            onClick={() => onView(product.slug)}
+            aria-label={`מעבר לעדכון מלאי עבור ${product.name}`}
+            className="flex-1 rounded-full bg-charcoal px-3 py-1.5 text-xs text-cream hover:bg-ink"
+          >
+            לעדכון מלאי
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onAdd(product.slug)}
+            aria-label={`הוספת ${product.name} לעגלה`}
+            className="flex-1 rounded-full bg-charcoal px-3 py-1.5 text-xs text-cream hover:bg-ink"
+          >
+            הוספה לעגלה
+          </button>
+        )}
       </div>
     </article>
   );

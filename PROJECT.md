@@ -40,6 +40,8 @@ setup and commands in [README.md](README.md), and image work in
 - **Price range:** ₪890–₪12,000
 - **Language:** Hebrew, full RTL. Prices in ILS (₪).
 - **WhatsApp / contact:** `+972-50-000-0000` — deliberately INVALID placeholder, never a real number.
+- **Studio:** שבזי 45, נווה צדק, תל אביב. Sun–Thu 10:00–19:00,
+  Fri 10:00–14:00, closed Saturday; booking ahead is recommended.
 
 ## Two audiences (drives the IA)
 1. **Self-purchaser** — browsing, curious, wants detail/materials/photos.
@@ -179,6 +181,7 @@ both worlds — the dark atelier and everyday light.
 - **Product** `/product/:slug` — the most important page (see requirements below).
 - **Custom design** `/custom` — lead form.
 - **Story** `/story` — Dana / the atelier.
+- **Visit** `/visit` — studio address, embedded map, Waze, hours and contact.
 - **Size & care guide** `/size-care`.
 - **Cart** `/cart`.
 - **Checkout** `/checkout` — designed, non-functional demo.
@@ -189,12 +192,31 @@ both worlds — the dark atelier and everyday light.
 ## Product page requirements (most important page)
 - Image gallery: **4–5 angles + an on-body shot**, plus the **360° sequence**.
 - Name, price, installment note.
+- Quiet availability status from real product data: ready / made-to-order /
+  temporarily out of stock.
 - **Metal selector that actually swaps the images** (yellow / rose / white).
 - **Size selector** + **size-guide modal** (focus-trapped, keyboard-closable).
 - **Sticky add-to-cart on mobile**.
 - Trust strip (handmade / certificate / exchange / wrapping).
 - Shipping & returns.
+- Home-delivery and studio-collection timing; made-to-order lead time is stated
+  before the chosen fulfilment time.
 - Related products.
+
+## Availability and fulfilment
+- `Product.availability` in `src/data/products.ts` is the single source of
+  truth. Every product has exactly one of `ready`, `made-to-order`, or
+  `out-of-stock`; UI and assistant copy must never infer a different state.
+- User-facing labels are `מוכן בסטודיו`, `נוצר בהזמנה`, and `אזל זמנית`.
+  Ready and made-to-order pieces use the existing cart and checkout unchanged.
+  Made-to-order pieces take about two weeks to make before fulfilment.
+- Home delivery takes 3–5 business days. Collection from the studio takes up
+  to 2 business days and costs zero. These timings live in
+  `src/lib/fulfillment.ts` and are reused on product pages, checkout and by the
+  assistant.
+- An out-of-stock product cannot be added to the cart. Its product page opens
+  a small restock-email form. The form is deliberately simulated: it validates
+  and confirms locally, sends no network request and stores no address.
 
 ## SEO (dedicated phase)
 - Per-page **Hebrew** `<title>` and meta description.
@@ -234,11 +256,12 @@ answer is computed from `src/data/products.ts` at runtime. Mounted once in
 - Every option offered is derived from the data at runtime and only when it has
   at least one matching product, so a guided path cannot reach an empty result.
   `relaxationOptions()` is the safety net, not a normal path.
-- **Content rule, non-negotiable:** the assistant never states stock,
-  delivery time, discounts or shipping cost — this project has no such data.
-  Those questions get an honest "not in this demo" answer plus WhatsApp. Product
-  names, prices, metals and categories are never written as literals in the
-  assistant code; they are read from `products.ts`.
+- **Content rule, non-negotiable:** availability is read from each product in
+  `products.ts`; delivery timing is read from the shared fulfilment constants.
+  The assistant may state those facts and nothing beyond them. Shipping cost,
+  discounts and returns remain unknown and receive an honest handoff to
+  WhatsApp. Product names, prices, metals and categories are never written as
+  literals in the assistant code; they are read from `products.ts`.
 - Layering: launcher/scrim z-30, panel z-41 (above the WhatsApp FAB's z-40 so it
   is not pierced, below the cart drawer / modals at z-50). The panel is
   bottom-anchored at `min(82svh, 100svh - 9rem)` so it never reaches the header.
@@ -285,6 +308,7 @@ it is ever approved.
   replaces it in production:
   - Payment → Cardcom / Grow / Tranzila
   - Forms (contact / custom-design lead) → EmailJS / Formspree
+  - Restock notification → inventory/CRM integration plus EmailJS / Formspree
   - Booking (if used) → Arbox-style
 - SPA routing is fine for the demo, but note in code that production needs
   SSR / pre-rendering for SEO (client-rendered product pages index poorly).

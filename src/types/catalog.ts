@@ -2,6 +2,8 @@ export type Metal = 'yellow' | 'rose' | 'white';
 
 export type Category = 'rings' | 'necklaces' | 'earrings' | 'bracelets';
 
+export type Availability = 'ready' | 'made-to-order' | 'out-of-stock';
+
 /**
  * A metal a piece is genuinely offered in. Every variant must have a truthful,
  * visually verified image for that exact design and metal: either a licensed
@@ -24,6 +26,8 @@ export type Product = {
   shortDescription: string;
   price: number;
   category: Category;
+  /** Real catalogue availability used by every shopping surface. */
+  availability: Availability;
   /** Product-specific stone disclosure. Falls back to the catalogue default. */
   stonesDescription?: string;
   /** Ordered; the first is the default view. At least one. */

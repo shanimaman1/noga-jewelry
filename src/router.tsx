@@ -7,6 +7,7 @@ import { GiftGuide } from '@/pages/GiftGuide';
 import { Product } from '@/pages/Product';
 import { CustomDesign } from '@/pages/CustomDesign';
 import { Story } from '@/pages/Story';
+import { Visit } from '@/pages/Visit';
 import { SizeCare } from '@/pages/SizeCare';
 import { Cart } from '@/pages/Cart';
 import { Checkout } from '@/pages/Checkout';
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
       { path: '/product/:slug', element: <Product /> },
       { path: '/custom', element: <CustomDesign /> },
       { path: '/story', element: <Story /> },
+      { path: '/visit', element: <Visit /> },
       { path: '/size-care', element: <SizeCare /> },
       { path: '/cart', element: <Cart /> },
       { path: '/checkout', element: <Checkout /> },
