@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# SPA rewrite — every path serves index.html so react-router handles routing
+# client-side. Equivalent to the rewrite vercel.json used to provide.
+# Redundant with public/_redirects (same rule, copied into dist/ on build by
+# Vite) — kept here too, explicitly, so the rewrite is visible in build
+# config and not only in a plain-text file a reader might miss.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

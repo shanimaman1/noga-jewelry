@@ -67,7 +67,12 @@ motion · lenis · zustand · react-router 7.
 
 ## פריסה
 
-היעד הוא Vercel. `vercel.json` מגדיר rewrite של כל הנתיבים ל־`index.html` (SPA).
+היעד הוא Netlify, עם פריסה רציפה (continuous deployment) מ־GitHub — הריפו
+ב־github.com/shanimaman1/noga-jewelry, ו־Netlify בונה ופורס את `master`
+אוטומטית בכל push. גרירה-ושחרור ידנית של `dist/` כבר לא בשימוש. `netlify.toml`
+מגדיר את פקודת ה־build, תיקיית הפרסום, ואת ה־rewrite של כל הנתיבים ל־
+`index.html` (SPA) — מקביל למה ש־`vercel.json` עשה קודם.
+
 לייצור אמיתי נדרש SSR או pre-rendering — עמודי מוצר שנרנדרים בצד הלקוח
 מאונדקסים גרוע.
 

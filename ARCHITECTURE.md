@@ -275,3 +275,21 @@ interface AgentBrain {
 החשוף (פתיחה → 4 שאלות → הוספה לעגלה) הושלמה בהצלחה. אפס שגיאות/אזהרות
 קונסול מעבר לרעש קיים ולא קשור (THREE.Clock, GL driver — נובע מהסצנה
 התלת־ממדית הרציפה של ה־hero, לא מהקוד הזה).
+
+## פריסה
+
+היעד הוא Netlify, עם פריסה רציפה (continuous deployment) מהריפו ב־GitHub —
+github.com/shanimaman1/noga-jewelry. Netlify בונה ופורס את `master` אוטומטית
+בכל push; גרירה-ושחרור ידנית של `dist/` כבר לא בשימוש (מדיניות האישור לפני
+פריסה נמצאת ב־PROJECT.md § Deploy — כאן רק ההיבט הטכני).
+
+`netlify.toml` הוא קובץ ההגדרות (מחליף את `vercel.json`, שהוסר):
+
+* `build.command` — `npm run build` (`tsc --noEmit` ואז `vite build`).
+* `build.publish` — `dist`.
+* `build.functions` — `netlify/functions`. **התיקייה שמורה אך ריקה** — אין
+  עדיין שום serverless function בפרויקט; זו רק הכנה לתשתית.
+* `[[redirects]]` — `/* → /index.html` (200), ה־rewrite ל־SPA. כפול בכוונה
+  עם `public/_redirects` הקיים (אותו כלל בדיוק, מועתק ל־`dist/` בזמן ה־build
+  על ידי Vite) — לא סתירה, רק שהכלל גלוי גם בקובץ ההגדרות ולא רק בקובץ טקסט
+  פשוט שקורא עלול לפספס.

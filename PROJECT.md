@@ -290,11 +290,18 @@ it is ever approved.
   SSR / pre-rendering for SEO (client-rendered product pages index poorly).
 
 ## Deploy
-- Target **Vercel**. Prepare the build; do NOT deploy without explicit go-ahead.
+- Target **Netlify**, continuous deployment from GitHub. The repo lives at
+  github.com/shanimaman1/noga-jewelry; Netlify builds and deploys `master`
+  automatically on every push. Drag-and-drop of `dist/` is no longer used.
+  Build config: `netlify.toml` (build command, publish directory, and a
+  reserved-but-currently-empty functions directory — see ARCHITECTURE.md).
+- **Because deploys are now automatic on push, pushing to `master` IS
+  deploying.** The existing "do not deploy without explicit go-ahead" rule
+  now applies to the push itself, not to a separate manual deploy step.
 
 ---
 
 ## Build phases (see plan file for detail)
 0 Foundation & design system · 1a 3D materials+lighting (static `/lab`, timeboxed
 ~2 days) · 2 Home · 3 Catalog+data · 4 Product page · 5 Cart/checkout · 6 Secondary
-pages · 1b ScrollRig+hero integration · SEO · 7 A11y+perf hardening · 8 Polish/QA/Vercel.
+pages · 1b ScrollRig+hero integration · SEO · 7 A11y+perf hardening · 8 Polish/QA/Netlify.
