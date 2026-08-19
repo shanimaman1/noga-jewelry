@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://noga-demo.vercel.app/sitemap.xml
+Sitemap: https://noga-jewelry.netlify.app/sitemap.xml

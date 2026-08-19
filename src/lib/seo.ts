@@ -4,7 +4,7 @@ import { BRAND } from './constants';
  * Canonical site origin. DEMO placeholder — update to the real domain on
  * deploy (also referenced by public/robots.txt and public/sitemap.xml).
  */
-export const SITE_URL = 'https://noga-demo.vercel.app';
+export const SITE_URL = 'https://noga-jewelry.netlify.app';
 
 /** Default Open Graph image (a real catalogue photo until a branded OG asset). */
 export const DEFAULT_OG_IMAGE = '/products/ring-solitaire-yellow.webp';
