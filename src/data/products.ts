@@ -22,17 +22,17 @@ export const products: Product[] = [
     category: 'rings',
     // The only product the ring.glb model genuinely depicts → live 360° viewer.
     has3D: true,
-    // Genuinely matched pair: same milgrain-band solitaire, two real metals.
+    // Matched pair: the same verified milgrain-band design in two metal colours.
     metals: [
       {
         id: 'yellow',
-        image: 'ring-solitaire-yellow',
-        imageAlt: 'טבעת סוליטר בזהב צהוב עם רצועה מחורצת, על בד כהה',
+        image: 'solitaire-classic-round-yellow-v1',
+        imageAlt: 'טבעת סוליטר מזהב צהוב עם יהלום עגול יחיד ורצועת מילגריין דקה, על בד כהה',
       },
       {
         id: 'rose',
-        image: 'ring-solitaire-rose',
-        imageAlt: 'טבעת סוליטר בזהב אדום עם רצועה מחורצת, על בד קרם',
+        image: 'solitaire-classic-round-rose-v1',
+        imageAlt: 'טבעת סוליטר מזהב אדום עם יהלום עגול יחיד ורצועת מילגריין דקה, על בד כהה',
       },
     ],
     featured: true,
@@ -46,8 +46,8 @@ export const products: Product[] = [
     metals: [
       {
         id: 'yellow',
-        image: 'ring-fine-band',
-        imageAlt: 'טבעות זהב צהוב דקות משובצות יהלומים זעירים, על רקע קרם',
+        image: 'fine-diamond-band-main-v1',
+        imageAlt: 'טבעת זהב צהוב דקה עם שורת יהלומים זעירים, על בד בגוון שנהב',
       },
     ],
     featured: true,
@@ -76,8 +76,8 @@ export const products: Product[] = [
     metals: [
       {
         id: 'yellow',
-        image: 'ring-worn-stack',
-        imageAlt: 'ידיים ענודות בטבעות זהב צהוב דקות ובצמיד עדין',
+        image: 'stacking-rings-set-v1',
+        imageAlt: 'שלוש טבעות זהב צהוב דקות — חלקה, במרקם מילגריין ומשובצת יהלומים זעירים — על בד בגוון שנהב',
       },
     ],
   },
@@ -92,8 +92,8 @@ export const products: Product[] = [
     metals: [
       {
         id: 'white',
-        image: 'necklace-small-pendant',
-        imageAlt: 'תליון יהלומים קטן בזהב לבן על שרשרת דקה, על רקע בהיר',
+        image: 'single-diamond-necklace-main-v1',
+        imageAlt: 'שרשרת עדינה מזהב לבן עם יהלום עגול יחיד בשיבוץ מסגרת, על בד בגוון שנהב',
       },
     ],
     featured: true,
@@ -164,8 +164,8 @@ export const products: Product[] = [
     metals: [
       {
         id: 'yellow',
-        image: 'necklace-bezel-chain',
-        imageAlt: 'שרשרת זהב צהוב דקה עם אבנים זעירות משובצות, על בד פשתן',
+        image: 'bezel-chain-necklace-main-v1',
+        imageAlt: 'שרשרת זהב צהוב דקה עם יהלומים זעירים בשיבוצי מסגרת, על רקע אבן בגוון קרם',
       },
     ],
   },
