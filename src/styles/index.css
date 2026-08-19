@@ -49,12 +49,25 @@
 
   /* Bottom clearance for the floating action stack (WhatsApp FAB + shopping
      assistant launcher, grouped in FloatingActions.tsx): iOS safe-area inset
-     plus a fixed buffer. Mobile Safari's bottom toolbar is not accounted for
-     by env(safe-area-inset-bottom) — that only covers the hardware safe area
-     (notch / home indicator) — so the buffer is sized generously to clear the
-     toolbar too, verified against the hero CTA row at 375x812. */
+     plus a small fixed gap — NOT a large defensive buffer. A bigger buffer
+     was tried (9rem) to dodge Safari's bottom toolbar and instead pushed the
+     stack to mid-viewport, over the hero H1 — a worse bug than the one it
+     fixed. `env(safe-area-inset-bottom)` already covers the hardware safe
+     area (notch / home indicator); this gap only needs to clear the toolbar
+     enough to stay reachable, not defend against its full height.
+     At 375x812 the group (102px tall) has a real but narrow window where it
+     clears both the hero H1 (ends 612px) and the CTA row (starts 728px):
+     roughly offset 84–98px. 5.75rem (92px) sits in the middle of that window
+     — H1 clear by ~6px, CTA clear by ~8px, measured in a real browser, not
+     assumed. The hero's subtext paragraph (636–688px) sits inside that same
+     102px band regardless of where in the window the offset lands — the
+     group is taller than the gap between the subtext and the CTA, so some
+     overlap with the subtext is unavoidable without shrinking the group or
+     the hero, neither of which is in scope here. See CHANGELOG.md for the
+     measured numbers, including the additional overlap this reintroduces
+     under a simulated ~110px Safari toolbar. */
   :root {
-    --floating-actions-offset: calc(env(safe-area-inset-bottom, 0px) + 9rem);
+    --floating-actions-offset: calc(env(safe-area-inset-bottom, 0px) + 5.75rem);
   }
 
   /* Visible keyboard focus (IS 5568 / WCAG AA). */

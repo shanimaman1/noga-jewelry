@@ -1,8 +1,10 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { BRAND, ROUTES, whatsappUrl } from '@/lib/constants';
 import { Container } from '@/components/common/Container';
 import { Seo } from '@/components/seo/Seo';
 import { HeroExperience } from '@/three/hero/HeroExperience';
+import { useHeroInViewObserver } from '@/hooks/useHeroInViewObserver';
 import { Collections } from '@/components/home/Collections';
 import { FeaturedProducts } from '@/components/home/FeaturedProducts';
 import { DanaStory } from '@/components/home/DanaStory';
@@ -17,6 +19,13 @@ import { InstagramNewsletter } from '@/components/home/InstagramNewsletter';
  * is a static "dark room" section that establishes the mood.
  */
 export function Home() {
+  // The floating shopping-assistant launcher and WhatsApp FAB hide while
+  // this section is on screen — there is no room for them beside the hero
+  // at narrow widths — and reveal once the user has scrolled past it. See
+  // useHeroInViewObserver and components/layout/FloatingActions.tsx.
+  const heroRef = useRef<HTMLElement>(null);
+  useHeroInViewObserver(heroRef);
+
   return (
     <>
       <Seo
@@ -27,6 +36,7 @@ export function Home() {
       {/* HERO — "The Dark Room": R3F ring, scroll-driven (rotation + light +
           backdrop charcoal→cream). See src/three/hero/HeroExperience.tsx. */}
       <section
+        ref={heroRef}
         aria-label="מסך פתיחה"
         className="relative flex min-h-[88vh] items-center justify-center overflow-hidden bg-charcoal text-cream"
       >

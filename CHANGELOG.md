@@ -101,6 +101,116 @@
     ומובטחים להתנגש בשורת תוכן מלאת־רוחב. כל הפריסה ב־CSS בלבד; אין hook
     חדש שקורא את גודל המסך.
 
+
+### Fixed — corrected the floating-actions offset (previous fix overcorrected)
+
+* **The previous fix (above) overcorrected.** Its 9rem buffer, sized to
+  clear Safari's bottom toolbar, pushed both floating elements to
+  mid-viewport height on a real iPhone in Safari at 375px: the launcher
+  covered the start of the hero headline, the WhatsApp FAB covered its
+  second line. Root cause: the previous fix only measured clearance
+  against the CTA row and never checked the H1/subtext above it, so the
+  buffer needed to escape the toolbar silently pushed the group into the
+  headline instead.
+* `--floating-actions-offset` is now `5.75rem` (92px), down from `9rem`
+  (144px). Measured in a real browser (Chromium via Playwright) at
+  375x812: the 102px-tall stack has a narrow real window — offset
+  84–98px — that clears both the H1 (ends at 612px) and the CTA row
+  (starts at 728px); 92px sits in the middle, 6px clear of the H1 and 8px
+  clear of the CTA.
+* **Known, accepted overlap:** the hero's subtext paragraph (636–688px)
+  sits inside that same 102px band at every offset in the safe window —
+  the stack is taller than the gap between the subtext and the CTA row,
+  so a ~52px overlap with the subtext is unavoidable without shrinking
+  the stack or the hero. Neither was in scope for this fix.
+* **Reported, not silently absorbed — a real conflict remains under a
+  simulated Safari toolbar.** Position:fixed elements in real iOS Safari
+  track the shrunk visual viewport while regular content still lays out
+  against the static one, so a visible bottom toolbar (~110px, per the
+  request that drove this fix) shifts the fixed stack up on screen while
+  the H1/subtext/CTA stay exactly where they are. Modelled that
+  arithmetically (content rects unchanged, the stack's rect shifted up
+  110px) rather than assuming: at every offset in the 84–98px safe
+  window — not just 92px — the shifted stack overlaps the H1 by
+  96–102px, i.e. almost its full height. No non-negative offset avoids
+  this: the stack's height (102px) plus the toolbar shift (110px)
+  exceeds the room between the H1 and the CTA row at this viewport, so
+  the conflict cannot be tuned away by picking a different offset. Fixing
+  it for real would mean shrinking the hero or the floating stack —
+  both out of scope here ("do not resize or move the hero to make
+  room") — flagging for a decision rather than picking one silently.
+* Verified unchanged: nothing renders on `/checkout` and every field stays
+  reachable; at 1440x900 the stack sits in the bottom corner, 92px from
+  the edge, clear of the CTA row; the assistant still opens, completes a
+  full flow, and adds to cart; no console errors beyond the pre-existing,
+  unrelated THREE.Clock/GPU-driver noise seen in every prior verification
+  pass.
+* Only `src/styles/index.css` changed (the offset value and its comment).
+  No other file touched.
+
+### Changed — hide the floating actions on the hero, reveal on scroll
+
+* **Superseded the offset-tuning approach above.** Measuring proved there
+  is no `--floating-actions-offset` value that clears the Home hero's
+  H1, subtext, and CTA row simultaneously at 375px — the floating stack
+  is taller than the room available. Rather than continuing to chase an
+  offset, both elements now hide outright while the hero is on screen
+  and reveal together once the user has scrolled past it. The offset
+  itself is untouched (`5.75rem`) — it now only positions the stack once
+  revealed, not around the hero.
+* `src/hooks/useHeroInViewObserver.ts` (new): an `IntersectionObserver`
+  on the hero section, not a scroll listener and not a hardcoded pixel
+  threshold. "Mostly out of view" is a single 10% threshold — reveal
+  once less than a tenth of the hero remains visible.
+* `src/lib/heroVisibility.ts` (new): a tiny, non-persisted zustand store
+  carrying one boolean. Needed because `Home` (which owns the hero ref)
+  and `FloatingActions` (mounted in `RootLayout`) are siblings, not
+  parent/child — there is no ref to pass directly between them. Pages
+  without a hero never touch the store, so it stays `false` there and
+  both elements show immediately; unmounting resets it to `false` so
+  navigating away never leaves them stuck hidden.
+* `src/pages/Home.tsx`: wires a ref on the hero `<section>` to the new
+  observer hook. No other page changed — only Home currently registers a
+  hero.
+* `src/components/layout/FloatingActions.tsx`: while the hero is in
+  view, the wrapper gets `opacity-0` and, imperatively via a ref
+  (`toggleAttribute('inert', heroInView)`), the `inert` attribute — not
+  opacity alone. `inert` is set via the DOM API rather than as a JSX
+  prop on purpose: a boolean-ish HTML attribute passed as `inert={false}`
+  in JSX risks rendering the literal string `"false"`, which the
+  browser reads as present (i.e. still inert) regardless of the string's
+  content. `inert` removes the group from the tab order, the
+  accessibility tree, and pointer/click handling immediately — it does
+  not wait for the opacity transition, so there is never a window where
+  a fading-out element is still clickable.
+* The transition (`transition-opacity duration-200`) is not given any
+  special reduced-motion handling of its own — the project's existing
+  global rule in `styles/index.css` (`transition-duration: 0.01ms
+  !important` under `prefers-reduced-motion: reduce`) already collapses
+  it, same as every other transition on the site. Verified with
+  Playwright's `reducedMotion: 'reduce'` context option: the elements
+  appear within ~50ms of scrolling past the hero, no visible fade.
+* **An already-open assistant panel is untouched by any of this.** The
+  panel is a separate `createPortal` straight to `document.body` (see
+  ShoppingAssistant.tsx) — it is not a DOM descendant of the
+  `FloatingActions` wrapper. Marking the wrapper `inert` while scrolling
+  back up to the hero never reaches an already-open panel, which is what
+  keeps it open with no extra logic needed to special-case it.
+* Verified in a real browser (Chromium via Playwright) at 375x812 and
+  1440x900: hidden and fully inert (opacity 0, `inert` present,
+  `aria-hidden="true"`) while the hero is in view, with 8 Tab presses
+  never landing on either element; revealed and clickable after
+  scrolling past (opacity 1, `inert` removed, launcher opens the panel);
+  scrolling back up with the panel open re-hides the launcher/FAB but
+  leaves the panel open; nothing renders on `/checkout` at any scroll
+  position; pages without a hero (`/catalog`) show both immediately; the
+  full flow (open -> 4 questions -> add to cart) completes; no console
+  errors beyond the pre-existing, unrelated THREE.Clock/GPU-driver noise
+  from the hero's continuous 3D scene.
+* Removed the now-resolved "known conflict" note about the hero overlap
+  from ARCHITECTURE.md (previously under § אלמנטים צפים) — it no
+  longer applies, since the elements are not shown at all while the hero
+  is on screen.
 ---
 
 ## [0.1.0] — 2026-08-03

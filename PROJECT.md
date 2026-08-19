@@ -19,6 +19,16 @@ setup and commands in [README.md](README.md), and image work in
   "fix" something that contradicts a decision recorded here; raise it first.
 - Decisions live in this file, not in an external plan file. If a decision is
   made, record it here so it survives.
+- **Floating actions hide behind the hero, reveal after it.** The shopping-
+  assistant launcher and the WhatsApp FAB are hidden while a page's hero
+  section is on screen, and appear together once the user has scrolled past
+  it — never one without the other (`src/components/layout/FloatingActions.tsx`).
+  This exists because at 375px the two elements cannot fit beside the Home
+  hero's headline, subtext and CTA row — an offset/spacing value alone does
+  not solve it (measured in a real browser, not assumed; see CHANGELOG.md).
+  Any change to hero spacing, or to either floating element, must preserve
+  this hide/reveal behaviour and be re-verified at 375px with simulated
+  mobile browser chrome.
 
 ---
 
