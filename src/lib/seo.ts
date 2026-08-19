@@ -1,8 +1,8 @@
 import { BRAND, STUDIO } from './constants';
 
 /**
- * Canonical site origin. DEMO placeholder — update to the real domain on
- * deploy (also referenced by public/robots.txt and public/sitemap.xml).
+ * Canonical Netlify origin, kept in sync with public/robots.txt and
+ * public/sitemap.xml.
  */
 export const SITE_URL = 'https://noga-jewelry.netlify.app';
 

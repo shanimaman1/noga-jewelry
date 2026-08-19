@@ -24,7 +24,8 @@ src/
 │  ├─ seo/         Seo (תגיות head לפי עמוד)
 │  └─ ui/          Modal, Field
 ├─ data/           products.ts, collections.ts, sizes.ts, testimonials
-├─ hooks/          useLenis, useMediaQuery, useReducedMotion, useReveal
+├─ hooks/          useLenis, useMediaQuery, useReducedMotion, useReveal,
+│                  useHeroInViewObserver
 ├─ lib/
 │  ├─ agent/       types.ts, catalog.ts, wizard.ts, index.ts
 │  ├─ cart/        store.ts (zustand + persist)
@@ -32,6 +33,7 @@ src/
 │  ├─ constants.ts BRAND, ROUTES, NAV_LINKS, whatsappUrl
 │  ├─ format.ts    formatPrice, installmentNote
 │  ├─ fulfillment.ts תוויות זמינות וזמני מסירה משותפים
+│  ├─ heroVisibility.ts מצב חשיפת הפעולות הצפות מול hero
 │  └─ seo.ts       JSON-LD
 ├─ pages/          עמוד לכל נתיב
 ├─ styles/         index.css — טוקני Tailwind v4 + כללי reveal
@@ -51,6 +53,13 @@ src/
 | מותג, נתיבים, וואטסאפ | `src/lib/constants.ts` | מספר הטלפון פלייסהולדר לא תקין בכוונה |
 
 אין להעתיק נתוני מוצר לשום מקום אחר. כל שכבה שצריכה מחיר או שם קוראת מכאן.
+
+### תוכן עברי ומקור השם
+
+`src/pages/Story.tsx` הוא המקום היחיד שמסביר שדנה קראה לאטלייה נוגה על שם
+בתה. סימני הפיסוק בטקסט עברי שמוצג למשתמש מנורמלים כך שמקף רגיל או פסיק
+מחליפים dash של משפט, שלוש נקודות מחליפות את תו האליפסיס, וגרשיים עבריים
+משמשים בתוך טקסט עברי. en dash נשאר בטווחי ערכים והמקף העברי נשאר בצירופים.
 
 ### זמינות ומסירה
 
@@ -307,12 +316,15 @@ github.com/shanimaman1/noga-jewelry. Netlify בונה ופורס את `master` �
 בכל push; גרירה-ושחרור ידנית של `dist/` כבר לא בשימוש (מדיניות האישור לפני
 פריסה נמצאת ב־PROJECT.md § Deploy — כאן רק ההיבט הטכני).
 
+הדומיין החי והקנוני הוא `https://noga-jewelry.netlify.app`. הערך `SITE_URL`
+ב־`src/lib/seo.ts`, כתובות ה־sitemap והפניית ה־sitemap ב־robots.txt תואמים לו.
+
 `netlify.toml` הוא קובץ ההגדרות (מחליף את `vercel.json`, שהוסר):
 
 * `build.command` — `npm run build` (`tsc --noEmit` ואז `vite build`).
 * `build.publish` — `dist`.
-* `build.functions` — `netlify/functions`. **התיקייה שמורה אך ריקה** — אין
-  עדיין שום serverless function בפרויקט; זו רק הכנה לתשתית.
+* `build.functions` — הנתיב השמור `netlify/functions`. אין כיום תיקייה כזו
+  ואין שום serverless function בפרויקט; זו רק הכנה אפשרית לתשתית עתידית.
 * `[[redirects]]` — `/* → /index.html` (200), ה־rewrite ל־SPA. כפול בכוונה
   עם `public/_redirects` הקיים (אותו כלל בדיוק, מועתק ל־`dist/` בזמן ה־build
   על ידי Vite) — לא סתירה, רק שהכלל גלוי גם בקובץ ההגדרות ולא רק בקובץ טקסט

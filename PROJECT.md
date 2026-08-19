@@ -37,6 +37,7 @@ setup and commands in [README.md](README.md), and image work in
 - Tel Aviv atelier, handmade 14/18k gold, natural & lab diamonds
 - **Positioning:** "תכשיט אחד שתלבשי כל יום — לא עשרה נשכחים במגירה"
 - **Founder:** Dana (דנה), Bezalel-trained goldsmith, 12 years' experience
+- **Name origin:** Dana named the atelier Noga after her daughter.
 - **Price range:** ₪890–₪12,000
 - **Language:** Hebrew, full RTL. Prices in ILS (₪).
 - **WhatsApp / contact:** `+972-50-000-0000` — deliberately INVALID placeholder, never a real number.
@@ -79,6 +80,10 @@ both worlds — the dark atelier and everyday light.
   No superlatives ("הכי", "מדהים", "הטוב ביותר"). No hype.
 - Speak plainly about materials, craft, and the everyday piece. Let the product
   and the whitespace carry the weight. When in doubt, say less.
+- In user-facing Hebrew, sentence punctuation uses a comma or a regular hyphen
+  with spaces, never an em dash. Three periods replace the ellipsis character,
+  and Hebrew quotation marks are used inside Hebrew copy. En dashes remain
+  unchanged for ranges, and the Hebrew maqaf remains in Hebrew compounds.
 
 ## Code / language conventions
 - All explanations, questions, summaries to the user: **Hebrew**.
@@ -317,8 +322,11 @@ it is ever approved.
 - Target **Netlify**, continuous deployment from GitHub. The repo lives at
   github.com/shanimaman1/noga-jewelry; Netlify builds and deploys `master`
   automatically on every push. Drag-and-drop of `dist/` is no longer used.
-  Build config: `netlify.toml` (build command, publish directory, and a
-  reserved-but-currently-empty functions directory — see ARCHITECTURE.md).
+  The live and canonical origin is `https://noga-jewelry.netlify.app`;
+  `src/lib/seo.ts`, `public/sitemap.xml` and `public/robots.txt` use that same
+  origin. Build config: `netlify.toml` (build command, publish directory, and a
+  reserved functions path; no functions directory or function exists today —
+  see ARCHITECTURE.md).
 - **Because deploys are now automatic on push, pushing to `master` IS
   deploying.** The existing "do not deploy without explicit go-ahead" rule
   now applies to the push itself, not to a separate manual deploy step.
