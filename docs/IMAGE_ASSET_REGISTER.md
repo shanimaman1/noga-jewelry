@@ -170,7 +170,8 @@ Avoid: gemstones, settings, signet shapes, flat wide band, square cross-section,
 - נבדקו טעינת התמונה הראשית והממוזערות, זום, כרטיס הקטלוג, מגירת העגלה
   והצ׳קאאוט. לא נמצאו שגיאות קונסול, שגיאות HTTP, תמונות חסרות או גלישה
   אופקית.
-- לא בוצעה פריסה. האתר החי נשאר ללא שינוי.
+- התמונה נפרסה לאתר החי יחד עם סבב חמש ההתאמות ב־2026-08-19,
+  במסגרת commit `56c04ee`.
 
 #### שחזור
 
@@ -185,9 +186,9 @@ Avoid: gemstones, settings, signet shapes, flat wide band, square cross-section,
 - **תאריך יצירה ובדיקה:** 2026-08-19
 - **אופן יצירה:** כלי `image_gen` המובנה; כל מועמד נוצר בקריאה נפרדת.
 - **אישור המשתמשת:** `הכל יפה תבחר את מה שהכי קרוב לתיאור כך שהכל יהפוך לתקין ותואם ואז תחליף את התמונות`.
-- **בחירה והטמעה מקומית:** 004, 005, 008, 010 ו־012 נבחרו כהתאמות
+- **בחירה, הטמעה ופריסה:** 004, 005, 008, 010 ו־012 נבחרו כהתאמות
   המדויקות ביותר וחוברו לקטלוג. 003, 006, 007, 009 ו־011 נשמרו כמועמדים
-  שלא נבחרו. לא בוצעו push או פריסה.
+  שלא נבחרו. התמונות נפרסו לאתר החי ב־2026-08-19 במסגרת commit `56c04ee`.
 - לכל תמונה נשמר מקור PNG בגודל 1254×1254, לצד WebP בגודל 1000×1000
   וגרסת `@600.webp` בגודל 600×600. כל הקבצים נמצאים תחת
   `docs/image-candidates/` ואינם מחליפים נכס קיים.
@@ -201,7 +202,8 @@ Avoid: gemstones, settings, signet shapes, flat wide band, square cross-section,
 
 #### מועמדים 003–004 — `single-diamond-necklace`
 
-- **הנכס הפעיל:** `necklace-small-pendant.webp` — תליון אשכול/הילה מרובה
+- **הנכסים המקוריים שנשמרו:** `necklace-small-pendant.webp` ו־
+  `necklace-small-pendant@600.webp` — תליון אשכול/הילה מרובה
   אבנים על שרשרת עבה, במקום יהלום בודד קטן על שרשרת לבנה ועדינה.
 - **003:** `candidate-003-single-diamond-necklace-prong` — שרשרת זהב לבן
   יחידה ועדינה, יהלום עגול יחיד בשיבוץ ארבע שיניים ומנגנון התאמה מחליק,
@@ -215,8 +217,9 @@ Avoid: gemstones, settings, signet shapes, flat wide band, square cross-section,
 
 #### מועמדים 005–006 — `solitaire-classic`, זוגות מתכת נעולים
 
-- **הנכסים הפעילים:** `ring-solitaire-yellow.webp` ו־
-  `ring-solitaire-rose.webp` — מציגים עיצובים שונים; בגרסה האדומה יש אבני
+- **הנכסים המקוריים שנשמרו:** `ring-solitaire-yellow.webp`,
+  `ring-solitaire-yellow@600.webp`, `ring-solitaire-rose.webp` ו־
+  `ring-solitaire-rose@600.webp` — מציגים עיצובים שונים; בגרסה האדומה יש אבני
   צד, בניגוד לאבן הבודדת ולרצועה המחורצת.
 - **005:** `candidate-005-solitaire-classic-round-{yellow|rose}` — אותה
   טבעת בדיוק בשתי המתכות: יהלום עגול יחיד, שש שיניים ורצועת מילגריין דקה;
@@ -225,14 +228,17 @@ Avoid: gemstones, settings, signet shapes, flat wide band, square cross-section,
   טבעת בדיוק בשתי המתכות: יהלום אובלי יחיד, ארבע שיניים ורצועה דקה עם
   חריצים אורכיים; גם כאן הגרסה האדומה היא עריכת מתכת בלבד של אותו מאסטר.
 - **נבחר:** 005. נכסים פעילים חדשים:
-  `solitaire-classic-round-yellow-v1{,@600}.webp` ו־
-  `solitaire-classic-round-rose-v1{,@600}.webp`.
+  `solitaire-classic-round-yellow-v1.webp`,
+  `solitaire-classic-round-yellow-v1@600.webp`,
+  `solitaire-classic-round-rose-v1.webp` ו־
+  `solitaire-classic-round-rose-v1@600.webp`.
 - **איסורים בפרומפטים:** ללא אבני צד, pavé, הילה, טבעת נוספת, שינוי גאומטריה
   בין המתכות, טקסט, לוגו או סימן מים.
 
 #### מועמדים 007–008 — `fine-diamond-band`
 
-- **הנכס הפעיל:** `ring-fine-band.webp` — טבעת היהלומים הנכונה מופיעה לצד
+- **הנכסים המקוריים שנשמרו:** `ring-fine-band.webp` ו־
+  `ring-fine-band@600.webp` — טבעת היהלומים הנכונה מופיעה לצד
   טבעת סוליטר נפרדת וחופפת.
 - **007:** `candidate-007-fine-diamond-band-stone` — טבעת יחידה ודקה בזהב
   צהוב עם שורה נמוכה של יהלומים עגולים זעירים, על אבן קרם.
@@ -245,7 +251,8 @@ Avoid: gemstones, settings, signet shapes, flat wide band, square cross-section,
 
 #### מועמדים 009–010 — `stacking-rings`
 
-- **הנכס הפעיל:** `ring-worn-stack.webp` — צילום סטיילינג עם טבעות שונות
+- **הנכסים המקוריים שנשמרו:** `ring-worn-stack.webp` ו־
+  `ring-worn-stack@600.webp` — צילום סטיילינג עם טבעות שונות
   על אצבעות שונות וצמיד; אין בו סט מזוהה של שלוש רצועות דקות.
 - **009:** `candidate-009-stacking-rings-stacked` — בדיוק שלוש טבעות דקות
   ומתואמות בזהב צהוב, מוצגות יחד: חלקה, מילגריין ואחת עם יהלומים זעירים.
@@ -258,7 +265,8 @@ Avoid: gemstones, settings, signet shapes, flat wide band, square cross-section,
 
 #### מועמדים 011–012 — `bezel-chain-necklace`
 
-- **הנכס הפעיל:** `necklace-bezel-chain.webp` — שרשרת הנקודות מופיעה לצד
+- **הנכסים המקוריים שנשמרו:** `necklace-bezel-chain.webp` ו־
+  `necklace-bezel-chain@600.webp` — שרשרת הנקודות מופיעה לצד
   שרשרת נוספת ומצטלבת איתה, ולכן הכמות והמוצר אינם חד־משמעיים.
 - **011:** `candidate-011-bezel-chain-necklace-linen` — שרשרת זהב צהוב אחת
   ושלמה עם יהלומים עגולים זעירים בשיבוצי מסגרת מרווחים, על פשתן שנהב.
@@ -268,6 +276,30 @@ Avoid: gemstones, settings, signet shapes, flat wide band, square cross-section,
   `bezel-chain-necklace-main-v1.webp` ו־`bezel-chain-necklace-main-v1@600.webp`.
 - **איסורים בפרומפטים:** ללא שרשרת שנייה, שכבות, תליון מרכזי, אבנים כהות,
   תכשיט נוסף, טקסט, לוגו או סימן מים.
+
+#### שחזור חמשת המוצרים
+
+כדי לחזור לתמונות שהיו פעילות לפני סבב זה, יש לשנות רק את ערכי `image`
+ו־`imageAlt` המתאימים ב־`src/data/products.ts`:
+
+- `single-diamond-necklace`: להחזיר את `image` ל־`necklace-small-pendant`
+  ואת `imageAlt` ל־`תליון יהלומים קטן בזהב לבן על שרשרת דקה, על רקע בהיר`.
+- `solitaire-classic`: במתכת `yellow` להחזיר את `image` ל־
+  `ring-solitaire-yellow` ואת `imageAlt` ל־
+  `טבעת סוליטר בזהב צהוב עם רצועה מחורצת, על בד כהה`; במתכת `rose` להחזיר
+  את `image` ל־`ring-solitaire-rose` ואת `imageAlt` ל־
+  `טבעת סוליטר בזהב אדום עם רצועה מחורצת, על בד קרם`.
+- `fine-diamond-band`: להחזיר את `image` ל־`ring-fine-band` ואת `imageAlt`
+  ל־`טבעות זהב צהוב דקות משובצות יהלומים זעירים, על רקע קרם`.
+- `stacking-rings`: להחזיר את `image` ל־`ring-worn-stack` ואת `imageAlt`
+  ל־`ידיים ענודות בטבעות זהב צהוב דקות ובצמיד עדין`.
+- `bezel-chain-necklace`: להחזיר את `image` ל־`necklace-bezel-chain` ואת
+  `imageAlt` ל־`שרשרת זהב צהוב דקה עם אבנים זעירות משובצות, על בד פשתן`.
+
+כל קובצי המקור, כולל גרסאות `@600.webp`, נשמרו תחת `public/products/` ולא
+נמחקו או שונו. לכן אין צורך לשחזר קובץ תמונה או למחוק את הקבצים החדשים;
+המועמדים והיסטוריית הבחירה נשארים לצורכי תיעוד. שחזור הערכים לעיל יחזיר
+במכוון גם את אי־ההתאמות שתועדו בסעיפי המועמדים.
 
 #### אימות לאחר ההטמעה
 
@@ -282,6 +314,7 @@ Avoid: gemstones, settings, signet shapes, flat wide band, square cross-section,
   ואפס גלישה אופקית.
 - בוצעה ביקורת חזותית חוזרת לכל 16 המוצרים מול השם, התיאור, סוג התכשיט,
   המתכת, הצבע, האבנים וכמות הפריטים. כל התמונות הפעילות נמצאו תואמות.
-- התמונות המקוריות לא נמחקו ולא שונו. לא בוצעו push או פריסה.
+- התמונות המקוריות לא נמחקו ולא שונו. התמונות החדשות נפרסו לאתר החי
+  ב־2026-08-19 במסגרת commit `56c04ee`.
 
 המספר הבא: `013`.
