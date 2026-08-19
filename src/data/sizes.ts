@@ -22,7 +22,7 @@ export const ringSizes: RingSize[] = [
 ];
 
 /** Chain lengths offered for necklaces, in cm. */
-export const necklaceLengths = ['40 ס"מ', '42 ס"מ', '45 ס"מ', '50 ס"מ'];
+export const necklaceLengths = ['40 ס״מ', '42 ס״מ', '45 ס״מ', '50 ס״מ'];
 
 /** Bracelet lengths, in cm. */
-export const braceletLengths = ['16 ס"מ', '17 ס"מ', '18 ס"מ', '19 ס"מ'];
+export const braceletLengths = ['16 ס״מ', '17 ס״מ', '18 ס״מ', '19 ס״מ'];

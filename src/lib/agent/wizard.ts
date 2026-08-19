@@ -159,7 +159,7 @@ function availabilityReply(text: string): AgentMessage {
   const count = (availability: Product['availability']) =>
     products.filter((item) => item.availability === availability).length;
   return assistant(
-    `לפי נתוני הקטלוג כרגע: ${AVAILABILITY_LABELS.ready} — ${count('ready')}; ${AVAILABILITY_LABELS['made-to-order']} — ${count('made-to-order')}; ${AVAILABILITY_LABELS['out-of-stock']} — ${count('out-of-stock')}. אפשר לשאול גם בשם מוצר מלא.`,
+    `לפי נתוני הקטלוג כרגע: ${AVAILABILITY_LABELS.ready} - ${count('ready')}; ${AVAILABILITY_LABELS['made-to-order']} - ${count('made-to-order')}; ${AVAILABILITY_LABELS['out-of-stock']} - ${count('out-of-stock')}. אפשר לשאול גם בשם מוצר מלא.`,
   );
 }
 
@@ -248,7 +248,7 @@ function resultsMessages(state: WizardState): AgentMessage[] {
 
   const closing = assistant(
     remainder > 0
-      ? `יש עוד ${matchCount(remainder)} בקטלוג בסינון הזה. אם משהו כאן מתאים, אפשר להוסיף לעגלה — ואם לא, נתחיל מחדש.`
+      ? `יש עוד ${matchCount(remainder)} בקטלוג בסינון הזה. אם משהו כאן מתאים, אפשר להוסיף לעגלה, ואם לא, נתחיל מחדש.`
       : 'אם משהו כאן מתאים, אפשר להוסיף לעגלה. אחרת נתחיל מחדש ונצמצם אחרת.',
     {
       actions: [
@@ -273,7 +273,7 @@ function emptyResultMessages(filters: CatalogFilters): AgentMessage[] {
 
   const choices: AgentChoice[] = options.map((option) => ({
     id: `relax:${option.filter}`,
-    label: `${relaxLabel[option.filter]} — ${matchCount(option.matches)}`,
+    label: `${relaxLabel[option.filter]} - ${matchCount(option.matches)}`,
   }));
   choices.push({ id: 'restart', label: 'להתחיל מחדש' });
 
@@ -317,7 +317,7 @@ function freeTextReply(text: string): AgentMessage[] {
 
   return [
     assistant(
-      'אני עובד לפי כמה שאלות קצרות ומצמצם מהקטלוג. אפשר לבחור מהאפשרויות, ולכל שאלה אחרת — וואטסאפ.',
+      'אני עובד לפי כמה שאלות קצרות ומצמצם מהקטלוג. אפשר לבחור מהאפשרויות, ולכל שאלה אחרת, וואטסאפ.',
       { actions: [{ kind: 'whatsapp', message: WHATSAPP_GENERAL }] },
     ),
   ];

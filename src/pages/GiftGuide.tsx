@@ -16,19 +16,19 @@ import { Seo } from '@/components/seo/Seo';
 const budgetTiers = [
   {
     label: 'עד ₪1,500',
-    copy: 'מתנה שמרגשת בלי להסתבך — עגילים, תליון או טבעת דקה.',
+    copy: 'מתנה שמרגשת בלי להסתבך, עגילים, תליון או טבעת דקה.',
     image: 'earrings-tiny-studs',
     to: `${ROUTES.catalog}?max=1500`,
   },
   {
     label: '₪1,500–3,000',
-    copy: 'הבחירה הפופולרית — שרשראות יהלום, חישוקים וצמידים.',
+    copy: 'הבחירה הפופולרית, שרשראות יהלום, חישוקים וצמידים.',
     image: 'necklace-gold-pendant',
     to: `${ROUTES.catalog}?min=1500&max=3000`,
   },
   {
     label: 'מעל ₪3,000',
-    copy: 'לרגע גדול — סוליטר, יהלום מרכזי, משהו שזוכרים.',
+    copy: 'לרגע גדול, סוליטר, יהלום מרכזי, משהו שזוכרים.',
     image: 'ring-solitaire-yellow',
     to: `${ROUTES.catalog}?min=3000`,
   },
@@ -37,19 +37,19 @@ const budgetTiers = [
 const occasions = [
   {
     title: 'מתנה לבת זוג',
-    copy: 'אם אין לך מושג מאיפה להתחיל — אלה הבחירות הבטוחות. עדין, קלאסי, ומתאים כמעט לכולן.',
+    copy: 'אם אין לך מושג מאיפה להתחיל, אלה הבחירות הבטוחות. עדין, קלאסי, ומתאים כמעט לכולן.',
     picks: ['single-diamond-necklace', 'mini-hoop-earrings', 'fine-diamond-band'],
     to: `${ROUTES.catalog}?category=necklaces`,
   },
   {
     title: 'יום נישואין',
-    copy: 'משהו עם משקל לרגע משמעותי — יהלום מרכזי או פריט שמלווה שנים.',
+    copy: 'משהו עם משקל לרגע משמעותי, יהלום מרכזי או פריט שמלווה שנים.',
     picks: ['solitaire-classic', 'heart-pendant-necklace', 'slim-bangle'],
     to: `${ROUTES.catalog}?min=3000`,
   },
   {
     title: 'מתנה קטנה ומרגשת',
-    copy: 'לא צריך אירוע גדול. פריט עדין שאומר "חשבתי עלייך", בתקציב נוח.',
+    copy: 'לא צריך אירוע גדול. פריט עדין שאומר ״חשבתי עלייך״, בתקציב נוח.',
     picks: ['tiny-stud-earrings', 'floral-chain-necklace', 'pearl-drop-necklace'],
     to: `${ROUTES.catalog}?max=1500`,
   },
@@ -60,7 +60,7 @@ export function GiftGuide() {
     <>
       <Seo
         title="מדריך מתנות"
-        description="לבחור מתנה בלי להיות מבינים בתכשיטים — לפי תקציב ולפי הזדמנות. סינון מהיר, ועזרה אישית בוואטסאפ."
+        description="לבחור מתנה בלי להיות מבינים בתכשיטים, לפי תקציב ולפי הזדמנות. סינון מהיר, ועזרה אישית בוואטסאפ."
         path="/gift-guide"
       />
       {/* Reassuring intro */}
@@ -71,7 +71,7 @@ export function GiftGuide() {
             לבחור מתנה, בלי להיות מבינים בתכשיטים
           </h1>
           <p className="mx-auto mt-6 max-w-xl leading-relaxed text-cream/70">
-            רוב האנשים לא יודעים מה לחפש — וזה בסדר גמור. סיננו במקומך לפי תקציב
+            רוב האנשים לא יודעים מה לחפש, וזה בסדר גמור. סיננו במקומך לפי תקציב
             ולפי ההזדמנות, כדי שתגיעו לבחירה נכונה בכמה קליקים.
           </p>
           <a

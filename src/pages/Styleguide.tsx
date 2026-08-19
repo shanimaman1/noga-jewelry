@@ -5,7 +5,7 @@
 // in David Libre, so does every heading on the site.
 import { BRAND } from '@/lib/constants';
 
-const HERO = 'תכשיט אחד שתלבשי כל יום — לא עשרה נשכחים במגירה';
+const HERO = 'תכשיט אחד שתלבשי כל יום - לא עשרה נשכחים במגירה';
 
 export default function Styleguide() {
   return (
@@ -15,7 +15,7 @@ export default function Styleguide() {
         <h1 className="mt-2">כותרות · David Libre · משקל 400</h1>
         <p className="mt-4 max-w-2xl font-body text-sm leading-relaxed text-cream/60">
           זו הבחירה הנעולה: David Libre (סריף עברי) במשקל 400 לכל הכותרות, דרך טוקן
-          יחיד. הגוף נשאר Assistant. כל שורה למטה היא תג כותרת אמיתי שיורש את הטוקן —
+          יחיד. הגוף נשאר Assistant. כל שורה למטה היא תג כותרת אמיתי שיורש את הטוקן,
           כך אפשר לאמת שכל רמות הכותרת קיבלו את השינוי, לא רק ה-Hero.
         </p>
 
@@ -36,7 +36,7 @@ export default function Styleguide() {
 
           <Row label="גוף · Assistant, משקל 400">
             <p className="max-w-2xl font-body leading-relaxed text-cream/80">
-              {BRAND.tagline}. דנה, צורפת בוגרת בצלאל, מלווה כל לקוחה לאורך כל הדרך —
+              {BRAND.tagline}. דנה, צורפת בוגרת בצלאל, מלווה כל לקוחה לאורך כל הדרך,
               עבודת יד, חומרים אמיתיים, ותשומת לב לכל פרט.
             </p>
           </Row>

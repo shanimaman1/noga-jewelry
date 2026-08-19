@@ -118,7 +118,7 @@ export function Visit() {
               </dl>
 
               <p className="mt-8 rounded-sm border border-mist p-5 text-sm leading-relaxed text-stone max-sm:me-28">
-                אפשר להגיע בשעות הפתיחה, אך מומלץ לתאם מראש — במיוחד למדידה,
+                אפשר להגיע בשעות הפתיחה, אך מומלץ לתאם מראש, במיוחד למדידה,
                 התאמה אישית או פגישה על תכשיט בהזמנה.
               </p>
             </div>

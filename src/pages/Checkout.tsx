@@ -155,7 +155,7 @@ export function Checkout() {
     <div className="py-12 sm:py-16">
       <Seo
         title="תשלום"
-        description="השלמת ההזמנה — אתר הדגמה, ללא חיוב אמיתי."
+        description="השלמת ההזמנה - אתר הדגמה, ללא חיוב אמיתי."
         path="/checkout"
       />
       <Container>
@@ -240,7 +240,7 @@ export function Checkout() {
                   className="accent-gold"
                 />
                 <span className="text-charcoal">
-                  לארוז כמתנה — קופסה, סרט וכרטיס בכתב יד <span className="text-stone">(ללא תוספת תשלום)</span>
+                  לארוז כמתנה, קופסה, סרט וכרטיס בכתב יד <span className="text-stone">(ללא תוספת תשלום)</span>
                 </span>
               </label>
               {giftWrap && (
@@ -256,7 +256,7 @@ export function Checkout() {
                 תשלום
               </h2>
               <p className="mt-2 text-xs text-stone">
-                זהו אתר הדגמה — לא מתבצע חיוב אמיתי ואין להזין פרטי כרטיס אמיתיים.
+                זהו אתר הדגמה - לא מתבצע חיוב אמיתי ואין להזין פרטי כרטיס אמיתיים.
               </p>
               <div className="mt-5">
                 <OptionCards
@@ -333,7 +333,7 @@ export function Checkout() {
                   <dd className="text-charcoal">{shipping === 0 ? 'חינם' : formatPrice(shipping)}</dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-mist pt-3 text-base">
-                  <dt className="text-charcoal">סה"כ לתשלום</dt>
+                  <dt className="text-charcoal">סה״כ לתשלום</dt>
                   <dd className="text-charcoal">{formatPrice(total)}</dd>
                 </div>
               </dl>
@@ -346,14 +346,14 @@ export function Checkout() {
                 {submitting ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-cream/40 border-t-cream" aria-hidden="true" />
-                    מעבד הזמנה…
+                    מעבד הזמנה...
                   </>
                 ) : (
                   `לתשלום · ${formatPrice(total)}`
                 )}
               </button>
               <p className="mt-3 text-center text-xs text-stone">
-                בלחיצה מתבצעת הזמנת הדגמה בלבד — ללא חיוב.
+                בלחיצה מתבצעת הזמנת הדגמה בלבד, ללא חיוב.
               </p>
             </div>
           </aside>

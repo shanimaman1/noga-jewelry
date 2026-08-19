@@ -310,7 +310,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                             </p>
                           )}
                           <p className="mt-2 text-xs text-stone">
-                            מצב הדגמה — הכתובת אינה נשלחת ולא נשמרת.
+                            מצב הדגמה - הכתובת אינה נשלחת ולא נשמרת.
                           </p>
                         </form>
                       )}
@@ -390,7 +390,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">טיפוח</dt>
                     <dd className="text-charcoal">
-                      להסיר לפני מקלחת וים. לניקוי — מים פושרים וסבון עדין, ולייבש במטלית רכה.
+                      להסיר לפני מקלחת וים. לניקוי, מים פושרים וסבון עדין, ולייבש במטלית רכה.
                     </dd>
                   </div>
                 </dl>

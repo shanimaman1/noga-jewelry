@@ -19,7 +19,7 @@ export function Header() {
         <Link
           to={ROUTES.home}
           className="font-heading text-2xl font-normal tracking-luxury text-charcoal"
-          aria-label={`${BRAND.nameHe} — לדף הבית`}
+          aria-label={`${BRAND.nameHe} - לדף הבית`}
         >
           {BRAND.nameHe}
         </Link>

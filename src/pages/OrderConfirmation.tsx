@@ -90,7 +90,7 @@ export function OrderConfirmation() {
               </dd>
             </div>
             <div className="flex items-center justify-between border-t border-mist pt-3 text-base">
-              <dt className="text-charcoal">סה"כ</dt>
+              <dt className="text-charcoal">סה״כ</dt>
               <dd className="text-charcoal">{formatPrice(order.total)}</dd>
             </div>
           </dl>

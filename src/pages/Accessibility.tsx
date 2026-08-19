@@ -7,7 +7,7 @@ const features = [
   'מבנה כותרות היררכי ותגיות סמנטיות לקוראי מסך.',
   'טקסט חלופי לתמונות המוצרים ולתוכן הוויזואלי.',
   'ניגודיות צבעים העומדת ביחס של 4.5:1 לפחות בטקסט.',
-  'כיבוד העדפת המערכת "צמצום תנועה" (prefers-reduced-motion).',
+  'כיבוד העדפת המערכת ״צמצום תנועה״ (prefers-reduced-motion).',
   'טפסים עם תוויות מקושרות והודעות שגיאה ברורות.',
   'תמיכה מלאה בעברית ובכיווניות מימין לשמאל.',
 ];
@@ -36,7 +36,7 @@ export function Accessibility() {
             <p>
               ב{BRAND.nameHe} אנו רואים חשיבות בכך שהאתר יהיה נגיש לכלל הגולשים,
               לרבות אנשים עם מוגבלות. האתר נבנה במטרה לעמוד בדרישות תקן הנגישות
-              הישראלי (ת"י 5568) ובהנחיות{' '}
+              הישראלי (ת״י 5568) ובהנחיות{' '}
               <span dir="ltr" className="text-charcoal">
                 WCAG 2.0
               </span>{' '}
@@ -77,7 +77,7 @@ export function Accessibility() {
             </p>
             <ul className="mt-4 space-y-2">
               <li>
-                דוא"ל:{' '}
+                דוא״ל:{' '}
                 <a
                   href={`mailto:${BRAND.email}`}
                   className="text-charcoal underline underline-offset-4 hover:text-gold"
@@ -99,7 +99,7 @@ export function Accessibility() {
             </ul>
             <p className="mt-6 text-sm">הצהרה זו עודכנה לאחרונה ב{updated}.</p>
             <p className="mt-2 text-sm text-stone/80">
-              (זהו אתר הדגמה לפורטפוליו — פרטי הקשר הם לצורך המחשה בלבד.)
+              (זהו אתר הדגמה לפורטפוליו - פרטי הקשר הם לצורך המחשה בלבד.)
             </p>
           </section>
         </div>

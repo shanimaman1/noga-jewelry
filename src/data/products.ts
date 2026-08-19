@@ -81,7 +81,7 @@ export const products: Product[] = [
       {
         id: 'yellow',
         image: 'stacking-rings-set-v1',
-        imageAlt: 'שלוש טבעות זהב צהוב דקות — חלקה, במרקם מילגריין ומשובצת יהלומים זעירים — על בד בגוון שנהב',
+        imageAlt: 'שלוש טבעות זהב צהוב דקות, חלקה, במרקם מילגריין ומשובצת יהלומים זעירים, על בד בגוון שנהב',
       },
     ],
   },
@@ -199,7 +199,7 @@ export const products: Product[] = [
   {
     slug: 'mini-hoop-earrings',
     name: 'עגילי חישוק קטנים',
-    shortDescription: 'חישוק בקוטר 10 מ"מ עם יהלומי בגט, קל מספיק לשכוח שהוא שם.',
+    shortDescription: 'חישוק בקוטר 10 מ״מ עם יהלומי בגט, קל מספיק לשכוח שהוא שם.',
     price: 2200,
     category: 'earrings',
     availability: 'ready',

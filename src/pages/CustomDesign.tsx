@@ -11,7 +11,7 @@ const PHONE_RE = /^0(5\d|[2-489])[-\s]?\d{7}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const steps = [
-  { n: '01', title: 'שיחת היכרות', text: 'נשב יחד (או בזום) ונבין מה את מחפשת — סגנון, תקציב, אבן, הזדמנות.' },
+  { n: '01', title: 'שיחת היכרות', text: 'נשב יחד (או בזום) ונבין מה את מחפשת, סגנון, תקציב, אבן, הזדמנות.' },
   { n: '02', title: 'שרטוט והצעה', text: 'דנה מכינה שרטוט והדמיה, עם הצעת מחיר מדויקת. מדייקים עד שזה מרגיש נכון.' },
   { n: '03', title: 'יצירה באטלייה', text: 'התכשיט נוצר בעבודת יד. בדרך כלל 3–4 שבועות, ואת מעודכנת לאורך הדרך.' },
 ];
@@ -52,7 +52,7 @@ export function CustomDesign() {
     <>
       <Seo
         title="עיצוב אישי"
-        description="נתכנן יחד תכשיט משלך — משיחת היכרות, דרך שרטוט והצעה, ועד יצירה בעבודת יד באטלייה."
+        description="נתכנן יחד תכשיט משלך, משיחת היכרות, דרך שרטוט והצעה, ועד יצירה בעבודת יד באטלייה."
         path="/custom"
       />
       {/* Intro */}
@@ -99,7 +99,7 @@ export function CustomDesign() {
               <div className="overflow-hidden rounded-sm">
                 <CatalogImage
                   name="ring-solitaire-rose"
-                  alt="טבעת סוליטר בזהב אדום — דוגמה לעבודת עיצוב אישי"
+                  alt="טבעת סוליטר בזהב אדום, דוגמה לעבודת עיצוב אישי"
                   className="aspect-[4/5] w-full"
                   full
                 />
@@ -128,7 +128,7 @@ export function CustomDesign() {
                   <Field label="שם מלא" name="name" autoComplete="name" error={errors.name} />
                   <Field label="טלפון" name="phone" type="tel" inputMode="tel" autoComplete="tel" dir="ltr" placeholder="050-0000000" error={errors.phone} />
                   <Field label="אימייל" name="email" type="email" inputMode="email" autoComplete="email" dir="ltr" placeholder="your@email.com" error={errors.email} />
-                  <TextAreaField label="מה את מדמיינת?" name="dream" placeholder="סוג התכשיט, סגנון, אבן, תקציב משוער, מועד יעד…" />
+                  <TextAreaField label="מה את מדמיינת?" name="dream" placeholder="סוג התכשיט, סגנון, אבן, תקציב משוער, מועד יעד..." />
                   {errors.dream && (
                     <p role="alert" className="text-xs text-red-800">
                       {errors.dream}

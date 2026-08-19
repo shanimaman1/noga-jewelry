@@ -41,7 +41,7 @@ export function Gallery({
       <div className="relative aspect-square overflow-hidden rounded-sm bg-mist/30">
         {mode === '3d' && canSpin ? (
           <Suspense
-            fallback={<div className="absolute inset-0 grid place-items-center text-sm text-stone">טוען תצוגת 360°…</div>}
+            fallback={<div className="absolute inset-0 grid place-items-center text-sm text-stone">טוען תצוגת 360°...</div>}
           >
             {/* Absolutely positioned so the R3F canvas can never drive the
                 layout width (see AmbientRing for the feedback-loop it avoids). */}
@@ -97,7 +97,7 @@ export function Gallery({
                 setMode('photo');
                 setActive(i);
               }}
-              aria-label={`${name} — ${view.label}`}
+              aria-label={`${name} - ${view.label}`}
               aria-current={mode === 'photo' && i === active}
               className={`block overflow-hidden rounded-sm border transition-colors ${
                 mode === 'photo' && i === active ? 'border-gold' : 'border-transparent hover:border-mist'

@@ -3,7 +3,7 @@
 export const BRAND = {
   nameHe: 'נוגה',
   nameEn: 'NOGA Fine Jewelry',
-  tagline: 'תכשיט אחד שתלבשי כל יום — לא עשרה נשכחים במגירה',
+  tagline: 'תכשיט אחד שתלבשי כל יום - לא עשרה נשכחים במגירה',
   city: 'תל אביב',
   foundedYear: 2013,
   // Deliberately INVALID placeholder number for this demo — never a real number.

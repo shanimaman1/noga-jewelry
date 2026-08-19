@@ -34,7 +34,7 @@ export function DemoModeBanner() {
         <p className="text-xs tracking-wide sm:text-sm">
           <span className="text-gold">מצב הדגמה</span>
           <span className="mx-2 opacity-40">·</span>
-          אתר תצוגה לפורטפוליו — אין רכישות, תשלומים או הזמנות אמיתיים.
+          אתר תצוגה לפורטפוליו - אין רכישות, תשלומים או הזמנות אמיתיים.
         </p>
         <button
           type="button"

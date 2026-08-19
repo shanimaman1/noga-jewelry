@@ -10,13 +10,13 @@ export function SizeGuideModal({ open, onClose }: { open: boolean; onClose: () =
           <h3 className="text-base text-charcoal">איך למדוד בבית</h3>
           <ol className="mt-3 list-decimal space-y-2 ps-5">
             <li>גזרי רצועת נייר ברוחב כחצי סנטימטר.</li>
-            <li>עטפי אותה סביב בסיס האצבע — צמוד, אבל כך שתעבור מעל הפרק.</li>
+            <li>עטפי אותה סביב בסיס האצבע, צמוד, אבל כך שתעבור מעל הפרק.</li>
             <li>סמני בעט את נקודת המפגש ומדדי את האורך בסרגל, במילימטרים.</li>
             <li>המספר שקיבלת הוא ההיקף. אתרי אותו בטבלה כדי לקבל את המידה.</li>
           </ol>
           <p className="mt-3">
             כדאי למדוד בסוף היום, כשהאצבעות בנפח מלא, ולחזור על המדידה פעמיים.
-            אם יצאתן בין שתי מידות — עדיף לעגל למידה הגדולה.
+            אם יצאתן בין שתי מידות, עדיף לעגל למידה הגדולה.
           </p>
         </section>
 
@@ -41,7 +41,7 @@ export function SizeGuideModal({ open, onClose }: { open: boolean; onClose: () =
                 {ringSizes.map((row) => (
                   <tr key={row.size} className="border-b border-mist/60">
                     <td className="py-2">{row.size}</td>
-                    <td className="py-2">{row.circumference} מ"מ</td>
+                    <td className="py-2">{row.circumference} מ״מ</td>
                   </tr>
                 ))}
               </tbody>
@@ -49,7 +49,7 @@ export function SizeGuideModal({ open, onClose }: { open: boolean; onClose: () =
           </div>
           <p className="mt-3">
             המידה בישראל היא הקוטר הפנימי במילימטרים. אם עדיין יש התלבטות, אפשר
-            לכתוב לנו ונעזור — ובכל מקרה ההחלפה אפשרית תוך 30 יום.
+            לכתוב לנו ונעזור, ובכל מקרה ההחלפה אפשרית תוך 30 יום.
           </p>
         </section>
       </div>

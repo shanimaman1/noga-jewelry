@@ -4,7 +4,7 @@ import { ringSizes } from '@/data/sizes';
 
 const measureSteps = [
   'גזרי רצועת נייר דקה, ברוחב כחצי סנטימטר.',
-  'עטפי אותה סביב בסיס האצבע — צמוד, אך כך שתעבור מעל הפרק.',
+  'עטפי אותה סביב בסיס האצבע, צמוד, אך כך שתעבור מעל הפרק.',
   'סמני בעט את נקודת המפגש, ומדדי את האורך בסרגל במילימטרים.',
   'המספר שקיבלת הוא ההיקף. אתרי אותו בטבלה כדי לקבל את המידה.',
 ];
@@ -24,7 +24,7 @@ const careItems = [
   },
   {
     title: 'אחסון',
-    text: 'שמרי כל פריט בנפרד — בשקית בד או בתא נפרד בקופסה — כדי שלא ישרטו זה את זה. זהב רך יחסית ונשרט במגע עם מתכות אחרות.',
+    text: 'שמרי כל פריט בנפרד, בשקית בד או בתא נפרד בקופסה, כדי שלא ישרטו זה את זה. זהב רך יחסית ונשרט במגע עם מתכות אחרות.',
   },
 ];
 
@@ -57,7 +57,7 @@ export function SizeCare() {
           </ol>
           <p className="mt-4 leading-relaxed text-stone">
             כדאי למדוד בסוף היום, כשהאצבעות בנפח מלא, ולחזור על המדידה פעמיים.
-            אם יצאת בין שתי מידות — עדיף לעגל למידה הגדולה.
+            אם יצאת בין שתי מידות, עדיף לעגל למידה הגדולה.
           </p>
         </section>
 
@@ -87,8 +87,8 @@ export function SizeCare() {
               <tbody>
                 {ringSizes.map((row) => (
                   <tr key={row.size} className="border-b border-mist/60">
-                    <td className="py-3">{row.size} מ"מ</td>
-                    <td className="py-3">{row.circumference} מ"מ</td>
+                    <td className="py-3">{row.size} מ״מ</td>
+                    <td className="py-3">{row.circumference} מ״מ</td>
                   </tr>
                 ))}
               </tbody>
@@ -113,7 +113,7 @@ export function SizeCare() {
 
         <p className="mt-14 rounded-sm border border-mist p-6 text-sm leading-relaxed text-stone">
           לא בטוחה לגבי מידה, או שרוצה לרענן תכשיט ותיק? אפשר לכתוב לנו בוואטסאפ
-          ונעזור. וכמובן — ההחלפה אפשרית תוך 30 יום.
+          ונעזור. וכמובן, ההחלפה אפשרית תוך 30 יום.
         </p>
       </Container>
     </div>

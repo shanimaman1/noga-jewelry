@@ -26,7 +26,7 @@ export function Footer() {
         </div>
 
         {/* Explore */}
-        <nav aria-label="ניווט תחתון — קטלוג">
+        <nav aria-label="ניווט תחתון - קטלוג">
           <h2 className="text-xs tracking-luxury text-gold">לגלות</h2>
           <ul className="mt-4 space-y-3 text-sm">
             {NAV_LINKS.map((link) => (
@@ -40,7 +40,7 @@ export function Footer() {
         </nav>
 
         {/* Service */}
-        <nav aria-label="ניווט תחתון — שירות">
+        <nav aria-label="ניווט תחתון - שירות">
           <h2 className="text-xs tracking-luxury text-gold">שירות</h2>
           <ul className="mt-4 space-y-3 text-sm">
             {serviceLinks.map((link) => (
@@ -90,7 +90,7 @@ export function Footer() {
       <div className="border-t border-cream/10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-6 text-xs text-cream/40 sm:flex-row sm:px-8">
           <p>
-            © {new Date().getFullYear()} {BRAND.nameEn}. אתר הדגמה לפורטפוליו — אין רכישות אמיתיות.
+            © {new Date().getFullYear()} {BRAND.nameEn}. אתר הדגמה לפורטפוליו - אין רכישות אמיתיות.
           </p>
           <Link to={ROUTES.accessibility} className="transition-colors hover:text-cream/70">
             נגישות
