@@ -17,6 +17,7 @@ import { SizeGuideModal } from '@/components/product/SizeGuideModal';
 import { Seo } from '@/components/seo/Seo';
 import { productImage } from '@/data/products';
 import { SITE_URL } from '@/lib/seo';
+import { stoneDescription } from '@/lib/productMaterials';
 import {
   DELIVERY_TIMES,
   SHIPPING,
@@ -367,7 +368,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
               </section>
 
               <div className="mt-4">
-                <TrustStrip />
+                <TrustStrip stones={product.stones} />
               </div>
 
               {/* Materials & care */}
@@ -377,15 +378,17 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">מתכת</dt>
                     <dd className="text-charcoal">
-                      זהב 14 קראט מלא ({METAL_LABELS[metal]}). אפשרי גם ב-18 קראט לפי בקשה.
+                      זהב 14 קראט מלא ({METAL_LABELS[metal]}).
+                      {product.availableIn18K && ' אפשר להזמין גם בזהב 18 קראט לפי בקשה.'}
                     </dd>
                   </div>
                   <div className="flex gap-3">
+                    <dt className="w-28 shrink-0 text-stone">משקל זהב</dt>
+                    <dd className="text-charcoal">כ־{product.goldWeightGrams} גרם</dd>
+                  </div>
+                  <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">אבנים</dt>
-                    <dd className="text-charcoal">
-                      {product.stonesDescription ??
-                        'יהלומים טבעיים בליטוש מבריק, דירוג צבע G–H, ניקיון VS.'}
-                    </dd>
+                    <dd className="text-charcoal">{stoneDescription(product.stones)}</dd>
                   </div>
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">ייצור</dt>

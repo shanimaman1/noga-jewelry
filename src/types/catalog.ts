@@ -4,6 +4,28 @@ export type Category = 'rings' | 'necklaces' | 'earrings' | 'bracelets';
 
 export type Availability = 'ready' | 'made-to-order' | 'out-of-stock';
 
+export type StoneDetails =
+  | { kind: 'none' }
+  | {
+      kind: 'pearl';
+      source: 'freshwater-cultured';
+      quantity: 1;
+      diameterMm: number;
+    }
+  | {
+      kind: 'diamonds';
+      origin: 'natural' | 'lab-grown';
+      totalCarat: number;
+      arrangement: 'single' | 'multiple';
+      cut?: 'round' | 'baguette';
+      color?: string;
+      clarity?: string;
+      setComposition?: {
+        diamondSetPieces: number;
+        plainPieces: number;
+      };
+    };
+
 /**
  * A metal a piece is genuinely offered in. Every variant must have a truthful,
  * visually verified image for that exact design and metal: either a licensed
@@ -28,8 +50,12 @@ export type Product = {
   category: Category;
   /** Real catalogue availability used by every shopping surface. */
   availability: Availability;
-  /** Product-specific stone disclosure. Falls back to the catalogue default. */
-  stonesDescription?: string;
+  /** Explicit material disclosure; there is deliberately no catalogue fallback. */
+  stones: StoneDetails;
+  /** Approximate net gold weight, excluding stones, in grams. */
+  goldWeightGrams: number;
+  /** Whether this design can genuinely be ordered in 18-karat gold. */
+  availableIn18K: boolean;
   /** Ordered; the first is the default view. At least one. */
   metals: MetalVariant[];
   /** Marks the piece for the "featured" row on the homepage. */

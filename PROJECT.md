@@ -202,7 +202,10 @@ both worlds — the dark atelier and everyday light.
 - **Metal selector that actually swaps the images** (yellow / rose / white).
 - **Size selector** + **size-guide modal** (focus-trapped, keyboard-closable).
 - **Sticky add-to-cart on mobile**.
-- Trust strip (handmade / certificate / exchange / wrapping).
+- Trust strip (certificate only when one diamond exceeds 0.3ct / exchange /
+  wrapping).
+- Explicit stones disclosure and approximate net gold weight from product data;
+  the 18-karat order note appears only on products that support it.
 - Shipping & returns.
 - Home-delivery and studio-collection timing; made-to-order lead time is stated
   before the chosen fulfilment time.
@@ -222,6 +225,19 @@ both worlds — the dark atelier and everyday light.
 - An out-of-stock product cannot be added to the cart. Its product page opens
   a small restock-email form. The form is deliberately simulated: it validates
   and confirms locally, sends no network request and stores no address.
+
+## Product materials
+- Every product has explicit `stones`, `goldWeightGrams` and `availableIn18K`
+  fields in `src/data/products.ts`. There is no fallback stone claim in the UI.
+- `stones` distinguishes no stones, cultured freshwater pearl, natural diamonds
+  and lab-grown diamonds. Diamond records carry total carat weight; the
+  solitaire also carries colour and clarity.
+- `goldWeightGrams` is an approximate net gold weight and excludes stones.
+- The 18-karat request note is shown only for the three made-to-order products;
+  no 18-karat price is stated.
+- The product trust strip follows the homepage policy exactly: a diamond
+  certificate is shown only for a single diamond above 0.3ct. Total melee
+  weight does not qualify a multi-stone piece.
 
 ## SEO (dedicated phase)
 - Per-page **Hebrew** `<title>` and meta description.
@@ -271,10 +287,11 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   delivery, free over ₪1,000, and free studio collection. Studio address and
   hours are read from the shared `STUDIO` constant. Discounts, returns, warranty
   and custom-order pricing remain unknown and receive an honest handoff to
-  WhatsApp. Product names, prices, metals and
-  categories are never written as literals in the assistant code; they are
-  read from `products.ts`. General jewellery knowledge may be answered without
-  a tool, but it must never become a claim about a Noga product or policy.
+  WhatsApp. Product names, prices, metals, categories, stone details and
+  approximate gold weights are never written as literals in the assistant
+  code; they are read from `products.ts`. General jewellery knowledge may be
+  answered without a tool, but it must never become a claim about a Noga product
+  or policy.
 - Layering: launcher/scrim z-30, panel z-41 (above the WhatsApp FAB's z-40 so it
   is not pierced, below the cart drawer / modals at z-50). The panel is
   bottom-anchored at `min(82svh, 100svh - 9rem)` so it never reaches the header.
@@ -324,8 +341,9 @@ remain buttons the shopper must click.
   reorder or choose a different subset. Filter/tool decisions run at zero
   temperature, while greetings, general knowledge and safe transition prose
   retain conversational sampling.
-- Product-specific prose, availability and delivery lines are assembled by
-  application code from that turn's tool records. Product names, prices and
+- Product-specific prose, stone details, approximate gold weight, availability
+  and delivery lines are assembled by application code from that turn's tool
+  records. Product names, prices and
   card descriptions are rendered from catalogue records, not model text.
   Availability, delivery, collection and shipping-cost facts use fixed code
   templates. Shipping figures are appended only from the verified tool result,

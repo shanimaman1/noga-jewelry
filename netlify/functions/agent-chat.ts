@@ -14,6 +14,7 @@ import {
   productDeliveryText,
 } from '../../src/lib/fulfillment';
 import { formatPrice } from '../../src/lib/format';
+import { stoneDescription } from '../../src/lib/productMaterials';
 import { STUDIO } from '../../src/lib/constants';
 import type { Availability, Category, Metal, Product } from '../../src/types/catalog';
 import type { AgentChatResponse, LlmClientAction } from '../../src/lib/agent/llmProtocol';
@@ -75,6 +76,7 @@ type RequestedField =
   | 'category'
   | 'metals'
   | 'stones'
+  | 'gold_weight'
   | 'availability'
   | 'delivery'
   | 'price';
@@ -114,14 +116,14 @@ CONVERSATION FIRST:
 
 NON-NEGOTIABLE BUSINESS DATA RULES:
 - You have no catalogue knowledge until a tool returns it in THIS request. Never rely on memory or prior turns.
-- Before making any claim about a Noga product name, price, category, metal, stones, availability or delivery, call search_products or get_product in this same request.
+- Before making any claim about a Noga product name, price, category, metal, stones, gold weight, availability or delivery, call search_products or get_product in this same request.
 - For a question about one identifiable product, search for that exact product first, then call get_product with the requested fields. Availability questions must request availability so application code renders the answer.
 - Studio address and opening hours, delivery or collection times, and shipping cost are business facts. State them only when a tool returns them in this request.
 - For delivery or collection times call search_products with include_delivery_policy. For shipping cost call it with include_shipping_cost. For studio address or hours call it with include_studio_info. Do not present product cards for an information-only request.
 - Use get_product.requested_fields to state exactly which facts the shopper asked to see. The application renders those facts from the tool record; do not repeat their values in prose.
 - For recommendations, search first and then call present_recommendations only with slugs returned in this request.
 - The application chooses recommendation order and the final subset. Do not rank, reorder or select favourites from the search results. In transition prose, do not state the result count or repeat catalogue categories, metals or other product facts; refer only to what the shopper herself asked for.
-- Never write a product price or name in your prose. Never write a product's metal, category, stone description, availability label, delivery time or a shipping-cost figure in prose. The application renders those facts from tool results.
+- Never write a product price or name in your prose. Never write a product's metal, category, stone description, gold weight, availability label, delivery time or a shipping-cost figure in prose. The application renders those facts from tool results.
 - A slug not returned by a catalogue tool is invalid. Never repair or guess it.
 - Discounts, returns, warranty and custom-order pricing are unknown business policies. Say you do not have verified information and call offer_whatsapp. Do not answer them from general knowledge.
 - Tools never perform actions. open_size_guide and offer_whatsapp only make buttons available for the shopper to click.
@@ -174,7 +176,7 @@ const TOOL_DECLARATIONS = [
           type: 'array',
           items: {
             type: 'string',
-            enum: ['description', 'category', 'metals', 'stones', 'availability', 'delivery', 'price'],
+            enum: ['description', 'category', 'metals', 'stones', 'gold_weight', 'availability', 'delivery', 'price'],
           },
         },
       },
@@ -311,7 +313,7 @@ function searchHaystack(product: Product): string {
       product.slug,
       product.name,
       product.shortDescription,
-      product.stonesDescription ?? '',
+      stoneDescription(product.stones),
       CATEGORY_LABELS[product.category],
       ...product.metals.flatMap((variant) => [METAL_LABELS[variant.id], variant.imageAlt]),
     ].join(' '),
@@ -326,7 +328,8 @@ function catalogueRecord(product: Product) {
     price: product.price,
     category: CATEGORY_LABELS[product.category],
     metals: product.metals.map((variant) => METAL_LABELS[variant.id]),
-    stonesDescription: product.stonesDescription ?? null,
+    stonesDescription: stoneDescription(product.stones),
+    goldWeightGrams: product.goldWeightGrams,
     availability: AVAILABILITY_LABELS[product.availability],
     delivery: productDeliveryText(product),
   };
@@ -353,6 +356,7 @@ const REQUESTED_FIELDS: RequestedField[] = [
   'category',
   'metals',
   'stones',
+  'gold_weight',
   'availability',
   'delivery',
   'price',
@@ -693,12 +697,9 @@ function requestedFactLine(product: Product, fields: Set<RequestedField>): strin
     facts.push(`מתכות: ${product.metals.map((variant) => METAL_LABELS[variant.id]).join(', ')}`);
   }
   if (fields.has('stones')) {
-    facts.push(
-      product.stonesDescription
-        ? `אבנים: ${product.stonesDescription}`
-        : 'אין בקטלוג פירוט אבנים נפרד לפריט הזה',
-    );
+    facts.push(`אבנים: ${stoneDescription(product.stones)}`);
   }
+  if (fields.has('gold_weight')) facts.push(`משקל זהב משוער: ${product.goldWeightGrams} גרם`);
   if (fields.has('availability')) {
     facts.push(`זמינות: ${AVAILABILITY_LABELS[product.availability]}`);
   }

@@ -1,6 +1,6 @@
 import type { Product } from '@/types/catalog';
 
-// Placeholder catalogue for the demo. Prices span the brand range ₪890–₪12,000.
+// Placeholder catalogue for the demo. Prices span the brand range ₪890–₪8,900.
 // Copy follows the brand voice: plain, restrained, no superlatives.
 //
 // Imagery: visually verified assets for the exact demo product — licensed real
@@ -21,6 +21,17 @@ export const products: Product[] = [
     price: 8900,
     category: 'rings',
     availability: 'made-to-order',
+    stones: {
+      kind: 'diamonds',
+      origin: 'natural',
+      totalCarat: 0.5,
+      arrangement: 'single',
+      cut: 'round',
+      color: 'G',
+      clarity: 'VS1',
+    },
+    goldWeightGrams: 3,
+    availableIn18K: true,
     // The only product the ring.glb model genuinely depicts → live 360° viewer.
     has3D: true,
     // Matched pair: the same verified milgrain-band design in two metal colours.
@@ -42,9 +53,17 @@ export const products: Product[] = [
     slug: 'fine-diamond-band',
     name: 'טבעת יהלומים דקה',
     shortDescription: 'שורת יהלומים זעירים על רצועה דקה, לענידה לבד או בשכבות.',
-    price: 4200,
+    price: 3400,
     category: 'rings',
     availability: 'made-to-order',
+    stones: {
+      kind: 'diamonds',
+      origin: 'lab-grown',
+      totalCarat: 0.35,
+      arrangement: 'multiple',
+    },
+    goldWeightGrams: 1.8,
+    availableIn18K: true,
     metals: [
       {
         id: 'yellow',
@@ -61,7 +80,9 @@ export const products: Product[] = [
     price: 1290,
     category: 'rings',
     availability: 'ready',
-    stonesDescription: 'ללא אבנים.',
+    stones: { kind: 'none' },
+    goldWeightGrams: 1.4,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -74,9 +95,18 @@ export const products: Product[] = [
     slug: 'stacking-rings',
     name: 'טבעות שכבות',
     shortDescription: 'שלוש רצועות דקות שנענדות יחד או בנפרד.',
-    price: 2600,
+    price: 3900,
     category: 'rings',
     availability: 'ready',
+    stones: {
+      kind: 'diamonds',
+      origin: 'lab-grown',
+      totalCarat: 0.1,
+      arrangement: 'multiple',
+      setComposition: { diamondSetPieces: 1, plainPieces: 2 },
+    },
+    goldWeightGrams: 4.4,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -94,6 +124,15 @@ export const products: Product[] = [
     price: 2450,
     category: 'necklaces',
     availability: 'ready',
+    stones: {
+      kind: 'diamonds',
+      origin: 'natural',
+      totalCarat: 0.25,
+      arrangement: 'single',
+      cut: 'round',
+    },
+    goldWeightGrams: 1.9,
+    availableIn18K: false,
     metals: [
       {
         id: 'white',
@@ -110,6 +149,14 @@ export const products: Product[] = [
     price: 3100,
     category: 'necklaces',
     availability: 'ready',
+    stones: {
+      kind: 'diamonds',
+      origin: 'lab-grown',
+      totalCarat: 0.45,
+      arrangement: 'multiple',
+    },
+    goldWeightGrams: 2.5,
+    availableIn18K: false,
     metals: [
       {
         id: 'white',
@@ -125,6 +172,9 @@ export const products: Product[] = [
     price: 1890,
     category: 'necklaces',
     availability: 'ready',
+    stones: { kind: 'none' },
+    goldWeightGrams: 2.8,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -140,6 +190,14 @@ export const products: Product[] = [
     price: 1650,
     category: 'necklaces',
     availability: 'ready',
+    stones: {
+      kind: 'pearl',
+      source: 'freshwater-cultured',
+      quantity: 1,
+      diameterMm: 8,
+    },
+    goldWeightGrams: 1.7,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -156,6 +214,9 @@ export const products: Product[] = [
     price: 2100,
     category: 'necklaces',
     availability: 'ready',
+    stones: { kind: 'none' },
+    goldWeightGrams: 3.2,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -171,6 +232,14 @@ export const products: Product[] = [
     price: 2950,
     category: 'necklaces',
     availability: 'ready',
+    stones: {
+      kind: 'diamonds',
+      origin: 'lab-grown',
+      totalCarat: 0.5,
+      arrangement: 'multiple',
+    },
+    goldWeightGrams: 2.4,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -186,6 +255,9 @@ export const products: Product[] = [
     price: 1490,
     category: 'necklaces',
     availability: 'out-of-stock',
+    stones: { kind: 'none' },
+    goldWeightGrams: 2.1,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -203,6 +275,15 @@ export const products: Product[] = [
     price: 2200,
     category: 'earrings',
     availability: 'ready',
+    stones: {
+      kind: 'diamonds',
+      origin: 'lab-grown',
+      totalCarat: 0.3,
+      arrangement: 'multiple',
+      cut: 'baguette',
+    },
+    goldWeightGrams: 2,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -218,6 +299,9 @@ export const products: Product[] = [
     price: 890,
     category: 'earrings',
     availability: 'ready',
+    stones: { kind: 'none' },
+    goldWeightGrams: 0.6,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -235,6 +319,9 @@ export const products: Product[] = [
     price: 2100,
     category: 'bracelets',
     availability: 'ready',
+    stones: { kind: 'none' },
+    goldWeightGrams: 2.8,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -247,9 +334,12 @@ export const products: Product[] = [
     slug: 'beaded-bracelet',
     name: 'צמיד חרוזים',
     shortDescription: 'שני צמידים דקים בעבודת חרוזים זעירים.',
-    price: 1350,
+    price: 2400,
     category: 'bracelets',
     availability: 'ready',
+    stones: { kind: 'none' },
+    goldWeightGrams: 3,
+    availableIn18K: false,
     metals: [
       {
         id: 'yellow',
@@ -262,9 +352,17 @@ export const products: Product[] = [
     slug: 'slim-bangle',
     name: 'צמיד קשיח דק',
     shortDescription: 'צמיד קשיח בקו נקי, עם שורת אבנים עדינה.',
-    price: 3800,
+    price: 5900,
     category: 'bracelets',
     availability: 'made-to-order',
+    stones: {
+      kind: 'diamonds',
+      origin: 'lab-grown',
+      totalCarat: 0.25,
+      arrangement: 'multiple',
+    },
+    goldWeightGrams: 6,
+    availableIn18K: true,
     metals: [
       {
         id: 'yellow',
