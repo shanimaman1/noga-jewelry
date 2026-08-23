@@ -30,7 +30,8 @@ const MAX_CONTEXT_LENGTH = 600;
 const MAX_GEMINI_CALLS_PER_MESSAGE = 4;
 const MAX_RECOMMENDATIONS = 3;
 const WHATSAPP_MESSAGE = 'היי, אשמח לעזרה בבחירת תכשיט';
-const SAFE_GENERIC = 'אין לי מידע מאומת על זה כרגע. אפשר לפנות לדנה בוואטסאפ.';
+const SAFE_GENERIC =
+  'הפרטים האלה יכולים להשתנות לפי ההזמנה, אז הכי טוב לבדוק ישירות עם דנה בוואטסאפ.';
 
 type Environment = Record<string, string | undefined>;
 const environment = (): Environment => process.env;
@@ -105,6 +106,7 @@ CONVERSATION FIRST:
 - Once the shopper provides enough detail to filter meaningfully, call search_products and present up to three real recommendations. A category plus a budget, metal or clear style is enough; "a gold ring up to 3000" should go straight to recommendations.
 - For general jewellery knowledge, answer warmly and briefly from general knowledge without a tool, then offer to help find something. General facts such as how karat affects hardness are allowed. Never turn general knowledge into a claim about a Noga product.
 - Vary the wording and reflect what the shopper actually asked. Do not repeat a stock transition sentence on every turn.
+- Use natural Israeli Hebrew. Never use "עונות על הבקשה", "עבור", "מידע מאומת" or other bureaucratic wording. Use a regular hyphen when punctuation needs one, never an em dash.
 
 NON-NEGOTIABLE BUSINESS DATA RULES:
 - You have no catalogue knowledge until a tool returns it in THIS request. Never rely on memory or prior turns.
@@ -114,6 +116,7 @@ NON-NEGOTIABLE BUSINESS DATA RULES:
 - For delivery or collection times call search_products with include_delivery_policy. For studio address or hours call it with include_studio_info. Do not present product cards for an information-only request.
 - Use get_product.requested_fields to state exactly which facts the shopper asked to see. The application renders those facts from the tool record; do not repeat their values in prose.
 - For recommendations, search first and then call present_recommendations only with slugs returned in this request.
+- The application chooses recommendation order and the final subset. Do not rank, reorder or select favourites from the search results. In transition prose, do not state the result count or repeat catalogue categories, metals or other product facts; refer only to what the shopper herself asked for.
 - Never write a price or product name in your prose. Never write a product's metal, category, stone description, availability label or delivery time in prose. The application renders those facts from tool results.
 - A slug not returned by a catalogue tool is invalid. Never repair or guess it.
 - Shipping cost, discounts, returns, warranty and custom-order pricing are unknown business policies. Say you do not have verified information and call offer_whatsapp. Do not answer them from general knowledge.
@@ -385,10 +388,13 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
         .slice(0, 8)
     : [];
 
-  state.searchHadMatches ||= matches.length > 0;
+  // `findProducts` has a stable rank (preferred category, featured, price,
+  // slug). The latest filter set fully replaces the candidate order, and the
+  // first three are always the displayed subset.
+  state.searchHadMatches = matches.length > 0;
+  state.searchedSlugs = matches.map((product) => product.slug);
   for (const product of matches) {
     state.evidence.set(product.slug, product);
-    if (!state.searchedSlugs.includes(product.slug)) state.searchedSlugs.push(product.slug);
   }
 
   return {
@@ -427,12 +433,10 @@ function getProductTool(args: Record<string, unknown>, state: ToolState) {
   return { product: catalogueRecord(product) };
 }
 
-function presentRecommendationsTool(args: Record<string, unknown>, state: ToolState) {
-  const slugs = Array.isArray(args.slugs) ? args.slugs : [];
-  const accepted = slugs
-    .filter((slug): slug is string => typeof slug === 'string' && state.evidence.has(slug))
-    .filter((slug, index, all) => all.indexOf(slug) === index)
-    .slice(0, MAX_RECOMMENDATIONS);
+function presentRecommendationsTool(_args: Record<string, unknown>, state: ToolState) {
+  // The model may request presentation, but selection and ordering are fixed
+  // by the already-sorted search results. Model-supplied slug order is ignored.
+  const accepted = state.searchedSlugs.slice(0, MAX_RECOMMENDATIONS);
   state.presentedSlugs = accepted;
   return { acceptedSlugs: accepted };
 }
@@ -549,6 +553,7 @@ async function callGemini(
   apiKey: string,
   contents: GeminiContent[],
   functionCallingConfig: FunctionCallingConfig,
+  temperature: number,
 ): Promise<GeminiResponse> {
   const available = await consumeCounter(`daily/${utcDay()}`, DAILY_REQUEST_CAP);
   if (!available) throw new SystemicFailure('Daily request cap reached.');
@@ -569,7 +574,7 @@ async function callGemini(
           functionCallingConfig,
         },
         generationConfig: {
-          temperature: 0.15,
+          temperature,
           maxOutputTokens: 320,
         },
       }),
@@ -603,20 +608,52 @@ function requiresUnknownPolicyHandoff(message: string): boolean {
   return asksShippingCost || /הנח|קופון|מבצע|החזר|החלפ|אחריות/.test(normalized) || asksCustomPrice;
 }
 
+function shoppingFilterSignalCount(normalized: string): number {
+  return [
+    /טבעת|שרשרת|עגיל|צמיד/.test(normalized),
+    /תקציב|עד\s*\d|\d\s*(?:שח|שקל)/.test(normalized),
+    /זהב צהוב|זהב אדום|זהב לבן|רוז גולד/.test(normalized),
+    /עדין|עדינה|קלאסי|קלאסית|בולט|בולטת|יומיום/.test(normalized),
+  ].filter(Boolean).length;
+}
+
 function isUnderspecifiedShoppingRequest(message: string): boolean {
   const normalized = normalize(message);
   const hasOpenShoppingIntent =
     /מחפש|מחפשת|מתנה|לא יודע מה|לא יודעת מה|רוצה לקנות|בא לי/.test(normalized);
   if (!hasOpenShoppingIntent) return false;
 
-  const filterSignals = [
-    /טבעת|שרשרת|עגיל|צמיד/.test(normalized),
-    /תקציב|עד\s*\d|\d\s*(?:שח|שקל)/.test(normalized),
-    /זהב צהוב|זהב אדום|זהב לבן|רוז גולד/.test(normalized),
-    /עדין|עדינה|קלאסי|קלאסית|בולט|בולטת|יומיום/.test(normalized),
-  ].filter(Boolean).length;
+  return shoppingFilterSignalCount(normalized) < 2;
+}
 
-  return filterSignals < 2;
+function deterministicCatalogTurn(message: string, context: string[], state: ToolState): boolean {
+  if (state.searchUsed) return true;
+  const normalized = normalize([...context, message].join(' '));
+  const filterSignals = shoppingFilterSignalCount(normalized);
+  return (
+    filterSignals >= 2 ||
+    (context.length > 0 && filterSignals >= 1) ||
+    /מלאי|זמינ|זמן משלוח|זמן איסוף|כתובת|שעות פתיחה/.test(normalized)
+  );
+}
+
+function oneQuestionOnly(text: string, message: string): string {
+  const normalized = normalize(text);
+  const questionMarks = (text.match(/[?؟]/g) ?? []).length;
+  const dimensions = [
+    /תקציב/.test(normalized),
+    /אירוע/.test(normalized),
+    /סגנון/.test(normalized),
+  ].filter(Boolean).length;
+  if (questionMarks === 1 && !/\sאו\s/.test(normalized) && dimensions <= 1) {
+    return text.trim();
+  }
+
+  const request = normalize(message);
+  if (!/תקציב|עד\s*\d|\d\s*(?:שח|שקל)/.test(request)) {
+    return 'איזה תקציב תרצי להקדיש לזה?';
+  }
+  return 'איזה סגנון היא אוהבת לענוד?';
 }
 
 function requestedFactLine(product: Product, fields: Set<RequestedField>): string | null {
@@ -643,6 +680,22 @@ function requestedFactLine(product: Product, fields: Set<RequestedField>): strin
   return facts.length > 0 ? facts.join('. ') : null;
 }
 
+function naturalRecommendationTransition(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return 'הנה כמה אפשרויות שיכולות להתאים למה שחיפשת.';
+  if (/עונות על (?:ה)?בקשה|מתאימות ל(?:ה)?בקשה|לבקשה שלך/.test(trimmed)) {
+    return 'הנה כמה אפשרויות שיכולות להתאים למה שחיפשת.';
+  }
+
+  const natural = trimmed
+    .replace(/אלו האפשרויות/g, 'הנה כמה אפשרויות')
+    .replace(/עבור יום ההולדת/g, 'ליום ההולדת')
+    .replace(/—/g, ',');
+  return /עבור/.test(natural)
+    ? 'הנה כמה כיוונים שיכולים להתאים למה שתיארת.'
+    : natural;
+}
+
 function deterministicOutput(state: ToolState, modelText: string) {
   const factLines = [...state.requestedFields.entries()].flatMap(([slug, fields]) => {
     const product = state.evidence.get(slug);
@@ -651,17 +704,11 @@ function deterministicOutput(state: ToolState, modelText: string) {
     return line ? [line] : [];
   });
 
-  const recommendationSlugs = [
-    ...state.requestedFields.keys(),
-    ...state.presentedSlugs,
-    ...(state.catalogSearchRequested &&
-    state.presentedSlugs.length === 0 &&
-    state.requestedFields.size === 0
+  const recommendationSlugs = (
+    state.catalogSearchRequested
       ? state.searchedSlugs.slice(0, MAX_RECOMMENDATIONS)
-      : []),
-  ]
-    .filter((slug, index, all) => all.indexOf(slug) === index && state.evidence.has(slug))
-    .slice(0, MAX_RECOMMENDATIONS);
+      : [...state.requestedFields.keys()].slice(0, MAX_RECOMMENDATIONS)
+  ).filter((slug) => state.evidence.has(slug));
 
   const lines = [...factLines];
   if (state.deliveryPolicyRequested) {
@@ -677,13 +724,13 @@ function deterministicOutput(state: ToolState, modelText: string) {
     );
   }
   if (recommendationSlugs.length > 0 && factLines.length === 0) {
-    lines.push(modelText.trim() || 'מצאתי כמה אפשרויות מהקטלוג שמתאימות לבקשה.');
+    lines.push(naturalRecommendationTransition(modelText));
   }
   if (state.catalogSearchRequested && !state.searchHadMatches) {
     lines.push('לא מצאתי התאמה בקטלוג לפי הבקשה הזאת.');
   }
   if (state.sizeGuideRequested) lines.push('אפשר לפתוח כאן את מדריך המידות.');
-  if (state.whatsappRequested) lines.push('אין לי מידע מאומת בנושא הזה. אפשר לפנות לדנה בוואטסאפ.');
+  if (state.whatsappRequested) lines.push(SAFE_GENERIC);
 
   const hasToolBackedOutput =
     state.evidence.size > 0 ||
@@ -756,7 +803,19 @@ async function runToolLoop(
     } else if (callNumber === 0 && isUnderspecifiedShoppingRequest(message)) {
       functionCallingConfig = { mode: 'NONE' };
     }
-    const response = await callGemini(apiKey, contents, functionCallingConfig);
+    const toolFactsComplete =
+      state.presentedSlugs.length > 0 ||
+      state.requestedFields.size > 0 ||
+      state.deliveryPolicyRequested ||
+      state.studioInfoRequested ||
+      state.whatsappRequested ||
+      state.sizeGuideRequested;
+    const temperature =
+      functionCallingConfig.mode === 'ANY' ||
+      (!toolFactsComplete && deterministicCatalogTurn(message, context, state))
+        ? 0
+        : 0.55;
+    const response = await callGemini(apiKey, contents, functionCallingConfig, temperature);
     const content = response.candidates?.[0]?.content;
     if (!content?.parts?.length) {
       const hasCompletedToolWork =
@@ -771,8 +830,14 @@ async function runToolLoop(
 
     const calls = content.parts.flatMap((part) => (part.functionCall ? [part.functionCall] : []));
     const text = content.parts.flatMap((part) => (typeof part.text === 'string' ? [part.text] : [])).join(' ');
-    if (text.trim()) finalText = text.trim();
-    if (calls.length === 0) return finalText;
+    if (text.trim()) {
+      finalText = text.trim().replace(/\s*—\s*/g, ', ').replace(/[!！]/g, '');
+    }
+    if (calls.length === 0) {
+      return functionCallingConfig.mode === 'NONE'
+        ? oneQuestionOnly(finalText, message)
+        : finalText;
+    }
 
     const results = executeCalls(calls, state);
     contents.push(content);

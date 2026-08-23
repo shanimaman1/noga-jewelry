@@ -311,18 +311,25 @@ remain buttons the shopper must click.
   questions about unknown business policies such as shipping cost, discounts,
   returns, warranty or custom-order pricing.
 - The model never supplies recommendation-card data. It returns tool calls;
-  the server accepts only slugs returned by a catalogue tool in the same turn,
-  and the client resolves every accepted slug against `products.ts` again. An
-  unknown slug renders nothing.
+  the server derives card slugs only from the sorted catalogue result in that
+  turn, and the client resolves every accepted slug against `products.ts`
+  again. An unknown slug renders nothing.
+- Catalogue selection is deterministic after the model chooses filters.
+  `findProducts` ranks by preferred category, featured status, price and slug;
+  the server always displays the first three. `present_recommendations` cannot
+  reorder or choose a different subset. Filter/tool decisions run at zero
+  temperature, while greetings, general knowledge and safe transition prose
+  retain conversational sampling.
 - Product-specific prose, availability and delivery lines are assembled by
   application code from that turn's tool records. Product names, prices and
   card descriptions are rendered from catalogue records, not model text.
+  Availability, delivery and collection facts use fixed code templates.
 - Before returning, the function scans outgoing prose for `₪`, price-range
   numbers and catalogue names without matching tool evidence. It also rejects
   unbacked metal, category, stone, availability and delivery vocabulary and
   replaces the whole line with a generic WhatsApp handoff.
-- Shipping cost, discounts and returns remain unknown and are handed off to
-  WhatsApp.
+- Shipping cost, discounts, returns, warranty and custom-order pricing remain
+  unknown and are handed off to WhatsApp.
 
 The remaining instruction-only boundary is semantic intent: under `AUTO`, the
 model decides whether a message is small talk, an open request, general
@@ -333,6 +340,12 @@ inject a product, price or card record; catalogue facts are ignored from model
 prose and rendered by code. This is the residual risk, and systemic failure
 never reaches the shopper: the resilient brain switches permanently to the
 unchanged wizard for that browser session after one short line.
+
+An underspecified shopping turn is also checked after generation: if Gemini
+asks more than one question or combines dimensions with "or", code replaces it
+with one short question about the next missing dimension. Known bureaucratic
+recommendation phrases are similarly normalised to plain Hebrew; greetings and
+general jewellery answers are not templated.
 
 Function logs record each called tool, privacy-safe arguments and result count,
 plus whether the outgoing grounding scan replaced the text and a safe category
