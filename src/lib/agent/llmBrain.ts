@@ -1,6 +1,10 @@
 import { getProduct } from '@/data/products';
 import type { AgentBrain, AgentInput, AgentMessage, AgentTurn } from './types';
-import { AGENT_CHAT_ENDPOINT, type AgentChatResponse } from './llmProtocol';
+import {
+  AGENT_CHAT_ENDPOINT,
+  type AgentChatRequest,
+  type AgentChatResponse,
+} from './llmProtocol';
 
 const OPENING = 'אפשר לכתוב לי מה מחפשים, ואני אבדוק מול הקטלוג.';
 const GENTLE_ERROR = 'לא הצלחתי לבדוק את זה כרגע. אפשר לנסות שוב בעוד רגע.';
@@ -62,14 +66,23 @@ export function createLlmBrain(): AgentBrain {
   };
 
   const sendText = async (text: string): Promise<AgentTurn> => {
+    const context = current()
+      .filter((message) => message.sender === 'user')
+      .slice(-2)
+      .map((message) => message.text);
     const base = [...current(), user(text)];
+    const requestBody: AgentChatRequest = {
+      sessionId,
+      message: text,
+      ...(context.length > 0 ? { context } : {}),
+    };
 
     let response: Response;
     try {
       response = await fetch(AGENT_CHAT_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, message: text }),
+        body: JSON.stringify(requestBody),
       });
     } catch {
       consecutiveTransportFailures += 1;

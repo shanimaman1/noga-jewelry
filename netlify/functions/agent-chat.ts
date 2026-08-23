@@ -12,6 +12,7 @@ import {
   DELIVERY_TIMES,
   productDeliveryText,
 } from '../../src/lib/fulfillment';
+import { STUDIO } from '../../src/lib/constants';
 import type { Availability, Category, Metal, Product } from '../../src/types/catalog';
 import type { AgentChatResponse, LlmClientAction } from '../../src/lib/agent/llmProtocol';
 
@@ -24,6 +25,8 @@ const STORE_NAME = 'agent-usage-limits';
 const DAILY_REQUEST_CAP = 200;
 const MAX_MESSAGES_PER_SESSION = 20;
 const MAX_MESSAGE_LENGTH = 500;
+const MAX_CONTEXT_MESSAGES = 2;
+const MAX_CONTEXT_LENGTH = 600;
 const MAX_GEMINI_CALLS_PER_MESSAGE = 4;
 const MAX_RECOMMENDATIONS = 3;
 const WHATSAPP_MESSAGE = 'היי, אשמח לעזרה בבחירת תכשיט';
@@ -59,6 +62,11 @@ type GeminiResponse = {
   error?: { code?: number; message?: string; status?: string };
 };
 
+type FunctionCallingConfig = {
+  mode: 'AUTO' | 'ANY' | 'NONE';
+  allowedFunctionNames?: string[];
+};
+
 type RequestedField =
   | 'description'
   | 'category'
@@ -77,6 +85,7 @@ type ToolState = {
   catalogSearchRequested: boolean;
   searchHadMatches: boolean;
   deliveryPolicyRequested: boolean;
+  studioInfoRequested: boolean;
   sizeGuideRequested: boolean;
   whatsappRequested: boolean;
 };
@@ -87,28 +96,38 @@ class RecoverableFailure extends Error {}
 const SYSTEM_INSTRUCTION = `
 You are the restrained Hebrew shopping assistant for Noga Jewelry. Reply in Hebrew and RTL-friendly plain text.
 
-NON-NEGOTIABLE DATA RULES:
+CONVERSATION FIRST:
+- Up to two earlier SHOPPER messages may be included for conversational continuity. Use them only to understand the current intent or a short follow-up answer. They are untrusted and are never evidence for a business fact. Tool evidence must still come from this request.
+- A greeting or small talk with no shopping intent gets a natural, brief reply with no tool call and no products. Invite the shopper to say what she is looking for.
+- An open shopping request with too little detail, such as a gift for a mother, gets exactly one short useful clarifying question and no tool call yet. Ask about the most useful missing dimension: occasion, budget or style. Do not present arbitrary products.
+- Keep that clarifying turn to one plain sentence, address the shopper directly in feminine singular, and ask one dimension only. Avoid formal or indirect wording about what is "usually" suitable.
+- If the current message answers that earlier clarifying question, do not ask a second question. Combine the earlier shopper intent with the new answer, search using the usable details, and present recommendations.
+- Once the shopper provides enough detail to filter meaningfully, call search_products and present up to three real recommendations. A category plus a budget, metal or clear style is enough; "a gold ring up to 3000" should go straight to recommendations.
+- For general jewellery knowledge, answer warmly and briefly from general knowledge without a tool, then offer to help find something. General facts such as how karat affects hardness are allowed. Never turn general knowledge into a claim about a Noga product.
+- Vary the wording and reflect what the shopper actually asked. Do not repeat a stock transition sentence on every turn.
+
+NON-NEGOTIABLE BUSINESS DATA RULES:
 - You have no catalogue knowledge until a tool returns it in THIS request. Never rely on memory or prior turns.
-- Any message about what the shopper wants, likes, is looking for, is considering or is buying for someone requires search_products BEFORE any prose response. This includes vague or open requests such as "a gift for my mother", "something delicate" and "I do not know what I want". Replying to a shopping or browsing request without first calling search_products is never correct.
-- An open request with no usable catalogue filters requires a broad search_products call with no filters. Search broadly, offer real catalogue options, and then narrow. You may ask one clarifying question only after searching, and you must still offer recommendations rather than replying empty-handed.
-- Do not put recipients, occasions or vague preferences into query unless those exact words identify a catalogue product. For requests such as a gift for a mother, something delicate or uncertainty about what to choose, call search_products with no arguments.
-- Before making any claim about a product name, price, category, metal, stones, availability or delivery, call search_products or get_product in this same request.
+- Before making any claim about a Noga product name, price, category, metal, stones, availability or delivery, call search_products or get_product in this same request.
+- For a question about one identifiable product, search for that exact product first, then call get_product with the requested fields. Availability questions must request availability so application code renders the answer.
+- Studio address and opening hours, and delivery or collection times, are business facts. State them only when a tool returns them in this request.
+- For delivery or collection times call search_products with include_delivery_policy. For studio address or hours call it with include_studio_info. Do not present product cards for an information-only request.
 - Use get_product.requested_fields to state exactly which facts the shopper asked to see. The application renders those facts from the tool record; do not repeat their values in prose.
 - For recommendations, search first and then call present_recommendations only with slugs returned in this request.
-- Never write a price, product name, metal, category, stone description, availability label or delivery time in your prose. The application renders them from tool results.
+- Never write a price or product name in your prose. Never write a product's metal, category, stone description, availability label or delivery time in prose. The application renders those facts from tool results.
 - A slug not returned by a catalogue tool is invalid. Never repair or guess it.
-- Reserve the honest "I do not have verified information" response for information the catalogue genuinely does not contain. Shipping cost, discounts and returns are unknown: say so and call offer_whatsapp. Never use that response for an open shopping or browsing request.
+- Shipping cost, discounts, returns, warranty and custom-order pricing are unknown business policies. Say you do not have verified information and call offer_whatsapp. Do not answer them from general knowledge.
 - Tools never perform actions. open_size_guide and offer_whatsapp only make buttons available for the shopper to click.
 - If no tool supports a factual answer, give a brief generic line and offer WhatsApp.
 
-Voice: concise, helpful, no exclamation marks, no superlatives. The final prose may only be a short conversational transition; catalogue facts are rendered by application code.
+Voice: concise, warm and helpful, no exclamation marks, no superlatives. Catalogue facts are rendered by application code.
 `.trim();
 
 const TOOL_DECLARATIONS = [
   {
     name: 'search_products',
     description:
-      'Search the live catalogue. Every shopping, preference, gift or browsing request must call this first. With no filters it returns a broad catalogue selection. Use query only for exact catalogue product words, not recipients, occasions or vague preferences. It may also return the verified fulfilment policy.',
+      'Search the live catalogue when the request has enough detail for meaningful filtering, before recommendations or product facts. Do not call for greetings, small talk, an initial vague shopping request or general jewellery knowledge. Use query only for exact catalogue product words. It can also return verified delivery and collection policy or studio address and hours.',
     parameters: {
       type: 'object',
       properties: {
@@ -116,10 +135,18 @@ const TOOL_DECLARATIONS = [
         category: { type: 'string', enum: ['rings', 'necklaces', 'earrings', 'bracelets'] },
         metal: { type: 'string', enum: ['yellow', 'rose', 'white'] },
         price_band: { type: 'string', enum: ['under1500', 'mid', 'over3000'] },
+        max_price: {
+          type: 'number',
+          description: 'Maximum price explicitly stated by the shopper.',
+        },
         availability: { type: 'string', enum: ['ready', 'made-to-order', 'out-of-stock'] },
         include_delivery_policy: {
           type: 'boolean',
           description: 'True when the shopper asks about general delivery or collection times.',
+        },
+        include_studio_info: {
+          type: 'boolean',
+          description: 'True when the shopper asks for the studio address or opening hours.',
         },
       },
     },
@@ -323,6 +350,7 @@ const REQUESTED_FIELDS: RequestedField[] = [
 function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
   state.searchUsed = true;
   if (args.include_delivery_policy === true) state.deliveryPolicyRequested = true;
+  if (args.include_studio_info === true) state.studioInfoRequested = true;
 
   const filters: CatalogFilters = {
     category: isCategory(args.category) ? args.category : undefined,
@@ -333,16 +361,23 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
   const query = typeof args.query === 'string' ? normalize(args.query).slice(0, 120) : '';
   const words = query.split(' ').filter(Boolean);
   const availability = isAvailability(args.availability) ? args.availability : undefined;
+  const maxPrice =
+    typeof args.max_price === 'number' && Number.isFinite(args.max_price) && args.max_price > 0
+      ? args.max_price
+      : undefined;
   const hasProductCriteria = Boolean(
-    query || filters.category || filters.metal || filters.band || availability,
+    query || filters.category || filters.metal || filters.band || availability || maxPrice,
   );
-  const isDeliveryPolicyOnly = args.include_delivery_policy === true && !hasProductCriteria;
-  const shouldSearchCatalogue = !isDeliveryPolicyOnly;
+  const isBusinessInfoOnly =
+    !hasProductCriteria &&
+    (args.include_delivery_policy === true || args.include_studio_info === true);
+  const shouldSearchCatalogue = !isBusinessInfoOnly;
   state.catalogSearchRequested ||= shouldSearchCatalogue;
 
   const matches = shouldSearchCatalogue
     ? findProducts(filters)
         .filter((product) => !availability || product.availability === availability)
+        .filter((product) => maxPrice === undefined || product.price <= maxPrice)
         .filter(
           (product) =>
             words.length === 0 || words.every((word) => searchHaystack(product).includes(word)),
@@ -364,6 +399,13 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
             home: DELIVERY_TIMES.home,
             collection: DELIVERY_TIMES.collection,
             madeToOrder: DELIVERY_TIMES.madeToOrder,
+          }
+        : null,
+    studioInfo:
+      args.include_studio_info === true
+        ? {
+            address: STUDIO.address,
+            hours: STUDIO.hours,
           }
         : null,
   };
@@ -451,8 +493,12 @@ function safeToolArguments(call: GeminiFunctionCall): Record<string, unknown> {
         ...(isCategory(args.category) ? { category: args.category } : {}),
         ...(isMetal(args.metal) ? { metal: args.metal } : {}),
         ...(isPriceBand(args.price_band) ? { priceBand: args.price_band } : {}),
+        ...(typeof args.max_price === 'number' && Number.isFinite(args.max_price)
+          ? { maxPriceProvided: true }
+          : {}),
         ...(isAvailability(args.availability) ? { availability: args.availability } : {}),
         ...(args.include_delivery_policy === true ? { includeDeliveryPolicy: true } : {}),
+        ...(args.include_studio_info === true ? { includeStudioInfo: true } : {}),
         queryProvided: typeof args.query === 'string' && args.query.trim().length > 0,
         ...(typeof args.query === 'string' ? { queryLength: args.query.length } : {}),
       };
@@ -502,7 +548,7 @@ function toolResultCount(
 async function callGemini(
   apiKey: string,
   contents: GeminiContent[],
-  functionCallingMode: 'ANY' | 'AUTO',
+  functionCallingConfig: FunctionCallingConfig,
 ): Promise<GeminiResponse> {
   const available = await consumeCounter(`daily/${utcDay()}`, DAILY_REQUEST_CAP);
   if (!available) throw new SystemicFailure('Daily request cap reached.');
@@ -520,7 +566,7 @@ async function callGemini(
         contents,
         tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
         toolConfig: {
-          functionCallingConfig: { mode: functionCallingMode },
+          functionCallingConfig,
         },
         generationConfig: {
           temperature: 0.15,
@@ -547,6 +593,32 @@ async function callGemini(
   throw new SystemicFailure(payload.error?.status ?? `Gemini HTTP ${response.status}`);
 }
 
+function requiresUnknownPolicyHandoff(message: string): boolean {
+  const normalized = normalize(message);
+  const asksShippingCost =
+    /(?:משלוח|שליחות)/.test(normalized) && /(?:כמה.*עולה|עלות|מחיר|דמי)/.test(normalized);
+  const asksCustomPrice =
+    /(?:עיצוב אישי|הזמנה אישית|הזמנה מיוחדת).*(?:עולה|עלות|מחיר|תמחור)/.test(normalized) ||
+    /(?:עולה|עלות|מחיר|תמחור).*(?:עיצוב אישי|הזמנה אישית|הזמנה מיוחדת)/.test(normalized);
+  return asksShippingCost || /הנח|קופון|מבצע|החזר|החלפ|אחריות/.test(normalized) || asksCustomPrice;
+}
+
+function isUnderspecifiedShoppingRequest(message: string): boolean {
+  const normalized = normalize(message);
+  const hasOpenShoppingIntent =
+    /מחפש|מחפשת|מתנה|לא יודע מה|לא יודעת מה|רוצה לקנות|בא לי/.test(normalized);
+  if (!hasOpenShoppingIntent) return false;
+
+  const filterSignals = [
+    /טבעת|שרשרת|עגיל|צמיד/.test(normalized),
+    /תקציב|עד\s*\d|\d\s*(?:שח|שקל)/.test(normalized),
+    /זהב צהוב|זהב אדום|זהב לבן|רוז גולד/.test(normalized),
+    /עדין|עדינה|קלאסי|קלאסית|בולט|בולטת|יומיום/.test(normalized),
+  ].filter(Boolean).length;
+
+  return filterSignals < 2;
+}
+
 function requestedFactLine(product: Product, fields: Set<RequestedField>): string | null {
   const facts: string[] = [];
   if (fields.has('description')) facts.push(product.shortDescription);
@@ -568,7 +640,7 @@ function requestedFactLine(product: Product, fields: Set<RequestedField>): strin
 
   // Price and name are deliberately rendered only by AssistantProductCard.
   if (facts.length === 0 && fields.has('price')) return null;
-  return facts.length > 0 ? `${product.name}: ${facts.join('. ')}` : null;
+  return facts.length > 0 ? facts.join('. ') : null;
 }
 
 function deterministicOutput(state: ToolState, modelText: string) {
@@ -597,8 +669,15 @@ function deterministicOutput(state: ToolState, modelText: string) {
       `משלוח עד הבית אורך ${DELIVERY_TIMES.home}, ואיסוף מהסטודיו אפשרי בתוך ${DELIVERY_TIMES.collection}. לפריט שנוצר בהזמנה יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ואז חל זמן המסירה שנבחר.`,
     );
   }
+  if (state.studioInfoRequested) {
+    lines.push(
+      `כתובת הסטודיו היא ${STUDIO.address}. שעות הפתיחה: ${STUDIO.hours
+        .map((row) => `${row.days}, ${row.hours}`)
+        .join('; ')}.`,
+    );
+  }
   if (recommendationSlugs.length > 0 && factLines.length === 0) {
-    lines.push('מצאתי כמה אפשרויות מהקטלוג שמתאימות לבקשה.');
+    lines.push(modelText.trim() || 'מצאתי כמה אפשרויות מהקטלוג שמתאימות לבקשה.');
   }
   if (state.catalogSearchRequested && !state.searchHadMatches) {
     lines.push('לא מצאתי התאמה בקטלוג לפי הבקשה הזאת.');
@@ -609,6 +688,7 @@ function deterministicOutput(state: ToolState, modelText: string) {
   const hasToolBackedOutput =
     state.evidence.size > 0 ||
     state.deliveryPolicyRequested ||
+    state.studioInfoRequested ||
     state.sizeGuideRequested ||
     state.whatsappRequested ||
     state.searchUsed;
@@ -654,18 +734,40 @@ function actionsFrom(state: ToolState): LlmClientAction[] {
   return actions;
 }
 
-async function runToolLoop(apiKey: string, message: string, state: ToolState) {
-  const contents: GeminiContent[] = [{ role: 'user', parts: [{ text: message }] }];
+async function runToolLoop(
+  apiKey: string,
+  message: string,
+  context: string[],
+  state: ToolState,
+) {
+  const contextualMessage =
+    context.length > 0
+      ? `Earlier shopper messages for intent only:\n${context
+          .map((entry, index) => `${index + 1}. ${entry}`)
+          .join('\n')}\n\nCurrent shopper message:\n${message}`
+      : message;
+  const contents: GeminiContent[] = [{ role: 'user', parts: [{ text: contextualMessage }] }];
   let finalText = '';
 
   for (let callNumber = 0; callNumber < MAX_GEMINI_CALLS_PER_MESSAGE; callNumber += 1) {
-    const response = await callGemini(
-      apiKey,
-      contents,
-      callNumber === 0 ? 'ANY' : 'AUTO',
-    );
+    let functionCallingConfig: FunctionCallingConfig = { mode: 'AUTO' };
+    if (callNumber === 0 && requiresUnknownPolicyHandoff(message)) {
+      functionCallingConfig = { mode: 'ANY', allowedFunctionNames: ['offer_whatsapp'] };
+    } else if (callNumber === 0 && isUnderspecifiedShoppingRequest(message)) {
+      functionCallingConfig = { mode: 'NONE' };
+    }
+    const response = await callGemini(apiKey, contents, functionCallingConfig);
     const content = response.candidates?.[0]?.content;
-    if (!content?.parts?.length) throw new RecoverableFailure('Gemini returned no candidate content.');
+    if (!content?.parts?.length) {
+      const hasCompletedToolWork =
+        state.searchUsed ||
+        state.sizeGuideRequested ||
+        state.whatsappRequested ||
+        state.deliveryPolicyRequested ||
+        state.studioInfoRequested;
+      if (hasCompletedToolWork) return finalText;
+      throw new RecoverableFailure('Gemini returned no candidate content.');
+    }
 
     const calls = content.parts.flatMap((part) => (part.functionCall ? [part.functionCall] : []));
     const text = content.parts.flatMap((part) => (typeof part.text === 'string' ? [part.text] : [])).join(' ');
@@ -704,9 +806,9 @@ export default async function handler(request: Request): Promise<Response> {
   }
   if (rawBody.length > 2_000) return json({ mode: 'retryable-error' }, 413);
 
-  let body: { sessionId?: unknown; message?: unknown };
+  let body: { sessionId?: unknown; message?: unknown; context?: unknown };
   try {
-    body = JSON.parse(rawBody) as { sessionId?: unknown; message?: unknown };
+    body = JSON.parse(rawBody) as { sessionId?: unknown; message?: unknown; context?: unknown };
   } catch {
     return json({ mode: 'retryable-error' }, 400);
   }
@@ -718,6 +820,19 @@ export default async function handler(request: Request): Promise<Response> {
   }
   const message = body.message.trim();
   if (message.length > MAX_MESSAGE_LENGTH) {
+    return json({ mode: 'retryable-error', sessionId: session.token }, 413);
+  }
+  const context = Array.isArray(body.context)
+    ? body.context
+        .filter((entry): entry is string => typeof entry === 'string')
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .slice(-MAX_CONTEXT_MESSAGES)
+    : [];
+  if (
+    context.some((entry) => entry.length > MAX_MESSAGE_LENGTH) ||
+    context.reduce((total, entry) => total + entry.length, 0) > MAX_CONTEXT_LENGTH
+  ) {
     return json({ mode: 'retryable-error', sessionId: session.token }, 413);
   }
 
@@ -737,11 +852,12 @@ export default async function handler(request: Request): Promise<Response> {
       catalogSearchRequested: false,
       searchHadMatches: false,
       deliveryPolicyRequested: false,
+      studioInfoRequested: false,
       sizeGuideRequested: false,
       whatsappRequested: false,
     };
 
-    const modelText = await runToolLoop(apiKey, message, state);
+    const modelText = await runToolLoop(apiKey, message, context, state);
     const output = deterministicOutput(state, modelText);
     const inspectedText = inspectOutgoingText(output.text, state);
     console.info(
@@ -765,6 +881,18 @@ export default async function handler(request: Request): Promise<Response> {
           : actions,
     });
   } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'agent_error',
+        kind:
+          error instanceof SystemicFailure
+            ? 'systemic'
+            : error instanceof RecoverableFailure
+              ? 'recoverable'
+              : 'unexpected',
+        reason: error instanceof Error ? error.message : 'Unknown error.',
+      }),
+    );
     if (error instanceof SystemicFailure) return json({ mode: 'fallback' });
     return json({ mode: 'retryable-error', sessionId: session.token }, 503);
   }

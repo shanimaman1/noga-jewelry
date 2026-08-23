@@ -267,10 +267,12 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   `relaxationOptions()` is the safety net, not a normal path.
 - **Content rule, non-negotiable:** availability is read from each product in
   `products.ts`; delivery timing is read from the shared fulfilment constants.
-  The assistant may state those facts and nothing beyond them. Shipping cost,
-  discounts and returns remain unknown and receive an honest handoff to
-  WhatsApp. Product names, prices, metals and categories are never written as
-  literals in the assistant code; they are read from `products.ts`.
+  Studio address and hours are read from the shared `STUDIO` constant. Shipping
+  cost, discounts, returns, warranty and custom-order pricing remain unknown
+  and receive an honest handoff to WhatsApp. Product names, prices, metals and
+  categories are never written as literals in the assistant code; they are
+  read from `products.ts`. General jewellery knowledge may be answered without
+  a tool, but it must never become a claim about a Noga product or policy.
 - Layering: launcher/scrim z-30, panel z-41 (above the WhatsApp FAB's z-40 so it
   is not pierced, below the cart drawer / modals at z-50). The panel is
   bottom-anchored at `min(82svh, 100svh - 9rem)` so it never reaches the header.
@@ -294,13 +296,20 @@ remain buttons the shopper must click.
 
 **Zero fabrication is structural wherever possible:**
 
-- Each function request contains only the current shopper message, not old
-  catalogue facts. Product facts must therefore be fetched again in that turn.
-- The first Gemini round uses forced function calling (`ANY`); later rounds use
-  `AUTO` so the model can write its final transition. Every shopping, gift,
-  preference or open browsing message must start with `search_products`. With
-  no usable filters, an argument-free search returns a broad catalogue sample
-  before the assistant narrows the request.
+- Each function request contains the current shopper message and at most two
+  earlier shopper messages for conversational intent. Previous assistant prose,
+  cards and catalogue facts are not sent. Context is explicitly untrusted and
+  never counts as evidence; product facts must be fetched again in that turn.
+- Gemini normally uses `AUTO` function calling on every round. Greetings and
+  general jewellery questions may therefore receive natural prose without a
+  tool, and an underspecified shopping request gets one clarifying question
+  before any products are shown. Once there is enough detail to filter, the
+  model must search and may present only results from that turn. A narrow
+  `NONE` exception disables tools for a recognisably underspecified shopping
+  request so it cannot dump arbitrary products before asking. A second narrow
+  exception uses `ANY` with only `offer_whatsapp` allowed for recognisable
+  questions about unknown business policies such as shipping cost, discounts,
+  returns, warranty or custom-order pricing.
 - The model never supplies recommendation-card data. It returns tool calls;
   the server accepts only slugs returned by a catalogue tool in the same turn,
   and the client resolves every accepted slug against `products.ts` again. An
@@ -315,20 +324,20 @@ remain buttons the shopper must click.
 - Shipping cost, discounts and returns remain unknown and are handed off to
   WhatsApp.
 
-The remaining instruction-only boundary is semantic intent after a tool call:
-forced calling guarantees that the first response is a tool, but the system
-instruction still tells the model that open shopping intent must choose
-`search_products` rather than another declared tool, and which requested fields
-match a natural-language question. A model can misunderstand that intent or
-produce subtle subjective wording that no finite scanner recognizes. It still
-cannot inject a product, price or card record; catalogue facts are ignored from
-model prose and rendered by code. This is the residual risk, and systemic
-failure never reaches the shopper: the resilient brain switches permanently to
-the unchanged wizard for that browser session after one short line.
+The remaining instruction-only boundary is semantic intent: under `AUTO`, the
+model decides whether a message is small talk, an open request, general
+jewellery knowledge or detailed shopping intent, then chooses the matching
+tool and requested fields. A model can misunderstand that intent or produce
+subtle subjective wording that no finite scanner recognizes. It still cannot
+inject a product, price or card record; catalogue facts are ignored from model
+prose and rendered by code. This is the residual risk, and systemic failure
+never reaches the shopper: the resilient brain switches permanently to the
+unchanged wizard for that browser session after one short line.
 
 Function logs record each called tool, privacy-safe arguments and result count,
-plus whether the outgoing grounding scan replaced the text. Free-text query
-values, shopper messages, API keys and session identifiers are never logged.
+plus whether the outgoing grounding scan replaced the text and a safe category
+for server errors. Free-text query values, shopper messages, API keys and
+session identifiers are never logged.
 
 Server protections are fixed in the function: an origin allowlist, 500
 characters per message, 20 messages per signed session, at most four Gemini
