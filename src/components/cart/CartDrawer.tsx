@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useCart, useCartSubtotal } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
 import { formatPrice } from '@/lib/format';
+import { homeDeliveryCharge } from '@/lib/fulfillment';
 import { LineItem } from './LineItem';
 import { FreeShippingBar } from './FreeShippingBar';
 
@@ -19,6 +20,7 @@ export function CartDrawer() {
   const close = useCart((s) => s.closeDrawer);
   const lines = useCart((s) => s.lines);
   const subtotal = useCartSubtotal();
+  const shipping = homeDeliveryCharge(subtotal);
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
@@ -119,7 +121,12 @@ export function CartDrawer() {
                 <span className="text-stone">סכום ביניים</span>
                 <span className="text-charcoal">{formatPrice(subtotal)}</span>
               </div>
-              <p className="text-xs text-stone">משלוח ומיסים מחושבים בתשלום.</p>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-stone">משלוח עד הבית</span>
+                <span className="text-charcoal">
+                  {shipping === 0 ? 'חינם' : formatPrice(shipping)}
+                </span>
+              </div>
               <Link
                 to={ROUTES.checkout}
                 onClick={close}

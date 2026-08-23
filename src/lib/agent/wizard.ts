@@ -5,8 +5,8 @@
  * Content rules enforced here, not left to chance:
  *   • Product names, prices, categories and metals are never written as
  *     literals — they are read from the catalogue (see `./catalog`).
- *   • Availability and delivery timing are answered only from the catalogue
- *     and fulfilment constants. Discounts, returns and shipping cost remain
+ *   • Availability, delivery timing and shipping cost are answered only from
+ *     the catalogue and fulfilment constants. Discounts and returns remain
  *     unknown and get an honest WhatsApp handoff.
  *   • A search with no results never dead-ends: it offers to drop exactly the
  *     filters that would genuinely produce matches.
@@ -19,9 +19,11 @@ import { products } from '@/data/products';
 import {
   AVAILABILITY_LABELS,
   DELIVERY_TIMES,
+  SHIPPING,
   availabilityDetail,
   productDeliveryText,
 } from '@/lib/fulfillment';
+import { formatPrice } from '@/lib/format';
 import type { AgentBrain, AgentChoice, AgentInput, AgentMessage, AgentTurn } from './types';
 import {
   CATEGORY_LABELS,
@@ -64,10 +66,6 @@ const DELIVERY_TIME_PATTERN = /משלוח|שילוח|אספקה|מתי יגיע|
 
 /** Topics this project still has no data for. Answered honestly, never guessed. */
 const UNSUPPORTED_TOPICS: { pattern: RegExp; topic: string }[] = [
-  {
-    pattern: /דמי משלוח|עלות משלוח|מחיר משלוח|כמה.*(?:עולה|עולים).*(?:משלוח|שילוח)/,
-    topic: 'עלות משלוח',
-  },
   { pattern: /הנחה|הנחות|מבצע|מבצעים|קופון|סייל|זול יותר/, topic: 'מבצעים ומחירים מיוחדים' },
   { pattern: /החזר|החזרה|החזרות|מדיניות החזר|ביטול הזמנה/, topic: 'החזרות וביטולים' },
 ];
@@ -168,7 +166,7 @@ function deliveryReply(text: string): AgentMessage {
   if (product) return assistant(`${product.name}: ${productDeliveryText(product)}`);
 
   return assistant(
-    `משלוח עד הבית אורך ${DELIVERY_TIMES.home}, ואיסוף מהסטודיו אפשרי בתוך ${DELIVERY_TIMES.collection}. לפריט שנוצר בהזמנה יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ואז חל זמן המסירה שנבחר.`,
+    `משלוח עד הבית עולה ${formatPrice(SHIPPING.home)}, וחינם בקנייה מעל ${formatPrice(SHIPPING.freeThreshold)}. זמן המשלוח הוא ${DELIVERY_TIMES.home}. איסוף מהסטודיו חינם ואפשרי בתוך ${DELIVERY_TIMES.collection}. לפריט שנוצר בהזמנה יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ואז חל זמן המסירה שנבחר.`,
   );
 }
 

@@ -19,6 +19,7 @@ import { productImage } from '@/data/products';
 import { SITE_URL } from '@/lib/seo';
 import {
   DELIVERY_TIMES,
+  SHIPPING,
   availabilityDetail,
   schemaAvailability,
 } from '@/lib/fulfillment';
@@ -346,11 +347,16 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                 <dl className="mt-4 space-y-3 text-sm">
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">משלוח לבית</dt>
-                    <dd className="text-charcoal">{DELIVERY_TIMES.home}</dd>
+                    <dd className="text-charcoal">
+                      {DELIVERY_TIMES.home} · {formatPrice(SHIPPING.home)}, חינם מעל{' '}
+                      {formatPrice(SHIPPING.freeThreshold)}
+                    </dd>
                   </div>
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">איסוף מהסטודיו</dt>
-                    <dd className="text-charcoal">{DELIVERY_TIMES.collection}</dd>
+                    <dd className="text-charcoal">
+                      {DELIVERY_TIMES.collection} · חינם
+                    </dd>
                   </div>
                 </dl>
                 {product.availability === 'made-to-order' && (

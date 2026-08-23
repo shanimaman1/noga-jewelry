@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   useCart,
   useCartSubtotal,
-  FREE_SHIPPING_THRESHOLD,
-  STANDARD_SHIPPING,
 } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
 import { formatPrice } from '@/lib/format';
@@ -19,7 +17,7 @@ import {
 } from '@/components/checkout/PaymentFields';
 import { getProduct, productImage } from '@/data/products';
 import { METAL_LABELS } from '@/types/catalog';
-import { DELIVERY_TIMES } from '@/lib/fulfillment';
+import { DELIVERY_TIMES, SHIPPING, homeDeliveryCharge } from '@/lib/fulfillment';
 import { Cart } from './Cart';
 
 type Errors = Record<string, string>;
@@ -27,12 +25,12 @@ type Errors = Record<string, string>;
 const FULFILLMENT = {
   courier: {
     label: 'משלוח עד הבית',
-    price: STANDARD_SHIPPING,
+    price: SHIPPING.home,
     time: DELIVERY_TIMES.home,
   },
   pickup: {
     label: 'איסוף מהסטודיו',
-    price: 0,
+    price: SHIPPING.collection,
     time: DELIVERY_TIMES.collection,
   },
 } as const;
@@ -58,8 +56,7 @@ export function Checkout() {
 
   const shipping = useMemo(() => {
     if (delivery === 'pickup') return 0;
-    if (delivery === 'courier' && subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
-    return FULFILLMENT[delivery].price;
+    return homeDeliveryCharge(subtotal);
   }, [delivery, subtotal]);
 
   const total = subtotal + shipping;
@@ -214,7 +211,7 @@ export function Checkout() {
                       <span className="text-end leading-relaxed">
                         <span className="block">{FULFILLMENT[k].time}</span>
                         <span className="block text-xs">
-                          {k === 'courier' && subtotal >= FREE_SHIPPING_THRESHOLD
+                          {k === 'courier' && subtotal >= SHIPPING.freeThreshold
                             ? 'חינם'
                             : FULFILLMENT[k].price === 0
                               ? 'חינם'

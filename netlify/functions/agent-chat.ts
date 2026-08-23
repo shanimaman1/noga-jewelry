@@ -10,8 +10,10 @@ import {
 import {
   AVAILABILITY_LABELS,
   DELIVERY_TIMES,
+  SHIPPING,
   productDeliveryText,
 } from '../../src/lib/fulfillment';
+import { formatPrice } from '../../src/lib/format';
 import { STUDIO } from '../../src/lib/constants';
 import type { Availability, Category, Metal, Product } from '../../src/types/catalog';
 import type { AgentChatResponse, LlmClientAction } from '../../src/lib/agent/llmProtocol';
@@ -86,6 +88,8 @@ type ToolState = {
   catalogSearchRequested: boolean;
   searchHadMatches: boolean;
   deliveryPolicyRequested: boolean;
+  shippingCostIntent: boolean;
+  shippingCostRequested: boolean;
   studioInfoRequested: boolean;
   sizeGuideRequested: boolean;
   whatsappRequested: boolean;
@@ -112,14 +116,14 @@ NON-NEGOTIABLE BUSINESS DATA RULES:
 - You have no catalogue knowledge until a tool returns it in THIS request. Never rely on memory or prior turns.
 - Before making any claim about a Noga product name, price, category, metal, stones, availability or delivery, call search_products or get_product in this same request.
 - For a question about one identifiable product, search for that exact product first, then call get_product with the requested fields. Availability questions must request availability so application code renders the answer.
-- Studio address and opening hours, and delivery or collection times, are business facts. State them only when a tool returns them in this request.
-- For delivery or collection times call search_products with include_delivery_policy. For studio address or hours call it with include_studio_info. Do not present product cards for an information-only request.
+- Studio address and opening hours, delivery or collection times, and shipping cost are business facts. State them only when a tool returns them in this request.
+- For delivery or collection times call search_products with include_delivery_policy. For shipping cost call it with include_shipping_cost. For studio address or hours call it with include_studio_info. Do not present product cards for an information-only request.
 - Use get_product.requested_fields to state exactly which facts the shopper asked to see. The application renders those facts from the tool record; do not repeat their values in prose.
 - For recommendations, search first and then call present_recommendations only with slugs returned in this request.
 - The application chooses recommendation order and the final subset. Do not rank, reorder or select favourites from the search results. In transition prose, do not state the result count or repeat catalogue categories, metals or other product facts; refer only to what the shopper herself asked for.
-- Never write a price or product name in your prose. Never write a product's metal, category, stone description, availability label or delivery time in prose. The application renders those facts from tool results.
+- Never write a product price or name in your prose. Never write a product's metal, category, stone description, availability label, delivery time or a shipping-cost figure in prose. The application renders those facts from tool results.
 - A slug not returned by a catalogue tool is invalid. Never repair or guess it.
-- Shipping cost, discounts, returns, warranty and custom-order pricing are unknown business policies. Say you do not have verified information and call offer_whatsapp. Do not answer them from general knowledge.
+- Discounts, returns, warranty and custom-order pricing are unknown business policies. Say you do not have verified information and call offer_whatsapp. Do not answer them from general knowledge.
 - Tools never perform actions. open_size_guide and offer_whatsapp only make buttons available for the shopper to click.
 - If no tool supports a factual answer, give a brief generic line and offer WhatsApp.
 
@@ -146,6 +150,10 @@ const TOOL_DECLARATIONS = [
         include_delivery_policy: {
           type: 'boolean',
           description: 'True when the shopper asks about general delivery or collection times.',
+        },
+        include_shipping_cost: {
+          type: 'boolean',
+          description: 'True when the shopper asks how much home delivery or collection costs.',
         },
         include_studio_info: {
           type: 'boolean',
@@ -353,6 +361,8 @@ const REQUESTED_FIELDS: RequestedField[] = [
 function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
   state.searchUsed = true;
   if (args.include_delivery_policy === true) state.deliveryPolicyRequested = true;
+  const includeShippingCost = args.include_shipping_cost === true || state.shippingCostIntent;
+  if (includeShippingCost) state.shippingCostRequested = true;
   if (args.include_studio_info === true) state.studioInfoRequested = true;
 
   const filters: CatalogFilters = {
@@ -373,8 +383,8 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
   );
   const isBusinessInfoOnly =
     !hasProductCriteria &&
-    (args.include_delivery_policy === true || args.include_studio_info === true);
-  const shouldSearchCatalogue = !isBusinessInfoOnly;
+    (args.include_delivery_policy === true || includeShippingCost || args.include_studio_info === true);
+  const shouldSearchCatalogue = !state.shippingCostIntent && !isBusinessInfoOnly;
   state.catalogSearchRequested ||= shouldSearchCatalogue;
 
   const matches = shouldSearchCatalogue
@@ -405,6 +415,14 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
             home: DELIVERY_TIMES.home,
             collection: DELIVERY_TIMES.collection,
             madeToOrder: DELIVERY_TIMES.madeToOrder,
+          }
+        : null,
+    shippingCost:
+      includeShippingCost
+        ? {
+            home: SHIPPING.home,
+            freeThreshold: SHIPPING.freeThreshold,
+            collection: SHIPPING.collection,
           }
         : null,
     studioInfo:
@@ -462,6 +480,13 @@ function executeTool(call: GeminiFunctionCall, state: ToolState): Record<string,
 }
 
 function executeCalls(calls: GeminiFunctionCall[], state: ToolState): Record<string, unknown>[] {
+  if (state.shippingCostIntent) {
+    for (const call of calls) {
+      if (call.name === 'search_products') {
+        call.args = { ...(call.args ?? {}), include_shipping_cost: true };
+      }
+    }
+  }
   const results: Record<string, unknown>[] = new Array(calls.length);
   const isDataCall = (call: GeminiFunctionCall) =>
     call.name === 'search_products' || call.name === 'get_product';
@@ -502,6 +527,7 @@ function safeToolArguments(call: GeminiFunctionCall): Record<string, unknown> {
           : {}),
         ...(isAvailability(args.availability) ? { availability: args.availability } : {}),
         ...(args.include_delivery_policy === true ? { includeDeliveryPolicy: true } : {}),
+        ...(args.include_shipping_cost === true ? { includeShippingCost: true } : {}),
         ...(args.include_studio_info === true ? { includeStudioInfo: true } : {}),
         queryProvided: typeof args.query === 'string' && args.query.trim().length > 0,
         ...(typeof args.query === 'string' ? { queryLength: args.query.length } : {}),
@@ -600,12 +626,15 @@ async function callGemini(
 
 function requiresUnknownPolicyHandoff(message: string): boolean {
   const normalized = normalize(message);
-  const asksShippingCost =
-    /(?:משלוח|שליחות)/.test(normalized) && /(?:כמה.*עולה|עלות|מחיר|דמי)/.test(normalized);
   const asksCustomPrice =
     /(?:עיצוב אישי|הזמנה אישית|הזמנה מיוחדת).*(?:עולה|עלות|מחיר|תמחור)/.test(normalized) ||
     /(?:עולה|עלות|מחיר|תמחור).*(?:עיצוב אישי|הזמנה אישית|הזמנה מיוחדת)/.test(normalized);
-  return asksShippingCost || /הנח|קופון|מבצע|החזר|החלפ|אחריות/.test(normalized) || asksCustomPrice;
+  return /הנח|קופון|מבצע|החזר|החלפ|אחריות/.test(normalized) || asksCustomPrice;
+}
+
+function asksShippingCost(message: string): boolean {
+  const normalized = normalize(message);
+  return /(?:משלוח|שליחות|איסוף)/.test(normalized) && /(?:כמה.*עולה|עלות|מחיר|דמי|חינם)/.test(normalized);
 }
 
 function shoppingFilterSignalCount(normalized: string): number {
@@ -716,6 +745,7 @@ function deterministicOutput(state: ToolState, modelText: string) {
       `משלוח עד הבית אורך ${DELIVERY_TIMES.home}, ואיסוף מהסטודיו אפשרי בתוך ${DELIVERY_TIMES.collection}. לפריט שנוצר בהזמנה יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ואז חל זמן המסירה שנבחר.`,
     );
   }
+  if (state.shippingCostRequested) lines.push('הנה הפרטים על עלות המשלוח והאיסוף.');
   if (state.studioInfoRequested) {
     lines.push(
       `כתובת הסטודיו היא ${STUDIO.address}. שעות הפתיחה: ${STUDIO.hours
@@ -735,6 +765,7 @@ function deterministicOutput(state: ToolState, modelText: string) {
   const hasToolBackedOutput =
     state.evidence.size > 0 ||
     state.deliveryPolicyRequested ||
+    state.shippingCostRequested ||
     state.studioInfoRequested ||
     state.sizeGuideRequested ||
     state.whatsappRequested ||
@@ -798,7 +829,9 @@ async function runToolLoop(
 
   for (let callNumber = 0; callNumber < MAX_GEMINI_CALLS_PER_MESSAGE; callNumber += 1) {
     let functionCallingConfig: FunctionCallingConfig = { mode: 'AUTO' };
-    if (callNumber === 0 && requiresUnknownPolicyHandoff(message)) {
+    if (callNumber === 0 && asksShippingCost(message)) {
+      functionCallingConfig = { mode: 'ANY', allowedFunctionNames: ['search_products'] };
+    } else if (callNumber === 0 && requiresUnknownPolicyHandoff(message)) {
       functionCallingConfig = { mode: 'ANY', allowedFunctionNames: ['offer_whatsapp'] };
     } else if (callNumber === 0 && isUnderspecifiedShoppingRequest(message)) {
       functionCallingConfig = { mode: 'NONE' };
@@ -807,6 +840,7 @@ async function runToolLoop(
       state.presentedSlugs.length > 0 ||
       state.requestedFields.size > 0 ||
       state.deliveryPolicyRequested ||
+      state.shippingCostRequested ||
       state.studioInfoRequested ||
       state.whatsappRequested ||
       state.sizeGuideRequested;
@@ -823,6 +857,7 @@ async function runToolLoop(
         state.sizeGuideRequested ||
         state.whatsappRequested ||
         state.deliveryPolicyRequested ||
+        state.shippingCostRequested ||
         state.studioInfoRequested;
       if (hasCompletedToolWork) return finalText;
       throw new RecoverableFailure('Gemini returned no candidate content.');
@@ -917,6 +952,8 @@ export default async function handler(request: Request): Promise<Response> {
       catalogSearchRequested: false,
       searchHadMatches: false,
       deliveryPolicyRequested: false,
+      shippingCostIntent: asksShippingCost(message),
+      shippingCostRequested: false,
       studioInfoRequested: false,
       sizeGuideRequested: false,
       whatsappRequested: false,
@@ -925,6 +962,10 @@ export default async function handler(request: Request): Promise<Response> {
     const modelText = await runToolLoop(apiKey, message, context, state);
     const output = deterministicOutput(state, modelText);
     const inspectedText = inspectOutgoingText(output.text, state);
+    const verifiedShippingText = state.shippingCostRequested
+      ? `משלוח עד הבית עולה ${formatPrice(SHIPPING.home)}, וחינם בקנייה מעל ${formatPrice(SHIPPING.freeThreshold)}. איסוף מהסטודיו חינם.`
+      : '';
+    const responseText = [inspectedText, verifiedShippingText].filter(Boolean).join(' ');
     console.info(
       JSON.stringify({
         event: 'agent_grounding',
@@ -938,7 +979,7 @@ export default async function handler(request: Request): Promise<Response> {
     return json({
       mode: 'ok',
       sessionId: session.token,
-      text: inspectedText,
+      text: responseText,
       recommendationSlugs: output.recommendationSlugs,
       actions:
         inspectedText === SAFE_GENERIC && actions.every((action) => action.kind !== 'whatsapp')

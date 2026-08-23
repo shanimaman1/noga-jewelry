@@ -26,10 +26,6 @@ type CartState = {
   clear: () => void;
 };
 
-/** Free-shipping threshold in ILS. Below it, delivery is charged (see SHIPPING). */
-export const FREE_SHIPPING_THRESHOLD = 1000;
-export const STANDARD_SHIPPING = 39;
-
 const lineId = (slug: string, metal: Metal, size?: string) =>
   `${slug}__${metal}__${size ?? 'one-size'}`;
 

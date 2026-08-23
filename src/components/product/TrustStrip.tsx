@@ -1,7 +1,10 @@
+import { formatPrice } from '@/lib/format';
+import { SHIPPING } from '@/lib/fulfillment';
+
 const items = [
   { label: 'החלפה תוך 30 יום', icon: 'M25 16a9 9 0 1 1-3.2-6.9 M26 6v5h-5' },
   { label: 'תעודת יהלום', icon: 'M6 13l10-6 10 6-10 12z M6 13h20 M16 7v18' },
-  { label: 'משלוח חינם ומבוטח', icon: 'M3 8h14v12H3z M17 12h6l3 4v4h-9 M7 24a2 2 0 1 0 0-4 2 2 0 0 0 0 4 M21 24a2 2 0 1 0 0-4 2 2 0 0 0 0 4' },
+  { label: `משלוח חינם מעל ${formatPrice(SHIPPING.freeThreshold)}`, icon: 'M3 8h14v12H3z M17 12h6l3 4v4h-9 M7 24a2 2 0 1 0 0-4 2 2 0 0 0 0 4 M21 24a2 2 0 1 0 0-4 2 2 0 0 0 0 4' },
   { label: 'אריזת מתנה', icon: 'M6 13h20v13H6z M6 13l3-5h14l3 5 M16 13v13' },
 ];
 

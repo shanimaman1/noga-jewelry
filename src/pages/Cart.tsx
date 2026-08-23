@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useCart, useCartSubtotal } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
 import { formatPrice } from '@/lib/format';
+import { homeDeliveryCharge } from '@/lib/fulfillment';
 import { Container } from '@/components/common/Container';
 import { LineItem } from '@/components/cart/LineItem';
 import { FreeShippingBar } from '@/components/cart/FreeShippingBar';
@@ -15,6 +16,7 @@ const cartSeo = (
 export function Cart() {
   const lines = useCart((s) => s.lines);
   const subtotal = useCartSubtotal();
+  const shipping = homeDeliveryCharge(subtotal);
 
   if (lines.length === 0) {
     return (
@@ -63,8 +65,10 @@ export function Cart() {
                   <dd className="text-charcoal">{formatPrice(subtotal)}</dd>
                 </div>
                 <div className="flex items-center justify-between">
-                  <dt className="text-stone">משלוח</dt>
-                  <dd className="text-charcoal">מחושב בתשלום</dd>
+                  <dt className="text-stone">משלוח עד הבית</dt>
+                  <dd className="text-charcoal">
+                    {shipping === 0 ? 'חינם' : formatPrice(shipping)}
+                  </dd>
                 </div>
               </dl>
               <Link

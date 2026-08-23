@@ -215,10 +215,10 @@ both worlds — the dark atelier and everyday light.
 - User-facing labels are `מוכן בסטודיו`, `נוצר בהזמנה`, and `אזל זמנית`.
   Ready and made-to-order pieces use the existing cart and checkout unchanged.
   Made-to-order pieces take about two weeks to make before fulfilment.
-- Home delivery takes 3–5 business days. Collection from the studio takes up
-  to 2 business days and costs zero. These timings live in
-  `src/lib/fulfillment.ts` and are reused on product pages, checkout and by the
-  assistant.
+- Home delivery takes 3–5 business days and costs ₪35, or zero above a ₪1,000
+  subtotal. Collection from the studio takes up to 2 business days and costs
+  zero. These timings and prices live in `src/lib/fulfillment.ts` and are reused
+  on product pages, in the cart and checkout, and by the assistant.
 - An out-of-stock product cannot be added to the cart. Its product page opens
   a small restock-email form. The form is deliberately simulated: it validates
   and confirms locally, sends no network request and stores no address.
@@ -267,9 +267,11 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   `relaxationOptions()` is the safety net, not a normal path.
 - **Content rule, non-negotiable:** availability is read from each product in
   `products.ts`; delivery timing is read from the shared fulfilment constants.
-  Studio address and hours are read from the shared `STUDIO` constant. Shipping
-  cost, discounts, returns, warranty and custom-order pricing remain unknown
-  and receive an honest handoff to WhatsApp. Product names, prices, metals and
+  Shipping cost is read from the same shared fulfilment source: ₪35 for home
+  delivery, free over ₪1,000, and free studio collection. Studio address and
+  hours are read from the shared `STUDIO` constant. Discounts, returns, warranty
+  and custom-order pricing remain unknown and receive an honest handoff to
+  WhatsApp. Product names, prices, metals and
   categories are never written as literals in the assistant code; they are
   read from `products.ts`. General jewellery knowledge may be answered without
   a tool, but it must never become a claim about a Noga product or policy.
@@ -308,8 +310,10 @@ remain buttons the shopper must click.
   `NONE` exception disables tools for a recognisably underspecified shopping
   request so it cannot dump arbitrary products before asking. A second narrow
   exception uses `ANY` with only `offer_whatsapp` allowed for recognisable
-  questions about unknown business policies such as shipping cost, discounts,
-  returns, warranty or custom-order pricing.
+  questions about unknown business policies such as discounts, returns,
+  warranty or custom-order pricing. A shipping-cost question uses a narrow
+  `ANY` call to `search_products`; the server guarantees that call receives the
+  shipping-cost flag before the fixed code template is rendered.
 - The model never supplies recommendation-card data. It returns tool calls;
   the server derives card slugs only from the sorted catalogue result in that
   turn, and the client resolves every accepted slug against `products.ts`
@@ -323,13 +327,15 @@ remain buttons the shopper must click.
 - Product-specific prose, availability and delivery lines are assembled by
   application code from that turn's tool records. Product names, prices and
   card descriptions are rendered from catalogue records, not model text.
-  Availability, delivery and collection facts use fixed code templates.
+  Availability, delivery, collection and shipping-cost facts use fixed code
+  templates. Shipping figures are appended only from the verified tool result,
+  after the unchanged model-prose grounding scan.
 - Before returning, the function scans outgoing prose for `₪`, price-range
   numbers and catalogue names without matching tool evidence. It also rejects
   unbacked metal, category, stone, availability and delivery vocabulary and
   replaces the whole line with a generic WhatsApp handoff.
-- Shipping cost, discounts, returns, warranty and custom-order pricing remain
-  unknown and are handed off to WhatsApp.
+- Discounts, returns, warranty and custom-order pricing remain unknown and are
+  handed off to WhatsApp.
 
 The remaining instruction-only boundary is semantic intent: under `AUTO`, the
 model decides whether a message is small talk, an open request, general

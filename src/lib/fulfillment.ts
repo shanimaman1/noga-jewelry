@@ -12,6 +12,21 @@ export const DELIVERY_TIMES = {
   madeToOrder: 'כשבועיים לייצור',
 } as const;
 
+/** Fulfilment prices in ILS. This is the single source used by every surface. */
+export const SHIPPING = {
+  home: 35,
+  freeThreshold: 1000,
+  collection: 0,
+} as const;
+
+export function homeDeliveryCharge(subtotal: number): number {
+  return subtotal >= SHIPPING.freeThreshold ? 0 : SHIPPING.home;
+}
+
+export function amountUntilFreeDelivery(subtotal: number): number {
+  return Math.max(0, SHIPPING.freeThreshold - subtotal);
+}
+
 export function availabilityDetail(availability: Availability): string {
   if (availability === 'made-to-order') {
     return `${DELIVERY_TIMES.madeToOrder}, ולאחר מכן זמן המשלוח או האיסוף שבחרת.`;
