@@ -1,0 +1,22 @@
+import type { AgentAction } from './types';
+
+/** Same-origin endpoint. The Gemini key never crosses this boundary. */
+export const AGENT_CHAT_ENDPOINT = '/.netlify/functions/agent-chat';
+
+export type LlmClientAction = Extract<AgentAction, { kind: 'size-guide' | 'whatsapp' }>;
+
+export type AgentChatResponse =
+  | {
+      mode: 'ok';
+      sessionId: string;
+      text: string;
+      recommendationSlugs: string[];
+      actions: LlmClientAction[];
+    }
+  | {
+      mode: 'retryable-error';
+      sessionId?: string;
+    }
+  | {
+      mode: 'fallback';
+    };

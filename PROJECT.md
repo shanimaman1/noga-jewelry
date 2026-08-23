@@ -240,19 +240,23 @@ both worlds — the dark atelier and everyday light.
   **80+ WITH the 3D present**.
 - **Mobile:** no real-time shadows, `dpr` capped `[1, 1.5]`, scroll-driven only.
 
-## Stack (client-side only — no backend)
+## Stack (client SPA + one serverless assistant endpoint)
 React 19 + Vite + TypeScript + Tailwind **v4** + @react-three/fiber +
 @react-three/drei + motion (framer-motion) + lenis + zustand.
-Cart in `localStorage`. Checkout is a designed, non-functional demo.
+Cart in `localStorage`. Checkout is a designed, non-functional demo. The only
+backend surface is `netlify/functions/agent-chat.ts`, used by the shopping
+assistant; it holds the Gemini key and usage limits outside the client bundle.
 
-### Shopping assistant — STAGE 1 ONLY (decision 2026-08-17)
+### Shopping assistant — hybrid Stage 2 (approved 2026-08-20)
 `src/lib/agent/` + `src/components/agent/`. A guided shopping assistant that
-narrows the catalogue by four questions and recommends up to three pieces.
+uses an LLM for free text and retains the four-question deterministic wizard as
+a permanent session fallback. Both recommend up to three pieces.
 
-**Stage 1 is fully client-side, so the "client-side only — no backend"
-constraint above still holds.** No LLM, no API key, no network call: every
-answer is computed from `src/data/products.ts` at runtime. Mounted once in
-`RootLayout` (so it is absent from `/lab`, which sits outside that layout).
+The widget is mounted once in `RootLayout` (so it is absent from `/lab`, which
+sits outside that layout). It still calls only `createAgentBrain()` and does not
+know there are two brains. Stage 1 itself remains fully client-side and
+unchanged: no LLM, API key or network call, and every answer is computed from
+`src/data/products.ts` at runtime.
 
 - The chat UI talks ONLY to the `AgentBrain` interface (`lib/agent/types.ts`).
   It never imports the wizard and never branches on which brain it got. Brain
@@ -276,13 +280,51 @@ answer is computed from `src/data/products.ts` at runtime. Mounted once in
   than the catalog filters would be inconsistent, and a second copy of the
   Hebrew labels would drift. Do not duplicate them.
 
-**Stage 2 (an `llmBrain`) is NOT approved.** A real LLM needs a serverless
-function to hold the API key (a key in the client bundle is public), which would
-break the no-backend constraint and require updating this file. Do not add
-`api/`, a server function, or any external network call without that approval.
-Cost and abuse-protection analysis was done on 2026-08-17: a hybrid design with
-a daily cap and a fallback to this deterministic wizard was the agreed shape if
-it is ever approved.
+**Stage 2 is approved and implemented.** `llmBrain` calls the same-origin
+`/.netlify/functions/agent-chat` endpoint, which uses
+`gemini-3.5-flash-lite`. The model ID is one server-side constant. The API key
+exists only as the Netlify environment variable `GEMINI_API_KEY`; never prefix
+it with `VITE_`, place it in `netlify.toml`, or expose it to client code.
+
+The function exposes exactly five non-acting tools: `search_products`,
+`get_product`, `present_recommendations`, `open_size_guide` and
+`offer_whatsapp`. Search and product lookup read the existing
+`lib/agent/catalog.ts` and `products.ts`; there is no second catalogue. Actions
+remain buttons the shopper must click.
+
+**Zero fabrication is structural wherever possible:**
+
+- Each function request contains only the current shopper message, not old
+  catalogue facts. Product facts must therefore be fetched again in that turn.
+- The model never supplies recommendation-card data. It returns tool calls;
+  the server accepts only slugs returned by a catalogue tool in the same turn,
+  and the client resolves every accepted slug against `products.ts` again. An
+  unknown slug renders nothing.
+- Product-specific prose, availability and delivery lines are assembled by
+  application code from that turn's tool records. Product names, prices and
+  card descriptions are rendered from catalogue records, not model text.
+- Before returning, the function scans outgoing prose for `₪`, price-range
+  numbers and catalogue names without matching tool evidence. It also rejects
+  unbacked metal, category, stone, availability and delivery vocabulary and
+  replaces the whole line with a generic WhatsApp handoff.
+- Shipping cost, discounts and returns remain unknown and are handed off to
+  WhatsApp.
+
+The remaining instruction-only boundary is semantic intent: the model chooses
+which tool and requested fields match a natural-language question, and writes
+generic conversational transitions. A model can misunderstand that intent or
+produce subtle subjective wording that no finite scanner recognizes. It still
+cannot inject a product, price or card record; catalogue facts are ignored from
+model prose and rendered by code. This is the residual risk, and systemic
+failure never reaches the shopper: the resilient brain switches permanently to
+the unchanged wizard for that browser session after one short line.
+
+Server protections are fixed in the function: an origin allowlist, 500
+characters per message, 20 messages per signed session, at most four Gemini
+calls per message and an atomic cap of 200 Gemini calls per UTC day in a
+strongly consistent Netlify Blobs store. Missing configuration, invalid session,
+quota/cap errors or unavailable limit storage cause permanent wizard fallback;
+a single recoverable message failure keeps the LLM path available.
 
 ### Pinned versions (3D-related = EXACT, no caret) — verified vs npm 2026-07-24
 - `react` **19.2.8**, `react-dom` **19.2.8** (inside fiber peer `>=19 <19.3`)

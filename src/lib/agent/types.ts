@@ -3,12 +3,12 @@
  *
  * The chat UI talks ONLY to `AgentBrain` — it never imports the wizard, never
  * inspects wizard state, and never branches on which brain it received. That
- * is what lets a future `llmBrain` (stage 2, serverless-backed) drop in behind
- * the same interface with zero UI changes.
+ * is what lets the serverless-backed `llmBrain` and the deterministic fallback
+ * sit behind the same interface with zero UI changes.
  *
  * Every method is async even though the stage-1 wizard answers synchronously:
- * an LLM brain will await a network call, and baking that into the contract now
- * means the UI's pending state already exists when it arrives.
+ * the LLM brain awaits a network call, while the UI uses the same pending state
+ * for either implementation.
  *
  * A turn returns the FULL transcript rather than a delta. The brain owns
  * conversation state; the UI is a pure renderer of the last turn it received.

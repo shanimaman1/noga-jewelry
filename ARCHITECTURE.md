@@ -27,7 +27,8 @@ src/
 ├─ hooks/          useLenis, useMediaQuery, useReducedMotion, useReveal,
 │                  useHeroInViewObserver
 ├─ lib/
-│  ├─ agent/       types.ts, catalog.ts, wizard.ts, index.ts
+│  ├─ agent/       types.ts, catalog.ts, wizard.ts, llmBrain.ts,
+│  │               resilientBrain.ts, llmProtocol.ts, index.ts
 │  ├─ cart/        store.ts (zustand + persist)
 │  ├─ motion/      קבועי אנימציה
 │  ├─ constants.ts BRAND, ROUTES, NAV_LINKS, whatsappUrl
@@ -39,6 +40,8 @@ src/
 ├─ styles/         index.css — טוקני Tailwind v4 + כללי reveal
 ├─ three/          hero/, lab/, product/, shared/, story/
 └─ types/          catalog.ts (Product, Availability, Metal, Category, METAL_LABELS)
+netlify/
+└─ functions/      agent-chat.ts (Gemini tool loop, guards, usage limits)
 ```
 
 ## מקורות אמת לנתונים
@@ -90,8 +93,8 @@ src/
 ### ממשק `AgentBrain`
 
 הווידג'ט מדבר **רק** עם `AgentBrain` (`src/lib/agent/types.ts`). הוא לא מייבא את
-האשף, לא קורא את מצבו, ולא מסתעף לפי סוג המוח שקיבל. זה מה שיאפשר להוסיף מוח
-מבוסס LLM בשלב 2 בלי לגעת בקומפוננטה.
+האשף, לא קורא את מצבו, ולא מסתעף לפי סוג המוח שקיבל. שלב 2 נוסף מאחורי אותו
+ממשק בלי שינוי בקומפוננטה.
 
 ```ts
 interface AgentBrain {
@@ -102,7 +105,7 @@ interface AgentBrain {
 }
 ```
 
-שתי החלטות תכנוניות שנועדו לשלב 2:
+שתי החלטות תכנוניות שמשרתות את שלב 2:
 
 1. **כל המתודות אסינכרוניות**, גם שהאשף עונה מיידית. מוח LLM ימתין לרשת, ולכן
    מצב ה־`pending` בממשק כבר קיים.
@@ -118,11 +121,15 @@ interface AgentBrain {
 | `types.ts` | `AgentBrain`, הודעות, בחירות, פעולות, המלצות |
 | `catalog.ts` | חיפוש וסינון טהורים מעל `products.ts` |
 | `wizard.ts` | זרימת השאלות, חוקי ההמלצה, טיפול בטקסט חופשי |
-| `index.ts` | ה־factory — המקום היחיד שבו נבחר מוח |
+| `llmBrain.ts` | קריאת ה־Function, תמליל וחזרה בטוחה משגיאת הודעה |
+| `resilientBrain.ts` | מחזיק LLM ואשף; מעבר קבוע לאשף בכשל מערכתי |
+| `llmProtocol.ts` | חוזה JSON צר ומשותף, ללא נתוני מוצר או סוד |
+| `index.ts` | ה־factory — מחזיר את המוח העמיד כברירת מחדל |
+| `netlify/functions/agent-chat.ts` | Gemini, חמשת הכלים, אימות טענות ומכסות |
 | `components/agent/ShoppingAssistant.tsx` | Launcher, פאנל, focus trap, חיווט הפעולות |
 | `components/agent/AssistantProductCard.tsx` | כרטיס המלצה קומפקטי |
 
-### הזרימה
+### הזרימה הדטרמיניסטית
 
 למי התכשיט → טווח מחירים → קטגוריה → מתכת → עד שלוש המלצות.
 
@@ -138,6 +145,35 @@ interface AgentBrain {
 
 `back()` נשען על מחסנית snapshots: כל שלב שומר גם את המצב וגם את התמליל, כך
 שחזרה משחזרת את שניהם במדויק.
+
+### זרימת ה־LLM והנפילה הבטוחה
+
+`createAgentBrain()` מחזיר `resilientBrain`, שמחזיק גם `llmBrain` וגם מופע חדש
+של האשף. ה־LLM שולח רק את ההודעה הנוכחית ל־Function; היסטוריית התצוגה נשארת
+בדפדפן, ולכן עובדות קטלוג מתור קודם אינן יכולות לשמש ראיה בתור חדש.
+
+ה־Function מריץ לולאת function calling מול `gemini-3.5-flash-lite` ומצהיר על
+חמישה כלים בלבד: חיפוש, מוצר יחיד, הצגת המלצות, מדריך מידות והצעת וואטסאפ.
+הכלים אינם מבצעים פעולה. הם מחזירים נתונים או מסמנים איזה כפתור להציג;
+המשתמשת היא שלוחצת בפועל.
+
+מפת ראיות חדשה נוצרת לכל בקשה. `present_recommendations` מקבל רק slugs שכבר
+חזרו מחיפוש או מקריאת מוצר באותה בקשה, עד שלושה. ה־Function מחזיר ללקוח רק
+slugs, טקסט שעבר בדיקה ופעולות. `AssistantProductCard` פותר שוב כל slug מול
+`products.ts`, ולכן slug שגוי לא מציג כרטיס. פרטי מוצר, זמינות וזמני מסירה
+מורכבים בקוד מרשומת הכלי; טקסט המודל אינו מקור לנתונים אלה.
+
+לפני ההחזרה נסרקים `₪`, מספרים בטווח מחירי הקטלוג ושמות מוצרים ללא ראיה
+תואמת, וכן מונחי מתכת, קטגוריה, אבנים, זמינות ומסירה ללא כלי תומך. הפרה
+מוחלפת בשורה כללית ובהצעת וואטסאפ. החלק שאי אפשר לאכוף במבנה הוא הבנת הכוונה
+הלשונית ובחירת הכלי/השדות; טעות שם יכולה לתת תשובה לא רלוונטית, אבל אינה
+יכולה ליצור כרטיס או נתון קטלוג חדש.
+
+הגנות השרת: מקור מורשה בלבד, 500 תווים להודעה, 20 הודעות בסשן חתום, עד ארבע
+קריאות Gemini להודעה ומכסה אטומית של 200 קריאות ביום UTC. הספירות נשמרות
+ב־Netlify Blobs בקריאות חזקות ובכתיבות ETag מותנות. כשל מערכתי, מכסה, מפתח
+חסר או אחסון מכסה לא זמין מעבירים את אותו סשן לצמיתות לאשף אחרי שורה קצרה;
+כשל יחיד שניתן להתאושש ממנו משאיר את ה־LLM פעיל.
 
 ### חוקי תוכן
 
@@ -323,8 +359,9 @@ github.com/shanimaman1/noga-jewelry. Netlify בונה ופורס את `master` �
 
 * `build.command` — `npm run build` (`tsc --noEmit` ואז `vite build`).
 * `build.publish` — `dist`.
-* `build.functions` — הנתיב השמור `netlify/functions`. אין כיום תיקייה כזו
-  ואין שום serverless function בפרויקט; זו רק הכנה אפשרית לתשתית עתידית.
+* `build.functions` — `netlify/functions`, ובתוכה `agent-chat.ts`. ה־Function
+  קורא את `GEMINI_API_KEY` מסביבת Netlify ומתקשר ל־Gemini; המפתח אינו נכלל
+  ב־`dist` או בחבילת JavaScript של הדפדפן.
 * `[[redirects]]` — `/* → /index.html` (200), ה־rewrite ל־SPA. כפול בכוונה
   עם `public/_redirects` הקיים (אותו כלל בדיוק, מועתק ל־`dist/` בזמן ה־build
   על ידי Vite) — לא סתירה, רק שהכלל גלוי גם בקובץ ההגדרות ולא רק בקובץ טקסט

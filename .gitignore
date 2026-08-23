@@ -31,5 +31,8 @@ verify-screenshots/
 .env.*
 !.env.example
 
+# Throwaway Gemini quota probe
+/temp/gemini-flash-lite-quota-probe/
+
 # Vercel
 .vercel
