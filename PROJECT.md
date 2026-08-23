@@ -296,6 +296,11 @@ remain buttons the shopper must click.
 
 - Each function request contains only the current shopper message, not old
   catalogue facts. Product facts must therefore be fetched again in that turn.
+- The first Gemini round uses forced function calling (`ANY`); later rounds use
+  `AUTO` so the model can write its final transition. Every shopping, gift,
+  preference or open browsing message must start with `search_products`. With
+  no usable filters, an argument-free search returns a broad catalogue sample
+  before the assistant narrows the request.
 - The model never supplies recommendation-card data. It returns tool calls;
   the server accepts only slugs returned by a catalogue tool in the same turn,
   and the client resolves every accepted slug against `products.ts` again. An
@@ -310,14 +315,20 @@ remain buttons the shopper must click.
 - Shipping cost, discounts and returns remain unknown and are handed off to
   WhatsApp.
 
-The remaining instruction-only boundary is semantic intent: the model chooses
-which tool and requested fields match a natural-language question, and writes
-generic conversational transitions. A model can misunderstand that intent or
+The remaining instruction-only boundary is semantic intent after a tool call:
+forced calling guarantees that the first response is a tool, but the system
+instruction still tells the model that open shopping intent must choose
+`search_products` rather than another declared tool, and which requested fields
+match a natural-language question. A model can misunderstand that intent or
 produce subtle subjective wording that no finite scanner recognizes. It still
 cannot inject a product, price or card record; catalogue facts are ignored from
 model prose and rendered by code. This is the residual risk, and systemic
 failure never reaches the shopper: the resilient brain switches permanently to
 the unchanged wizard for that browser session after one short line.
+
+Function logs record each called tool, privacy-safe arguments and result count,
+plus whether the outgoing grounding scan replaced the text. Free-text query
+values, shopper messages, API keys and session identifiers are never logged.
 
 Server protections are fixed in the function: an origin allowlist, 500
 characters per message, 20 messages per signed session, at most four Gemini

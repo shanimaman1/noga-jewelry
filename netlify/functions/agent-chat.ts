@@ -89,12 +89,15 @@ You are the restrained Hebrew shopping assistant for Noga Jewelry. Reply in Hebr
 
 NON-NEGOTIABLE DATA RULES:
 - You have no catalogue knowledge until a tool returns it in THIS request. Never rely on memory or prior turns.
+- Any message about what the shopper wants, likes, is looking for, is considering or is buying for someone requires search_products BEFORE any prose response. This includes vague or open requests such as "a gift for my mother", "something delicate" and "I do not know what I want". Replying to a shopping or browsing request without first calling search_products is never correct.
+- An open request with no usable catalogue filters requires a broad search_products call with no filters. Search broadly, offer real catalogue options, and then narrow. You may ask one clarifying question only after searching, and you must still offer recommendations rather than replying empty-handed.
+- Do not put recipients, occasions or vague preferences into query unless those exact words identify a catalogue product. For requests such as a gift for a mother, something delicate or uncertainty about what to choose, call search_products with no arguments.
 - Before making any claim about a product name, price, category, metal, stones, availability or delivery, call search_products or get_product in this same request.
 - Use get_product.requested_fields to state exactly which facts the shopper asked to see. The application renders those facts from the tool record; do not repeat their values in prose.
 - For recommendations, search first and then call present_recommendations only with slugs returned in this request.
 - Never write a price, product name, metal, category, stone description, availability label or delivery time in your prose. The application renders them from tool results.
 - A slug not returned by a catalogue tool is invalid. Never repair or guess it.
-- Shipping cost, discounts and returns are unknown. Say you do not have verified information and call offer_whatsapp.
+- Reserve the honest "I do not have verified information" response for information the catalogue genuinely does not contain. Shipping cost, discounts and returns are unknown: say so and call offer_whatsapp. Never use that response for an open shopping or browsing request.
 - Tools never perform actions. open_size_guide and offer_whatsapp only make buttons available for the shopper to click.
 - If no tool supports a factual answer, give a brief generic line and offer WhatsApp.
 
@@ -105,7 +108,7 @@ const TOOL_DECLARATIONS = [
   {
     name: 'search_products',
     description:
-      'Search the live catalogue. Use this before recommending products or answering general availability questions. It may also return the verified fulfilment policy.',
+      'Search the live catalogue. Every shopping, preference, gift or browsing request must call this first. With no filters it returns a broad catalogue selection. Use query only for exact catalogue product words, not recipients, occasions or vague preferences. It may also return the verified fulfilment policy.',
     parameters: {
       type: 'object',
       properties: {
@@ -330,12 +333,14 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
   const query = typeof args.query === 'string' ? normalize(args.query).slice(0, 120) : '';
   const words = query.split(' ').filter(Boolean);
   const availability = isAvailability(args.availability) ? args.availability : undefined;
-  const hasSearchCriteria = Boolean(
+  const hasProductCriteria = Boolean(
     query || filters.category || filters.metal || filters.band || availability,
   );
-  state.catalogSearchRequested ||= hasSearchCriteria;
+  const isDeliveryPolicyOnly = args.include_delivery_policy === true && !hasProductCriteria;
+  const shouldSearchCatalogue = !isDeliveryPolicyOnly;
+  state.catalogSearchRequested ||= shouldSearchCatalogue;
 
-  const matches = hasSearchCriteria
+  const matches = shouldSearchCatalogue
     ? findProducts(filters)
         .filter((product) => !availability || product.availability === availability)
         .filter(
@@ -421,12 +426,83 @@ function executeCalls(calls: GeminiFunctionCall[], state: ToolState): Record<str
   calls.forEach((call, index) => {
     if (!isDataCall(call)) results[index] = executeTool(call, state);
   });
+  calls.forEach((call, index) => {
+    console.info(
+      JSON.stringify({
+        event: 'agent_tool_call',
+        tool: safeToolName(call.name),
+        arguments: safeToolArguments(call),
+        resultCount: toolResultCount(call, results[index]),
+      }),
+    );
+  });
   return results;
+}
+
+function safeToolName(name: string): string {
+  return TOOL_DECLARATIONS.some((tool) => tool.name === name) ? name : 'unknown_tool';
+}
+
+function safeToolArguments(call: GeminiFunctionCall): Record<string, unknown> {
+  const args = call.args ?? {};
+  switch (call.name) {
+    case 'search_products':
+      return {
+        ...(isCategory(args.category) ? { category: args.category } : {}),
+        ...(isMetal(args.metal) ? { metal: args.metal } : {}),
+        ...(isPriceBand(args.price_band) ? { priceBand: args.price_band } : {}),
+        ...(isAvailability(args.availability) ? { availability: args.availability } : {}),
+        ...(args.include_delivery_policy === true ? { includeDeliveryPolicy: true } : {}),
+        queryProvided: typeof args.query === 'string' && args.query.trim().length > 0,
+        ...(typeof args.query === 'string' ? { queryLength: args.query.length } : {}),
+      };
+    case 'get_product':
+      {
+        const slug = typeof args.slug === 'string' ? args.slug : '';
+        const recognizedSlug = Boolean(getProduct(slug));
+        return {
+          ...(recognizedSlug ? { slug } : { slugRecognized: false }),
+          requestedFields: Array.isArray(args.requested_fields)
+            ? args.requested_fields.filter(
+                (field): field is RequestedField =>
+                  typeof field === 'string' && REQUESTED_FIELDS.includes(field as RequestedField),
+              )
+            : [],
+        };
+      }
+    case 'present_recommendations':
+      return {
+        slugs: Array.isArray(args.slugs)
+          ? args.slugs.filter(
+              (slug): slug is string => typeof slug === 'string' && Boolean(getProduct(slug)),
+            )
+          : [],
+        requestedSlugCount: Array.isArray(args.slugs) ? args.slugs.length : 0,
+      };
+    default:
+      return {};
+  }
+}
+
+function toolResultCount(
+  call: GeminiFunctionCall,
+  result: Record<string, unknown> | undefined,
+): number {
+  if (!result) return 0;
+  if (call.name === 'search_products') {
+    return Array.isArray(result.products) ? result.products.length : 0;
+  }
+  if (call.name === 'get_product') return result.product ? 1 : 0;
+  if (call.name === 'present_recommendations') {
+    return Array.isArray(result.acceptedSlugs) ? result.acceptedSlugs.length : 0;
+  }
+  return result.offered === true ? 1 : 0;
 }
 
 async function callGemini(
   apiKey: string,
   contents: GeminiContent[],
+  functionCallingMode: 'ANY' | 'AUTO',
 ): Promise<GeminiResponse> {
   const available = await consumeCounter(`daily/${utcDay()}`, DAILY_REQUEST_CAP);
   if (!available) throw new SystemicFailure('Daily request cap reached.');
@@ -443,6 +519,9 @@ async function callGemini(
         systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
         contents,
         tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
+        toolConfig: {
+          functionCallingConfig: { mode: functionCallingMode },
+        },
         generationConfig: {
           temperature: 0.15,
           maxOutputTokens: 320,
@@ -580,7 +659,11 @@ async function runToolLoop(apiKey: string, message: string, state: ToolState) {
   let finalText = '';
 
   for (let callNumber = 0; callNumber < MAX_GEMINI_CALLS_PER_MESSAGE; callNumber += 1) {
-    const response = await callGemini(apiKey, contents);
+    const response = await callGemini(
+      apiKey,
+      contents,
+      callNumber === 0 ? 'ANY' : 'AUTO',
+    );
     const content = response.candidates?.[0]?.content;
     if (!content?.parts?.length) throw new RecoverableFailure('Gemini returned no candidate content.');
 
@@ -661,6 +744,14 @@ export default async function handler(request: Request): Promise<Response> {
     const modelText = await runToolLoop(apiKey, message, state);
     const output = deterministicOutput(state, modelText);
     const inspectedText = inspectOutgoingText(output.text, state);
+    console.info(
+      JSON.stringify({
+        event: 'agent_grounding',
+        replaced: inspectedText !== output.text,
+        evidenceCount: state.evidence.size,
+        recommendationCount: output.recommendationSlugs.length,
+      }),
+    );
     const actions = actionsFrom(state);
 
     return json({

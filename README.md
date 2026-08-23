@@ -26,6 +26,18 @@ npm run dev
 | `npm run typecheck` | בדיקת טיפוסים בלבד |
 | `npm run verify` | בדיקת עשן בדפדפן אמיתי (Playwright) — `scripts/verify-site.mjs` |
 
+### דרישת פריסה לעוזר שלב 2
+
+ב־Netlify חייב להיות משתנה סביבה בשם `GEMINI_API_KEY` תחת
+**Project configuration → Environment variables**. הוא מוגדר באותו ערך בכל
+הקשרי הפריסה (Production,‏ Deploy Previews ו־Branch deploys), והערך עצמו לעולם
+אינו נשמר בריפו או נכלל ב־bundle. הוספה או שינוי של המשתנה נכנסים לתוקף
+בפריסה הבאה, ולכן נדרשת פריסה חדשה לאחר עדכון ההגדרה.
+
+אם `GEMINI_API_KEY` חסר, ה־Function מחזיר מצב fallback ועוזר הבחירה עובר לאשף
+הדטרמיניסטי. הקטלוג, העגלה ושאר האתר ממשיכים לעבוד כרגיל; חסרון המפתח אינו
+שובר את ההדגמה.
+
 ## סטאק
 
 React 19 · Vite 8 · TypeScript 7 · Tailwind v4 · react-three-fiber · drei ·
