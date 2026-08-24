@@ -118,7 +118,7 @@ CONVERSATION FIRST:
 NON-NEGOTIABLE BUSINESS DATA RULES:
 - You have no catalogue knowledge until a tool returns it in THIS request. Never rely on memory or prior turns.
 - Before making any claim about a Noga product name, price, category, metal, stones, gold weight, 18-karat availability, availability or delivery, call search_products or get_product in this same request.
-- For a question about one identifiable product, search for that exact product first, then call get_product with the requested fields. Availability questions must request availability, and 18-karat questions must request 18k_availability, so application code renders the answer.
+- For a question about one identifiable product, search for that exact product first, then call get_product with the requested fields. Availability questions must request availability, and 18-karat questions, including price or lead time, must request 18k_availability, so application code renders the answer and the matching structured card.
 - Studio address and opening hours, delivery or collection times, and shipping cost are business facts. State them only when a tool returns them in this request.
 - For delivery or collection times call search_products with include_delivery_policy. For shipping cost call it with include_shipping_cost. For studio address or hours call it with include_studio_info. Do not present product cards for an information-only request.
 - Use get_product.requested_fields to state exactly which facts the shopper asked to see. The application renders those facts from the tool record; do not repeat their values in prose.
@@ -126,7 +126,7 @@ NON-NEGOTIABLE BUSINESS DATA RULES:
 - The application chooses recommendation order and the final subset. Do not rank, reorder or select favourites from the search results. In transition prose, do not state the result count or repeat catalogue categories, metals or other product facts; refer only to what the shopper herself asked for.
 - Never write a product price or name in your prose. Never write a product's metal, category, stone description, gold weight, 18-karat availability, availability label, delivery time or a shipping-cost figure in prose. The application renders those facts from tool results.
 - A slug not returned by a catalogue tool is invalid. Never repair or guess it.
-- Discounts, returns, warranty and custom-order pricing are unknown business policies. Say you do not have verified information and call offer_whatsapp. Do not answer them from general knowledge.
+- Discounts, returns, warranty and custom-order pricing other than the explicit 18-karat catalogue variants are unknown business policies. Say you do not have verified information and call offer_whatsapp. Do not answer them from general knowledge.
 - Tools never perform actions. open_size_guide and offer_whatsapp only make buttons available for the shopper to click.
 - If no tool supports a factual answer, give a brief generic line and offer WhatsApp.
 
@@ -332,6 +332,9 @@ function catalogueRecord(product: Product) {
     stonesDescription: stoneDescription(product.stones),
     goldWeightGrams: product.goldWeightGrams,
     availableIn18K: product.availableIn18K,
+    price18K: product.availableIn18K ? product.price18K : null,
+    eighteenKExclusionReason: product.availableIn18K ? null : product.eighteenKExclusionReason,
+    eighteenKLeadTime: product.availableIn18K ? DELIVERY_TIMES.madeToOrder : null,
     availability: AVAILABILITY_LABELS[product.availability],
     delivery: productDeliveryText(product),
   };
@@ -705,8 +708,8 @@ function requestedFactLine(product: Product, fields: Set<RequestedField>): strin
   if (fields.has('18k_availability')) {
     facts.push(
       product.availableIn18K
-        ? 'אפשר להזמין את העיצוב גם בזהב 18 קראט לפי בקשה.'
-        : 'אי אפשר להזמין את העיצוב בזהב 18 קראט.',
+        ? `אפשר לבחור בזהב 18 קראט כהזמנה מיוחדת. יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ולאחר מכן חל זמן המסירה שנבחר.`
+        : product.eighteenKExclusionReason,
     );
   }
   if (fields.has('availability')) {
@@ -748,6 +751,9 @@ function deterministicOutput(state: ToolState, modelText: string) {
       ? state.searchedSlugs.slice(0, MAX_RECOMMENDATIONS)
       : [...state.requestedFields.keys()].slice(0, MAX_RECOMMENDATIONS)
   ).filter((slug) => state.evidence.has(slug));
+  const eighteenKSlugs = [...state.requestedFields.entries()]
+    .filter(([slug, fields]) => fields.has('18k_availability') && state.evidence.get(slug)?.availableIn18K)
+    .map(([slug]) => slug);
 
   const lines = [...factLines];
   if (state.deliveryPolicyRequested) {
@@ -784,6 +790,7 @@ function deterministicOutput(state: ToolState, modelText: string) {
   return {
     text: lines.join(' ').trim() || (hasToolBackedOutput ? SAFE_GENERIC : modelText.trim() || SAFE_GENERIC),
     recommendationSlugs,
+    eighteenKSlugs,
   };
 }
 
@@ -991,6 +998,7 @@ export default async function handler(request: Request): Promise<Response> {
       sessionId: session.token,
       text: responseText,
       recommendationSlugs: output.recommendationSlugs,
+      eighteenKSlugs: output.eighteenKSlugs,
       actions:
         inspectedText === SAFE_GENERIC && actions.every((action) => action.kind !== 'whatsapp')
           ? [...actions, { kind: 'whatsapp', message: WHATSAPP_MESSAGE }]

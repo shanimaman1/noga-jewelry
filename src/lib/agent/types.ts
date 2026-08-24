@@ -28,8 +28,8 @@ export type AgentChoice = {
  * only decides which actions belong on a message.
  */
 export type AgentAction =
-  | { kind: 'view-product'; slug: string }
-  | { kind: 'add-to-cart'; slug: string }
+  | { kind: 'view-product'; slug: string; karat?: 18 }
+  | { kind: 'add-to-cart'; slug: string; karat?: 14 | 18 }
   | { kind: 'size-guide' }
   | { kind: 'whatsapp'; message: string }
   | { kind: 'restart' };
@@ -41,6 +41,8 @@ export type AgentAction =
  */
 export type AgentRecommendation = {
   slug: string;
+  /** Present only when a tool-backed 18-karat fact was requested. */
+  karat?: 18;
   /** One honest line about why this matched. Facts only, from catalogue data. */
   reason: string;
 };

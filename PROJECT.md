@@ -34,12 +34,12 @@ setup and commands in [README.md](README.md), and image work in
 
 ## Brand
 - **Name:** NOGA Fine Jewelry / נוגה
-- Tel Aviv atelier for handmade 14k gold; selected made-to-order designs are
-  available in 18k by request. Natural and lab-grown diamonds.
+- Tel Aviv atelier for handmade 14k gold; seven selected designs have an
+  explicitly priced 18k special-order variant. Natural and lab-grown diamonds.
 - **Positioning:** "תכשיט אחד שתלבשי כל יום — לא עשרה נשכחים במגירה"
 - **Founder:** Dana (דנה), Bezalel-trained goldsmith, 12 years' experience
 - **Name origin:** Dana named the atelier Noga after her daughter.
-- **Price range:** ₪890–₪12,000
+- **Price range:** ₪890–₪10,200, including selectable 18k variants.
 - **Language:** Hebrew, full RTL. Prices in ILS (₪).
 - **WhatsApp / contact:** `+972-50-000-0000` — deliberately INVALID placeholder, never a real number.
 - **Studio:** שבזי 45, נווה צדק, תל אביב. Sun–Thu 10:00–19:00,
@@ -206,7 +206,8 @@ both worlds — the dark atelier and everyday light.
 - Trust strip (certificate only when one diamond exceeds 0.3ct / exchange /
   wrapping).
 - Explicit stones disclosure and approximate net gold weight from product data;
-  the 18-karat order note appears only on products that support it.
+  seven supported designs show a 14k / 18k selector and the other nine explain
+  plainly why they stay in harder 14k gold.
 - Shipping & returns.
 - Home-delivery and studio-collection timing; made-to-order lead time is stated
   before the chosen fulfilment time.
@@ -219,6 +220,10 @@ both worlds — the dark atelier and everyday light.
 - User-facing labels are `מוכן בסטודיו`, `נוצר בהזמנה`, and `אזל זמנית`.
   Ready and made-to-order pieces use the existing cart and checkout unchanged.
   Made-to-order pieces take about two weeks to make before fulfilment.
+- Selecting an 18k variant always sets the effective state to `made-to-order`
+  without changing the product's stored 14k availability. Karat, effective
+  price and lead time change together and the selected karat stays on the cart
+  line through checkout and confirmation.
 - Home delivery takes 3–5 business days and is free on every order. Collection
   from the studio takes up to 2 business days and is also free. These timings
   and prices live in `src/lib/fulfillment.ts` and are reused on product pages,
@@ -234,10 +239,15 @@ both worlds — the dark atelier and everyday light.
   and lab-grown diamonds. Diamond records carry total carat weight; the
   solitaire also carries colour and clarity.
 - `goldWeightGrams` is an approximate net gold weight and excludes stones.
-- The 18-karat request note is shown only for the three made-to-order products;
-  no 18-karat price is stated. The assistant receives the same
-  `availableIn18K` value through its catalogue tool and renders a fixed answer
-  from code when that fact is requested.
+- Exactly seven products carry `availableIn18K: true` and an explicit `price18K`;
+  the other nine carry a plain construction reason for staying in 14k. The
+  assistant receives availability, price, reason and lead time through its
+  catalogue tool. It renders the fixed facts from code and shows any 18k price
+  in a catalogue-backed card, never in model prose.
+- Checkout offers one or three interest-free credit-card payments. Integer
+  totals are split exactly, any remainder goes into the first payment, and the
+  selected schedule is recorded in the order confirmation. Bit and Apple Pay
+  stay single-payment options. Checkout remains a local demo with no charge.
 - The product trust strip follows the homepage policy exactly: a diamond
   certificate is shown only for a single diamond above 0.3ct. Total melee
   weight does not qualify a multi-stone piece.
@@ -288,8 +298,9 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   `products.ts`; delivery timing is read from the shared fulfilment constants.
   Shipping cost is read from the same shared fulfilment source: home delivery
   and studio collection are free on every order. Studio address and hours are
-  read from the shared `STUDIO` constant. Discounts, returns, warranty
-  and custom-order pricing remain unknown and receive an honest handoff to
+  read from the shared `STUDIO` constant. Explicit 18k variant prices are real
+  catalogue data; discounts, returns, warranty and other custom-order pricing
+  remain unknown and receive an honest handoff to
   WhatsApp. Product names, prices, metals, categories, stone details and
   approximate gold weights are never written as literals in the assistant
   code; they are read from `products.ts`. General jewellery knowledge may be
@@ -331,7 +342,7 @@ remain buttons the shopper must click.
   request so it cannot dump arbitrary products before asking. A second narrow
   exception uses `ANY` with only `offer_whatsapp` allowed for recognisable
   questions about unknown business policies such as discounts, returns,
-  warranty or custom-order pricing. A shipping-cost question uses a narrow
+  warranty or custom-order pricing other than explicit 18k variants. A shipping-cost question uses a narrow
   `ANY` call to `search_products`; the server guarantees that call receives the
   shipping-cost flag before the fixed code template is rendered.
 - The model never supplies recommendation-card data. It returns tool calls;
@@ -355,8 +366,8 @@ remain buttons the shopper must click.
   numbers and catalogue names without matching tool evidence. It also rejects
   unbacked metal, category, stone, availability and delivery vocabulary and
   replaces the whole line with a generic WhatsApp handoff.
-- Discounts, returns, warranty and custom-order pricing remain unknown and are
-  handed off to WhatsApp.
+- Discounts, returns, warranty and custom-order pricing other than explicit 18k
+  variants remain unknown and are handed off to WhatsApp.
 
 The remaining instruction-only boundary is semantic intent: under `AUTO`, the
 model decides whether a message is small talk, an open request, general

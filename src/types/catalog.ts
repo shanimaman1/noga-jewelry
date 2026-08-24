@@ -4,6 +4,8 @@ export type Category = 'rings' | 'necklaces' | 'earrings' | 'bracelets';
 
 export type Availability = 'ready' | 'made-to-order' | 'out-of-stock';
 
+export type GoldKarat = 14 | 18;
+
 export type StoneDetails =
   | { kind: 'none' }
   | {
@@ -42,7 +44,7 @@ export type MetalVariant = {
   imageAlt: string;
 };
 
-export type Product = {
+type ProductBase = {
   slug: string;
   name: string;
   shortDescription: string;
@@ -54,8 +56,6 @@ export type Product = {
   stones: StoneDetails;
   /** Approximate net gold weight, excluding stones, in grams. */
   goldWeightGrams: number;
-  /** Whether this design can genuinely be ordered in 18-karat gold. */
-  availableIn18K: boolean;
   /** Ordered; the first is the default view. At least one. */
   metals: MetalVariant[];
   /** Marks the piece for the "featured" row on the homepage. */
@@ -67,6 +67,21 @@ export type Product = {
    *  real shape differs from the model. */
   has3D?: boolean;
 };
+
+export type Product = ProductBase &
+  (
+    | {
+        /** This design has an explicitly priced 18-karat special-order variant. */
+        availableIn18K: true;
+        price18K: number;
+      }
+    | {
+        /** This design stays in 14-karat gold for the stated construction reason. */
+        availableIn18K: false;
+        price18K?: never;
+        eighteenKExclusionReason: string;
+      }
+  );
 
 export type Collection = {
   slug: string;

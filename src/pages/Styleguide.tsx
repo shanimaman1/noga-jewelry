@@ -29,7 +29,7 @@ export default function Styleguide() {
           </Row>
           <Row label="H3 · תת-כותרת">
             <h3 className="text-xl sm:text-2xl">
-              זהב 14 קראט, עם אפשרות לזהב 18 קראט לפי בקשה בדגמים נבחרים שנוצרים בהזמנה
+              זהב 14 קראט, עם אפשרות לזהב 18 קראט בדגמים נבחרים בהזמנה מיוחדת
             </h3>
           </Row>
           <Row label="H4 · כותרת משנה">

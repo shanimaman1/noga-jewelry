@@ -9,7 +9,7 @@ export function LineItem({ line, compact = false }: { line: CartLine; compact?: 
   const setQuantity = useCart((s) => s.setQuantity);
   const remove = useCart((s) => s.remove);
 
-  const meta = [METAL_LABELS[line.metal], line.size && `מידה ${line.size}`]
+  const meta = [METAL_LABELS[line.metal], `${line.karat} קראט`, line.size && `מידה ${line.size}`]
     .filter(Boolean)
     .join(' · ');
 

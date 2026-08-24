@@ -30,7 +30,7 @@ export function Home() {
     <>
       <Seo
         title="תכשיטי יוקרה בעבודת יד בתל אביב"
-        description="נוגה - אטלייה בתל אביב לתכשיטי זהב 14 קראט בעבודת יד. 18 קראט לפי בקשה בדגמים נבחרים שנוצרים בהזמנה. יהלומים טבעיים ומעבדה."
+        description="נוגה - אטלייה בתל אביב לתכשיטי זהב 14 קראט בעבודת יד. 18 קראט זמין בדגמים נבחרים בהזמנה מיוחדת. יהלומים טבעיים ומעבדה."
         path="/"
       />
       {/* HERO — "The Dark Room": R3F ring, scroll-driven (rotation + light +
@@ -59,8 +59,8 @@ export function Home() {
                 {BRAND.tagline}
               </h1>
               <p className="mt-6 max-w-md leading-relaxed text-cream/70 max-md:mx-auto">
-                תכשיטי זהב 14 קראט בעבודת יד, עם אפשרות לזהב 18 קראט לפי בקשה בדגמים
-                נבחרים שנוצרים בהזמנה. יהלומים טבעיים ויהלומי מעבדה. כל תכשיט נולד בסטודיו
+                תכשיטי זהב 14 קראט בעבודת יד, עם אפשרות לזהב 18 קראט בדגמים
+                נבחרים בהזמנה מיוחדת. יהלומים טבעיים ויהלומי מעבדה. כל תכשיט נולד בסטודיו
                 בתל אביב.
               </p>
               <div className="mt-10 flex flex-wrap items-center justify-center gap-4 md:justify-start">

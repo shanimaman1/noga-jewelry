@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import type { Metal } from '@/types/catalog';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import type { GoldKarat, Metal } from '@/types/catalog';
 import { METAL_LABELS } from '@/types/catalog';
 import { getProduct, products } from '@/data/products';
 import { ringSizes, necklaceLengths, braceletLengths } from '@/data/sizes';
@@ -31,15 +31,25 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function Product() {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
   const product = slug ? getProduct(slug) : undefined;
 
   if (!product) return <NotFound />;
-  return <ProductView key={product.slug} product={product} />;
+  const initialKarat: GoldKarat =
+    searchParams.get('karat') === '18' && product.availableIn18K ? 18 : 14;
+  return <ProductView key={`${product.slug}-${initialKarat}`} product={product} initialKarat={initialKarat} />;
 }
 
-function ProductView({ product }: { product: NonNullable<ReturnType<typeof getProduct>> }) {
+function ProductView({
+  product,
+  initialKarat,
+}: {
+  product: NonNullable<ReturnType<typeof getProduct>>;
+  initialKarat: GoldKarat;
+}) {
   const add = useCart((s) => s.add);
   const [metal, setMetal] = useState<Metal>(product.metals[0].id);
+  const [karat, setKarat] = useState<GoldKarat>(initialKarat);
   const variant = product.metals.find((m) => m.id === metal) ?? product.metals[0];
   const [size, setSize] = useState<string>('');
   const [sizeError, setSizeError] = useState(false);
@@ -62,9 +72,11 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
 
   const sizeLabel = product.category === 'rings' ? 'מידה' : 'אורך';
   const needsSize = sizeOptions.length > 0;
+  const selectedPrice = karat === 18 && product.availableIn18K ? product.price18K : product.price;
+  const selectedAvailability = karat === 18 ? 'made-to-order' : product.availability;
 
   // Clear the "added" confirmation when the selection changes.
-  useEffect(() => setAdded(false), [metal, size]);
+  useEffect(() => setAdded(false), [metal, karat, size]);
 
   const related = products
     .filter((p) => p.slug !== product.slug && p.category === product.category)
@@ -72,7 +84,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
     .slice(0, 4);
 
   const handleAdd = () => {
-    if (product.availability === 'out-of-stock') return;
+    if (selectedAvailability === 'out-of-stock') return;
     if (needsSize && !size) {
       setSizeError(true);
       return;
@@ -81,9 +93,10 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
     add({
       slug: product.slug,
       name: product.name,
-      price: product.price,
+      price: selectedPrice,
       image: variant.image,
       metal,
+      karat,
       size: size || undefined,
     });
     setAdded(true);
@@ -123,9 +136,9 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
     category: product.category,
     offers: {
       '@type': 'Offer',
-      price: product.price,
+      price: selectedPrice,
       priceCurrency: 'ILS',
-      availability: schemaAvailability[product.availability],
+      availability: schemaAvailability[selectedAvailability],
       url: `${SITE_URL}${ROUTES.product}/${product.slug}`,
     },
   };
@@ -170,12 +183,12 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
             {/* Details */}
             <div>
               <h1 className="text-3xl sm:text-4xl">{product.name}</h1>
-              <p className="mt-4 text-xl text-charcoal">{formatPrice(product.price)}</p>
-              <p className="mt-1 text-sm text-stone">{installmentNote(product.price)}</p>
+              <p className="mt-4 text-xl text-charcoal">{formatPrice(selectedPrice)}</p>
+              <p className="mt-1 text-sm text-stone">{installmentNote(selectedPrice)}</p>
               <div className="mt-4">
-                <AvailabilityStatus availability={product.availability} prominent />
+                <AvailabilityStatus availability={selectedAvailability} prominent />
                 <p className="mt-2 text-sm leading-relaxed text-stone">
-                  {availabilityDetail(product.availability)}
+                  {availabilityDetail(selectedAvailability)}
                 </p>
               </div>
 
@@ -209,6 +222,40 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
               ) : (
                 <p className="mt-8 text-sm text-charcoal">
                   מתכת<span className="text-stone"> · {METAL_LABELS[metal]}</span>
+                </p>
+              )}
+
+              {product.availableIn18K ? (
+                <fieldset className="mt-8">
+                  <legend className="text-sm text-charcoal">
+                    קראט<span className="text-stone"> · {karat} קראט</span>
+                  </legend>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {([14, 18] as const).map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setKarat(option)}
+                        aria-pressed={karat === option}
+                        className={`rounded-full border px-5 py-2 text-sm transition-colors ${
+                          karat === option
+                            ? 'border-gold text-charcoal'
+                            : 'border-mist text-stone hover:border-stone'
+                        }`}
+                      >
+                        {option} קראט
+                      </button>
+                    ))}
+                  </div>
+                  {karat === 18 && (
+                    <p className="mt-3 text-sm leading-relaxed text-stone">
+                      זו הזמנה מיוחדת בזהב 18 קראט. יש להוסיף {DELIVERY_TIMES.madeToOrder}.
+                    </p>
+                  )}
+                </fieldset>
+              ) : (
+                <p className="mt-4 text-sm leading-relaxed text-stone">
+                  {product.eighteenKExclusionReason}
                 </p>
               )}
 
@@ -257,7 +304,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
 
               {/* Purchase / restock action */}
               <div ref={restockAreaRef} className="mt-8">
-                {product.availability === 'out-of-stock' ? (
+                {selectedAvailability === 'out-of-stock' ? (
                   restockSent ? (
                     <p
                       role="status"
@@ -360,7 +407,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                     </dd>
                   </div>
                 </dl>
-                {product.availability === 'made-to-order' && (
+                {selectedAvailability === 'made-to-order' && (
                   <p className="mt-4 text-sm leading-relaxed text-stone">
                     לפריט זה יש להוסיף {DELIVERY_TIMES.madeToOrder}; לאחר מכן חל זמן המסירה שבחרת.
                   </p>
@@ -378,8 +425,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">מתכת</dt>
                     <dd className="text-charcoal">
-                      זהב 14 קראט מלא ({METAL_LABELS[metal]}).
-                      {product.availableIn18K && ' אפשר להזמין גם בזהב 18 קראט לפי בקשה.'}
+                      זהב {karat} קראט מלא ({METAL_LABELS[metal]}).
                     </dd>
                   </div>
                   <div className="flex gap-3">
@@ -393,7 +439,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">ייצור</dt>
                     <dd className="text-charcoal">
-                      עבודת יד בסטודיו בתל אביב. {availabilityDetail(product.availability)}
+                      עבודת יד בסטודיו בתל אביב. {availabilityDetail(selectedAvailability)}
                     </dd>
                   </div>
                   <div className="flex gap-3">
@@ -436,9 +482,9 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
         <div className="flex items-center gap-4">
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm text-charcoal">{product.name}</p>
-            <p className="text-sm text-stone">{formatPrice(product.price)}</p>
+            <p className="text-sm text-stone">{formatPrice(selectedPrice)}</p>
           </div>
-          {product.availability === 'out-of-stock' ? (
+          {selectedAvailability === 'out-of-stock' ? (
             <button
               type="button"
               onClick={() => openRestock(true)}

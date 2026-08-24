@@ -1,7 +1,7 @@
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import type { CartLine } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, installmentSummary } from '@/lib/format';
 import { shippingCostText } from '@/lib/fulfillment';
 import { METAL_LABELS } from '@/types/catalog';
 import { Container } from '@/components/common/Container';
@@ -16,6 +16,7 @@ type OrderSnapshot = {
   total: number;
   delivery: string;
   giftWrap: boolean;
+  installments: 1 | 3;
 };
 
 export function OrderConfirmation() {
@@ -58,7 +59,7 @@ export function OrderConfirmation() {
                   <span className="text-charcoal">{line.name}</span>
                   <span className="text-stone">
                     {' '}
-                    · {METAL_LABELS[line.metal]}
+                    · {METAL_LABELS[line.metal]} · {line.karat} קראט
                     {line.size && ` · מידה ${line.size}`} · כמות {line.quantity}
                   </span>
                 </span>
@@ -91,6 +92,12 @@ export function OrderConfirmation() {
             <div className="flex items-center justify-between border-t border-mist pt-3 text-base">
               <dt className="text-charcoal">סה״כ</dt>
               <dd className="text-charcoal">{formatPrice(order.total)}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="shrink-0 text-stone">תשלומים</dt>
+              <dd className="text-end leading-relaxed text-charcoal">
+                {installmentSummary(order.total, order.installments)}
+              </dd>
             </div>
           </dl>
         </div>

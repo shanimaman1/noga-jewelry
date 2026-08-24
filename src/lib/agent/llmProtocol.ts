@@ -18,6 +18,7 @@ export type AgentChatResponse =
       sessionId: string;
       text: string;
       recommendationSlugs: string[];
+      eighteenKSlugs: string[];
       actions: LlmClientAction[];
     }
   | {

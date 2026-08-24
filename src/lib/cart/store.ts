@@ -1,15 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Metal } from '@/types/catalog';
+import type { GoldKarat, Metal } from '@/types/catalog';
 
 export type CartLine = {
-  /** Stable key: same product in a different metal/size is a separate line. */
+  /** Stable key: same product in a different metal, karat or size is a separate line. */
   id: string;
   slug: string;
   name: string;
   price: number;
   image: string;
   metal: Metal;
+  karat: GoldKarat;
   size?: string;
   quantity: number;
 };
@@ -26,8 +27,8 @@ type CartState = {
   clear: () => void;
 };
 
-const lineId = (slug: string, metal: Metal, size?: string) =>
-  `${slug}__${metal}__${size ?? 'one-size'}`;
+const lineId = (slug: string, metal: Metal, karat: GoldKarat, size?: string) =>
+  `${slug}__${metal}__${karat}k__${size ?? 'one-size'}`;
 
 /**
  * Cart state, persisted to localStorage so it survives a refresh.
@@ -44,7 +45,7 @@ export const useCart = create<CartState>()(
 
       add: (line, quantity = 1) =>
         set((state) => {
-          const id = lineId(line.slug, line.metal, line.size);
+          const id = lineId(line.slug, line.metal, line.karat, line.size);
           const existing = state.lines.find((l) => l.id === id);
           const lines = existing
             ? state.lines.map((l) =>
@@ -69,6 +70,19 @@ export const useCart = create<CartState>()(
     }),
     {
       name: 'noga_cart_v1',
+      version: 2,
+      migrate: (persistedState) => {
+        const state = persistedState as { lines?: Array<Omit<CartLine, 'karat'> & { karat?: GoldKarat }> };
+        const lines = (state.lines ?? []).map((line) => {
+          const karat = line.karat === 18 ? 18 : 14;
+          return {
+            ...line,
+            karat,
+            id: lineId(line.slug, line.metal, karat, line.size),
+          } satisfies CartLine;
+        });
+        return { ...state, lines };
+      },
       // Persist only the line items — drawer state is per-session UI.
       partialize: (state) => ({ lines: state.lines }),
     },

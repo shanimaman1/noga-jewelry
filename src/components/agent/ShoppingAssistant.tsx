@@ -190,13 +190,15 @@ export function ShoppingAssistant() {
     switch (action.kind) {
       case 'view-product':
         setOpen(false);
-        navigate(`${ROUTES.product}/${action.slug}`);
+        navigate(`${ROUTES.product}/${action.slug}${action.karat === 18 ? '?karat=18' : ''}`);
         break;
 
       case 'add-to-cart': {
         const product = getProduct(action.slug);
         if (!product) return;
-        if (product.availability === 'out-of-stock') {
+        const is18K = action.karat === 18 && product.availableIn18K;
+        const effectiveAvailability = is18K ? 'made-to-order' : product.availability;
+        if (effectiveAvailability === 'out-of-stock') {
           setOpen(false);
           navigate(`${ROUTES.product}/${product.slug}`);
           return;
@@ -205,9 +207,10 @@ export function ShoppingAssistant() {
         addLine({
           slug: product.slug,
           name: product.name,
-          price: product.price,
+          price: is18K ? product.price18K : product.price,
           image: variant.image,
           metal: variant.id,
+          karat: is18K ? 18 : 14,
         });
         // `add` opens the cart drawer; step aside so only one dialog traps focus.
         setOpen(false);
@@ -341,10 +344,10 @@ export function ShoppingAssistant() {
                   <div className="space-y-2">
                     {message.recommendations.map((recommendation) => (
                       <AssistantProductCard
-                        key={recommendation.slug}
+                        key={`${recommendation.slug}-${recommendation.karat ?? 14}`}
                         recommendation={recommendation}
-                        onView={(slug) => runAction({ kind: 'view-product', slug })}
-                        onAdd={(slug) => runAction({ kind: 'add-to-cart', slug })}
+                        onView={(slug, karat) => runAction({ kind: 'view-product', slug, karat })}
+                        onAdd={(slug, karat) => runAction({ kind: 'add-to-cart', slug, karat })}
                       />
                     ))}
                   </div>

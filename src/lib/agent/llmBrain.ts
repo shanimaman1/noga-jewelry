@@ -117,9 +117,16 @@ export function createLlmBrain(): AgentBrain {
     consecutiveTransportFailures = 0;
     sessionId = payload.sessionId;
 
+    const eighteenKSlugs = new Set(payload.eighteenKSlugs ?? []);
     const recommendations = payload.recommendationSlugs.flatMap((slug) => {
       const product = getProduct(slug);
-      return product ? [{ slug: product.slug, reason: product.shortDescription }] : [];
+      return product
+        ? [{
+            slug: product.slug,
+            reason: product.shortDescription,
+            ...(eighteenKSlugs.has(slug) && product.availableIn18K ? { karat: 18 as const } : {}),
+          }]
+        : [];
     });
 
     push([

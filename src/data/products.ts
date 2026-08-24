@@ -1,6 +1,6 @@
 import type { Product } from '@/types/catalog';
 
-// Placeholder catalogue for the demo. Prices span the brand range ₪890–₪8,900.
+// Placeholder catalogue for the demo. Prices including 18k variants span ₪890–₪10,200.
 // Copy follows the brand voice: plain, restrained, no superlatives.
 //
 // Imagery: visually verified assets for the exact demo product — licensed real
@@ -12,6 +12,9 @@ import type { Product } from '@/types/catalog';
 // colour is never simulated with a tint. Most pieces therefore offer a single
 // metal — that is correct, not a gap. To add a metal, first source and verify a
 // licensed photo or obtain explicit approval for a spec-matched AI demo asset.
+const FOURTEEN_KARAT_ONLY_REASON =
+  'הדגם נשאר בזהב 14 קראט, שהוא קשיח יותר ומתאים לענידה רצופה.';
+
 export const products: Product[] = [
   // ── Rings ──────────────────────────────────────────────────────────────
   {
@@ -32,6 +35,7 @@ export const products: Product[] = [
     },
     goldWeightGrams: 3,
     availableIn18K: true,
+    price18K: 10200,
     // The only product the ring.glb model genuinely depicts → live 360° viewer.
     has3D: true,
     // Matched pair: the same verified milgrain-band design in two metal colours.
@@ -63,7 +67,8 @@ export const products: Product[] = [
       arrangement: 'multiple',
     },
     goldWeightGrams: 1.8,
-    availableIn18K: true,
+    availableIn18K: false,
+    eighteenKExclusionReason: FOURTEEN_KARAT_ONLY_REASON,
     metals: [
       {
         id: 'yellow',
@@ -83,6 +88,7 @@ export const products: Product[] = [
     stones: { kind: 'none' },
     goldWeightGrams: 1.4,
     availableIn18K: false,
+    eighteenKExclusionReason: FOURTEEN_KARAT_ONLY_REASON,
     metals: [
       {
         id: 'yellow',
@@ -107,6 +113,7 @@ export const products: Product[] = [
     },
     goldWeightGrams: 4.4,
     availableIn18K: false,
+    eighteenKExclusionReason: FOURTEEN_KARAT_ONLY_REASON,
     metals: [
       {
         id: 'yellow',
@@ -132,7 +139,8 @@ export const products: Product[] = [
       cut: 'round',
     },
     goldWeightGrams: 1.9,
-    availableIn18K: false,
+    availableIn18K: true,
+    price18K: 4000,
     metals: [
       {
         id: 'white',
@@ -156,7 +164,8 @@ export const products: Product[] = [
       arrangement: 'multiple',
     },
     goldWeightGrams: 2.5,
-    availableIn18K: false,
+    availableIn18K: true,
+    price18K: 4000,
     metals: [
       {
         id: 'white',
@@ -174,7 +183,8 @@ export const products: Product[] = [
     availability: 'ready',
     stones: { kind: 'none' },
     goldWeightGrams: 2.8,
-    availableIn18K: false,
+    availableIn18K: true,
+    price18K: 2300,
     metals: [
       {
         id: 'yellow',
@@ -197,7 +207,8 @@ export const products: Product[] = [
       diameterMm: 8,
     },
     goldWeightGrams: 1.7,
-    availableIn18K: false,
+    availableIn18K: true,
+    price18K: 2100,
     metals: [
       {
         id: 'yellow',
@@ -217,6 +228,7 @@ export const products: Product[] = [
     stones: { kind: 'none' },
     goldWeightGrams: 3.2,
     availableIn18K: false,
+    eighteenKExclusionReason: FOURTEEN_KARAT_ONLY_REASON,
     metals: [
       {
         id: 'yellow',
@@ -239,7 +251,8 @@ export const products: Product[] = [
       arrangement: 'multiple',
     },
     goldWeightGrams: 2.4,
-    availableIn18K: false,
+    availableIn18K: true,
+    price18K: 3900,
     metals: [
       {
         id: 'yellow',
@@ -258,6 +271,7 @@ export const products: Product[] = [
     stones: { kind: 'none' },
     goldWeightGrams: 2.1,
     availableIn18K: false,
+    eighteenKExclusionReason: FOURTEEN_KARAT_ONLY_REASON,
     metals: [
       {
         id: 'yellow',
@@ -283,7 +297,8 @@ export const products: Product[] = [
       cut: 'baguette',
     },
     goldWeightGrams: 2,
-    availableIn18K: false,
+    availableIn18K: true,
+    price18K: 2700,
     metals: [
       {
         id: 'yellow',
@@ -302,6 +317,7 @@ export const products: Product[] = [
     stones: { kind: 'none' },
     goldWeightGrams: 0.6,
     availableIn18K: false,
+    eighteenKExclusionReason: FOURTEEN_KARAT_ONLY_REASON,
     metals: [
       {
         id: 'yellow',
@@ -322,6 +338,7 @@ export const products: Product[] = [
     stones: { kind: 'none' },
     goldWeightGrams: 2.8,
     availableIn18K: false,
+    eighteenKExclusionReason: FOURTEEN_KARAT_ONLY_REASON,
     metals: [
       {
         id: 'yellow',
@@ -340,6 +357,7 @@ export const products: Product[] = [
     stones: { kind: 'none' },
     goldWeightGrams: 3,
     availableIn18K: false,
+    eighteenKExclusionReason: FOURTEEN_KARAT_ONLY_REASON,
     metals: [
       {
         id: 'yellow',
@@ -362,7 +380,8 @@ export const products: Product[] = [
       arrangement: 'multiple',
     },
     goldWeightGrams: 6,
-    availableIn18K: true,
+    availableIn18K: false,
+    eighteenKExclusionReason: FOURTEEN_KARAT_ONLY_REASON,
     metals: [
       {
         id: 'yellow',
