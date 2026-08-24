@@ -368,7 +368,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
               </section>
 
               <div className="mt-4">
-                <TrustStrip stones={product.stones} />
+                <TrustStrip stones={product.stones} price={product.price} />
               </div>
 
               {/* Materials & care */}
