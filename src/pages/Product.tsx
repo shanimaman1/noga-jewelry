@@ -356,7 +356,7 @@ function ProductView({
                               type="submit"
                               className="rounded-full bg-charcoal px-7 py-3 text-sm text-cream transition-colors hover:bg-charcoal/90"
                             >
-                              שמירת כתובת
+                              בדיקת כתובת
                             </button>
                           </div>
                           {restockError && (
