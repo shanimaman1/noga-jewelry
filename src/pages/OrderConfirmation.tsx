@@ -1,7 +1,7 @@
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import type { CartLine } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
-import { formatPrice, installmentSummary } from '@/lib/format';
+import { formatPrice, installmentSummary, type InstallmentCount } from '@/lib/format';
 import { shippingCostText } from '@/lib/fulfillment';
 import { METAL_LABELS } from '@/types/catalog';
 import { Container } from '@/components/common/Container';
@@ -16,7 +16,7 @@ type OrderSnapshot = {
   total: number;
   delivery: string;
   giftWrap: boolean;
-  installments: 1 | 3;
+  installments: InstallmentCount;
 };
 
 export function OrderConfirmation() {

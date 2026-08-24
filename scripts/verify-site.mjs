@@ -194,6 +194,104 @@ async function checkNoJs(browser) {
   await ctx.close();
 }
 
+/** Credit-card instalments: every count keeps the total exact and survives confirmation. */
+async function checkInstallments(browser) {
+  const ctx = await browser.newContext({ viewport: { width: 375, height: 812 } });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text().slice(0, 160));
+  });
+  page.on('pageerror', (error) => errors.push(`pageerror: ${String(error).slice(0, 160)}`));
+
+  await page.goto(BASE + '/product/single-diamond-necklace', {
+    waitUntil: 'networkidle',
+    timeout: 30000,
+  });
+  const productText = await page.locator('main').innerText();
+  if (!productText.includes('עד 12 תשלומים ללא תוספת תשלום')) {
+    fail('installments', 'product page does not state the 12-payment option');
+  }
+
+  await page.getByRole('button', { name: '40 ס״מ', exact: true }).click();
+  await page.getByRole('button', { name: 'הוסף לעגלה', exact: true }).first().click();
+  await page.getByRole('link', { name: 'המשך לתשלום', exact: true }).click();
+  await page.waitForURL('**/checkout');
+
+  const select = page.locator('#installments');
+  const options = await select.locator('option').allTextContents();
+  if (options.join(',') !== '1,2,3,4,5,6,7,8,9,10,11,12') {
+    fail('installments', `unexpected dropdown options: ${options.join(',')}`);
+  }
+
+  const total = 3400;
+  for (let count = 1; count <= 12; count += 1) {
+    await select.selectOption(String(count));
+    const summary = await page.locator('#installments + p').innerText();
+    const amounts = [...summary.matchAll(/([\d,]+)[\s\u00a0\u200e\u200f]*₪/g)].map((match) =>
+      Number(match[1].replace(/,/g, '')),
+    );
+    const regular = Math.floor(total / count);
+    const first = regular + (total - regular * count);
+    const expected = count === 1
+      ? [total, total]
+      : first === regular
+        ? [regular, total]
+        : [first, regular, total];
+    if (amounts.join(',') !== expected.join(',')) {
+      fail('installments', `${count} payments rendered ${amounts.join(',')} instead of ${expected.join(',')}`);
+    }
+    if (first + regular * (count - 1) !== total) {
+      fail('installments', `${count} payments do not sum to ${total}`);
+    }
+    const orderTotal = await page.evaluate(() => {
+      const term = [...document.querySelectorAll('dt')].find((item) => item.textContent?.includes('סה״כ לתשלום'));
+      return term?.parentElement?.querySelector('dd')?.textContent ?? '';
+    });
+    if (!orderTotal.includes('3,400')) {
+      fail('installments', `${count} payments changed the order total: ${orderTotal}`);
+    }
+  }
+
+  if ((await page.locator('body').innerText()).includes('ריבית')) {
+    fail('installments', 'checkout displays forbidden interest wording');
+  }
+
+  await select.selectOption('12');
+  await page.getByLabel('שם מלא', { exact: true }).fill('בדיקת הדגמה');
+  await page.getByLabel('טלפון', { exact: true }).fill('0500000000');
+  await page.getByLabel('אימייל', { exact: true }).fill('demo@example.com');
+  await page.getByRole('radio', { name: /איסוף מהסטודיו/ }).check();
+  await page.getByLabel('מספר כרטיס', { exact: true }).fill('4111 1111 1111 1111');
+  await page.getByLabel('שם בעל הכרטיס', { exact: true }).fill('DEMO USER');
+  await page.getByLabel('תוקף', { exact: true }).fill('12/30');
+  await page.getByLabel('CVV', { exact: true }).fill('123');
+  await page.getByRole('button', { name: /לתשלום/ }).click();
+  await page.waitForURL('**/order-confirmation', { timeout: 5000 });
+  await page.getByRole('heading', { name: 'ההזמנה התקבלה', exact: true }).waitFor();
+
+  const confirmationText = await page.locator('main').innerText();
+  const normalizedConfirmation = confirmationText
+    .replace(/[\u200e\u200f]/g, '')
+    .replace(/\s+/g, ' ');
+  if (!normalizedConfirmation.includes('תשלום ראשון של') || !normalizedConfirmation.includes('11 תשלומים')) {
+    fail('installments', '12-payment choice did not survive into confirmation');
+  }
+  if (confirmationText.includes('ריבית')) {
+    fail('installments', 'confirmation displays forbidden interest wording');
+  }
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+  );
+  if (overflow) fail('installments', 'horizontal overflow at 375px');
+  const direction = await page.evaluate(() => document.documentElement.dir);
+  if (direction !== 'rtl') fail('installments', 'document direction is not RTL');
+  if (errors.length) fail('installments', `console errors: ${errors.join(' | ')}`);
+
+  await page.screenshot({ path: join(SHOTS, 'installments-375.png'), fullPage: true });
+  await ctx.close();
+}
+
 async function main() {
   await mkdir(SHOTS, { recursive: true });
   const browser = await launchBrowser();
@@ -219,6 +317,9 @@ async function main() {
     }
   }
 
+  process.stdout.write('  checking installments 1–12 … ');
+  try { await checkInstallments(browser); console.log('done'); } catch (e) { fail('installments', String(e).slice(0, 160)); console.log('ERROR'); }
+
   process.stdout.write('  checking hero-3d … ');
   try { await checkHero3D(page); console.log('done'); } catch (e) { fail('hero-3d', String(e).slice(0, 160)); console.log('ERROR'); }
 
@@ -234,7 +335,7 @@ async function main() {
 
   console.log('\n' + '='.repeat(60));
   if (failures.length === 0) {
-    console.log(`PASS — ${ROUTES.length} routes, 3D hero, reduced-motion, fail-open CSS.`);
+    console.log(`PASS — ${ROUTES.length} routes, instalments 1–12, 3D hero, reduced-motion, fail-open CSS.`);
     console.log(`Screenshots: ${SHOTS}`);
   } else {
     console.log(`FAIL — ${failures.length} problem(s):\n`);

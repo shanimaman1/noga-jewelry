@@ -5,7 +5,12 @@ import {
   useCartSubtotal,
 } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
-import { formatPrice, installmentSummary } from '@/lib/format';
+import {
+  formatPrice,
+  installmentSummary,
+  INSTALLMENT_COUNTS,
+  type InstallmentCount,
+} from '@/lib/format';
 import { Container } from '@/components/common/Container';
 import { Seo } from '@/components/seo/Seo';
 import { Field, TextAreaField, OptionCards } from '@/components/ui/Field';
@@ -36,7 +41,6 @@ const FULFILLMENT = {
 } as const;
 type FulfillmentKey = keyof typeof FULFILLMENT;
 type PaymentMethod = 'card' | 'bit' | 'apple';
-type InstallmentCount = 1 | 3;
 
 // Israeli mobile: 05X followed by 7 digits, with optional separators.
 const PHONE_RE = /^0(5\d|[2-489])[-\s]?\d{7}$/;
@@ -272,16 +276,25 @@ export function Checkout() {
               {payment === 'card' && (
                 <>
                   <div className="mt-5">
-                    <OptionCards
-                      legend="מספר תשלומים"
+                    <label htmlFor="installments" className="block text-sm text-charcoal">
+                      מספר תשלומים
+                    </label>
+                    <select
+                      id="installments"
                       name="installments"
-                      value={String(installments)}
-                      onChange={(value) => setInstallments(value === '3' ? 3 : 1)}
-                      options={[
-                        { value: '1', label: 'תשלום אחד', note: installmentSummary(total, 1) },
-                        { value: '3', label: '3 תשלומים', note: installmentSummary(total, 3) },
-                      ]}
-                    />
+                      value={installments}
+                      onChange={(event) => setInstallments(Number(event.target.value) as InstallmentCount)}
+                      className="mt-2 w-full rounded-md border border-mist bg-transparent px-4 py-3 text-charcoal focus:border-gold focus:outline-none"
+                    >
+                      {INSTALLMENT_COUNTS.map((count) => (
+                        <option key={count} value={count}>
+                          {count}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-3 text-sm leading-relaxed text-stone">
+                      {installmentSummary(total, installments)}
+                    </p>
                   </div>
                   {/* Editable demo fields with format-only validation. In
                       production these would be replaced by a PCI-compliant PSP

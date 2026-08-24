@@ -184,7 +184,7 @@ function ProductView({
             <div>
               <h1 className="text-3xl sm:text-4xl">{product.name}</h1>
               <p className="mt-4 text-xl text-charcoal">{formatPrice(selectedPrice)}</p>
-              <p className="mt-1 text-sm text-stone">{installmentNote(selectedPrice)}</p>
+              <p className="mt-1 text-sm text-stone">{installmentNote()}</p>
               <div className="mt-4">
                 <AvailabilityStatus availability={selectedAvailability} prominent />
                 <p className="mt-2 text-sm leading-relaxed text-stone">

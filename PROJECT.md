@@ -244,10 +244,11 @@ both worlds — the dark atelier and everyday light.
   assistant receives availability, price, reason and lead time through its
   catalogue tool. It renders the fixed facts from code and shows any 18k price
   in a catalogue-backed card, never in model prose.
-- Checkout offers one or three interest-free credit-card payments. Integer
-  totals are split exactly, any remainder goes into the first payment, and the
-  selected schedule is recorded in the order confirmation. Bit and Apple Pay
-  stay single-payment options. Checkout remains a local demo with no charge.
+- Checkout offers a credit-card instalment dropdown from 1 to 12 with no price
+  uplift. Integer totals are split exactly, any remainder goes into the first
+  payment, and the selected schedule is recorded in the order confirmation.
+  Bit and Apple Pay stay single-payment options. Checkout remains a local demo
+  with no charge.
 - The product trust strip follows the homepage policy exactly: a diamond
   certificate is shown only for a single diamond above 0.3ct. Total melee
   weight does not qualify a multi-stone piece.
