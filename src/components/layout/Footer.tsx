@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BRAND, NAV_LINKS, ROUTES, whatsappUrl } from '@/lib/constants';
+import { BRAND, DEMO_CONTACT_LABEL, NAV_LINKS, ROUTES, whatsappUrl } from '@/lib/constants';
 
 const serviceLinks = [
   { to: ROUTES.sizeCare, label: 'מדריך מידות וטיפוח' },
@@ -69,7 +69,7 @@ export function Footer() {
             </li>
             <li>
               <a href={`mailto:${BRAND.email}`} className="transition-colors hover:text-cream">
-                {BRAND.email}
+                {BRAND.email} <span className="text-cream/50">({DEMO_CONTACT_LABEL})</span>
               </a>
             </li>
             <li>
@@ -79,7 +79,8 @@ export function Footer() {
                 rel="noreferrer"
                 className="transition-colors hover:text-cream"
               >
-                Instagram · @{BRAND.instagram}
+                Instagram · @{BRAND.instagram}{' '}
+                <span className="text-cream/50">({DEMO_CONTACT_LABEL})</span>
               </a>
             </li>
           </ul>

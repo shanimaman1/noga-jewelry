@@ -41,7 +41,9 @@ setup and commands in [README.md](README.md), and image work in
 - **Name origin:** Dana named the atelier Noga after her daughter.
 - **Price range:** ₪890–₪10,200, including selectable 18k variants.
 - **Language:** Hebrew, full RTL. Prices in ILS (₪).
-- **WhatsApp / contact:** `+972-50-000-0000` — deliberately INVALID placeholder, never a real number.
+- **WhatsApp / contact:** `050-9054826`; WhatsApp links use `972509054826`.
+  This is the only real contact route in the demo. The displayed email and
+  Instagram account are fictional demo details and are labelled as such.
 - **Studio:** שבזי 45, נווה צדק, תל אביב. Sun–Thu 10:00–19:00,
   Fri 10:00–14:00, closed Saturday; booking ahead is recommended.
 
@@ -432,6 +434,12 @@ a single recoverable message failure keeps the LLM path available.
 ## Demo integrity
 - A dismissible **"מצב הדגמה"** indicator is always present so no visitor thinks
   a real purchase happened.
+- WhatsApp is the one working contact route. Email and Instagram stay visible
+  as fictional portfolio details and carry a plain demo label wherever shown.
+- Newsletter and custom-design forms validate locally, send and store nothing,
+  and state that before submission and in their local success message. The
+  checkout creates only a local navigation snapshot; confirmation states that
+  no charge, email, fulfilment or shipping action occurs.
 - At every simulated integration point, a code comment states EXACTLY what
   replaces it in production:
   - Payment → Cardcom / Grow / Tranzila

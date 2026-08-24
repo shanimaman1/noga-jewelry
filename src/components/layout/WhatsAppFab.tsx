@@ -3,7 +3,7 @@ import { whatsappUrl } from '@/lib/constants';
 
 /**
  * WhatsApp button — the fast path for time-pressured gift buyers. Links to
- * wa.me with an invalid demo number (see constants).
+ * the real contact number through wa.me (see constants).
  *
  * Product pages render their own button with the product name prefilled into
  * the message, so this generic one steps aside there.

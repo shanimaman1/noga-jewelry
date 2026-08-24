@@ -29,7 +29,7 @@ export function OrderConfirmation() {
 
   return (
     <div className="py-16 sm:py-24">
-      <Seo title="אישור הזמנה" description="תודה על ההזמנה." path="/order-confirmation" />
+      <Seo title="אישור הזמנת הדגמה" description="סיכום הזמנת הדגמה, ללא חיוב או שליחה." path="/order-confirmation" />
       <Container className="max-w-2xl">
         <div className="text-center">
           <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-gold text-gold">
@@ -38,16 +38,16 @@ export function OrderConfirmation() {
             </svg>
           </span>
           <p className="mt-6 text-xs tracking-luxury text-gold">תודה</p>
-          <h1 className="mt-3 text-3xl sm:text-4xl">ההזמנה התקבלה</h1>
+          <h1 className="mt-3 text-3xl sm:text-4xl">הזמנת ההדגמה נקלטה</h1>
           <p className="mt-4 leading-relaxed text-stone">
-            שלחנו אישור עם כל הפרטים לכתובת{' '}
+            זו הזמנת הדגמה בלבד. לא בוצע חיוב, לא נשלח אישור לכתובת{' '}
             <span dir="ltr" className="text-charcoal">
               {order.email}
             </span>
-            . נעדכן אותך כשההזמנה יוצאת לדרך.
+            , וההזמנה אינה מועברת לטיפול או למשלוח.
           </p>
           <p className="mt-4 text-sm text-stone">
-            מספר הזמנה: <span className="text-charcoal">{order.orderNumber}</span>
+            מספר הזמנת הדגמה: <span className="text-charcoal">{order.orderNumber}</span>
           </p>
         </div>
 

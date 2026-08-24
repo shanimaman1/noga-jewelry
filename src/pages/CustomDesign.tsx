@@ -111,8 +111,8 @@ export function CustomDesign() {
                 נשמח לשמוע מה בראש
               </h2>
               <p className="mt-4 leading-relaxed text-stone">
-                השאירי פרטים וכמה מילים על מה שאת מדמיינת. נחזור אלייך תוך יום–יומיים
-                לתיאום שיחה.
+                השאירי פרטים וכמה מילים על מה שאת מדמיינת. במצב ההדגמה הפרטים
+                נבדקים בדפדפן בלבד ואינם נשלחים או נשמרים.
               </p>
 
               {sent ? (
@@ -120,8 +120,7 @@ export function CustomDesign() {
                   role="status"
                   className="mt-8 rounded-sm border border-gold/50 bg-cream p-6 leading-relaxed text-charcoal"
                 >
-                  תודה. קיבלנו את הפנייה ונחזור אלייך תוך יום–יומיים. בינתיים אפשר
-                  לעיין בקולקציה.
+                  הפרטים תקינים. זו הדגמה בלבד, והפנייה אינה נשלחת ואינה נשמרת.
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-4">
@@ -138,7 +137,7 @@ export function CustomDesign() {
                     type="submit"
                     className="w-full rounded-full bg-charcoal px-8 py-4 text-sm tracking-wide text-cream transition-colors hover:bg-charcoal/90 sm:w-auto"
                   >
-                    שליחת פנייה
+                    בדיקת הפרטים
                   </button>
                 </form>
               )}

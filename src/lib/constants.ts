@@ -1,4 +1,4 @@
-// Brand-level constants. Copy is Hebrew placeholder for this portfolio demo.
+// Brand-level constants for this portfolio demo.
 
 export const BRAND = {
   nameHe: 'נוגה',
@@ -6,12 +6,13 @@ export const BRAND = {
   tagline: 'תכשיט אחד שתלבשי כל יום - לא עשרה נשכחים במגירה',
   city: 'תל אביב',
   foundedYear: 2013,
-  // Deliberately INVALID placeholder number for this demo — never a real number.
-  whatsapp: '+972-50-000-0000',
-  whatsappDigits: '972500000000',
+  whatsapp: '050-9054826',
+  whatsappDigits: '972509054826',
   email: 'hello@noga-demo.co.il',
   instagram: 'noga.jewelry',
 } as const;
+
+export const DEMO_CONTACT_LABEL = 'פרט הדגמה';
 
 export const ROUTES = {
   home: '/',
@@ -47,6 +48,6 @@ export const STUDIO = {
   ],
 } as const;
 
-// wa.me link. Number is intentionally invalid (demo) — link is illustrative.
+// WhatsApp uses the real contact number in international format without symbols.
 export const whatsappUrl = (message = 'היי, אשמח לעזרה בבחירת תכשיט') =>
   `https://wa.me/${BRAND.whatsappDigits}?text=${encodeURIComponent(message)}`;

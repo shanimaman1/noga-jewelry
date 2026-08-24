@@ -227,7 +227,7 @@ async function checkInstallments(browser) {
   }
   await page.getByRole('link', { name: 'המשך לתשלום', exact: true }).click();
   await page.waitForURL('**/checkout');
-  await page.locator('h1').waitFor();
+  await page.locator('h1').filter({ hasText: 'תשלום' }).waitFor();
   if (!/מק״ט\s*NCK-001/.test((await page.locator('main').textContent()) ?? '')) {
     fail('order-details', 'checkout does not show the catalogue number');
   }
@@ -285,7 +285,7 @@ async function checkInstallments(browser) {
   await page.getByLabel('CVV', { exact: true }).fill('123');
   await page.getByRole('button', { name: /לתשלום/ }).click();
   await page.waitForURL('**/order-confirmation', { timeout: 5000 });
-  await page.getByRole('heading', { name: 'ההזמנה התקבלה', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'הזמנת ההדגמה נקלטה', exact: true }).waitFor();
 
   const confirmationText = await page.locator('main').innerText();
   const normalizedConfirmation = confirmationText
@@ -300,6 +300,16 @@ async function checkInstallments(browser) {
   if (!normalizedConfirmation.includes('הערות להזמנה') || !normalizedConfirmation.includes('למסור בשעות הערב')) {
     fail('order-details', 'order notes did not survive into confirmation');
   }
+  if (
+    !normalizedConfirmation.includes('לא בוצע חיוב') ||
+    !normalizedConfirmation.includes('לא נשלח אישור') ||
+    !normalizedConfirmation.includes('אינה מועברת לטיפול או למשלוח')
+  ) {
+    fail('demo-consistency', 'order confirmation does not state the demo limitations');
+  }
+  if (normalizedConfirmation.includes('שלחנו אישור') || normalizedConfirmation.includes('נעדכן אותך')) {
+    fail('demo-consistency', 'order confirmation still promises email or follow-up');
+  }
   if (confirmationText.includes('ריבית')) {
     fail('installments', 'confirmation displays forbidden interest wording');
   }
@@ -312,6 +322,94 @@ async function checkInstallments(browser) {
   if (errors.length) fail('installments', `console errors: ${errors.join(' | ')}`);
 
   await page.screenshot({ path: join(SHOTS, 'installments-375.png'), fullPage: true });
+  await ctx.close();
+}
+
+/** Real WhatsApp route and truthful demo-only contact/forms at mobile width. */
+async function checkDemoContacts(browser) {
+  const ctx = await browser.newContext({ viewport: { width: 375, height: 812 } });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text().slice(0, 160));
+  });
+  page.on('pageerror', (error) => errors.push(`pageerror: ${String(error).slice(0, 160)}`));
+
+  for (const path of ['/', '/gift-guide', '/product/single-diamond-necklace', '/visit', '/accessibility']) {
+    await page.goto(BASE + path, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    const whatsappLinks = await page.locator('a[href^="https://wa.me/"]').all();
+    if (whatsappLinks.length === 0) {
+      fail('demo-contacts', `${path} has no WhatsApp link`);
+      continue;
+    }
+    for (const link of whatsappLinks) {
+      const href = (await link.getAttribute('href')) ?? '';
+      if (!href.startsWith('https://wa.me/972509054826?text=')) {
+        fail('demo-contacts', `${path} uses the wrong WhatsApp target: ${href}`);
+      }
+    }
+  }
+
+  await page.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const homeText = await page.locator('main').innerText();
+  if (!homeText.includes('@noga.jewelry · פרט הדגמה')) {
+    fail('demo-contacts', 'homepage Instagram handle is not marked as a demo detail');
+  }
+  if (!homeText.includes('מצב הדגמה - הכתובת אינה נשלחת ולא נשמרת')) {
+    fail('demo-contacts', 'newsletter lacks its pre-submit demo disclosure');
+  }
+  await page.getByPlaceholder('your@email.com', { exact: true }).fill('demo@example.com');
+  await page.getByRole('button', { name: 'בדיקת כתובת', exact: true }).click();
+  const newsletterStatus = await page.getByRole('status').innerText();
+  if (!newsletterStatus.includes('אינה נשלחת ולא נשמרת')) {
+    fail('demo-contacts', 'newsletter success message implies a real subscription');
+  }
+
+  await page.goto(BASE + '/custom', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const customText = await page.locator('main').innerText();
+  if (!customText.includes('נבדקים בדפדפן בלבד ואינם נשלחים או נשמרים')) {
+    fail('demo-contacts', 'custom form lacks its pre-submit demo disclosure');
+  }
+  await page.getByLabel('שם מלא', { exact: true }).fill('בדיקת הדגמה');
+  await page.getByLabel('טלפון', { exact: true }).fill('0500000000');
+  await page.getByLabel('אימייל', { exact: true }).fill('demo@example.com');
+  await page.getByLabel('מה את מדמיינת?', { exact: true }).fill('טבעת עדינה');
+  await page.getByRole('button', { name: 'בדיקת הפרטים', exact: true }).click();
+  const customStatus = await page.getByRole('status').innerText();
+  if (!customStatus.includes('הפנייה אינה נשלחת ואינה נשמרת')) {
+    fail('demo-contacts', 'custom-form success message implies a real follow-up');
+  }
+
+  await page.goto(BASE + '/visit', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const visitText = await page.locator('main').innerText();
+  if (
+    !visitText.includes('050-9054826') ||
+    !visitText.includes('hello@noga-demo.co.il') ||
+    !visitText.includes('@noga.jewelry') ||
+    (visitText.match(/פרט הדגמה/g) ?? []).length < 2
+  ) {
+    fail('demo-contacts', 'visit page contact details are incomplete or not labelled');
+  }
+
+  await page.goto(BASE + '/accessibility', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const accessibilityText = await page.locator('main').innerText();
+  if (
+    !accessibilityText.includes('050-9054826') ||
+    !accessibilityText.includes('פרט הדגמה') ||
+    !accessibilityText.includes('מספר הוואטסאפ פעיל')
+  ) {
+    fail('demo-contacts', 'accessibility contact details are not distinguished correctly');
+  }
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+  );
+  if (overflow) fail('demo-contacts', 'horizontal overflow at 375px');
+  const direction = await page.evaluate(() => document.documentElement.dir);
+  if (direction !== 'rtl') fail('demo-contacts', 'document direction is not RTL');
+  if (errors.length) fail('demo-contacts', `console errors: ${errors.join(' | ')}`);
+
+  await page.screenshot({ path: join(SHOTS, 'demo-contacts-375.png'), fullPage: true });
   await ctx.close();
 }
 
@@ -343,6 +441,9 @@ async function main() {
   process.stdout.write('  checking installments 1–12 … ');
   try { await checkInstallments(browser); console.log('done'); } catch (e) { fail('installments', String(e).slice(0, 160)); console.log('ERROR'); }
 
+  process.stdout.write('  checking contact and demo consistency … ');
+  try { await checkDemoContacts(browser); console.log('done'); } catch (e) { fail('demo-contacts', String(e).slice(0, 160)); console.log('ERROR'); }
+
   process.stdout.write('  checking hero-3d … ');
   try { await checkHero3D(page); console.log('done'); } catch (e) { fail('hero-3d', String(e).slice(0, 160)); console.log('ERROR'); }
 
@@ -358,7 +459,7 @@ async function main() {
 
   console.log('\n' + '='.repeat(60));
   if (failures.length === 0) {
-    console.log(`PASS — ${ROUTES.length} routes, instalments 1–12, 3D hero, reduced-motion, fail-open CSS.`);
+    console.log(`PASS — ${ROUTES.length} routes, instalments 1–12, contact/demo consistency, 3D hero, reduced-motion, fail-open CSS.`);
     console.log(`Screenshots: ${SHOTS}`);
   } else {
     console.log(`FAIL — ${failures.length} problem(s):\n`);

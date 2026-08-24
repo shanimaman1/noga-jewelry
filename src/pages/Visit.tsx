@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { BRAND, ROUTES, STUDIO, whatsappUrl } from '@/lib/constants';
+import { BRAND, DEMO_CONTACT_LABEL, ROUTES, STUDIO, whatsappUrl } from '@/lib/constants';
 import { Container } from '@/components/common/Container';
 import { Seo } from '@/components/seo/Seo';
 import { useHeroInViewObserver } from '@/hooks/useHeroInViewObserver';
@@ -113,6 +113,34 @@ export function Visit() {
                     >
                       <bdi>{BRAND.whatsapp}</bdi>
                     </a>
+                  </dd>
+                </div>
+
+                <div className="border-t border-mist pt-5">
+                  <dt className="text-sm text-stone">אימייל</dt>
+                  <dd className="mt-2">
+                    <a
+                      href={`mailto:${BRAND.email}`}
+                      className="text-charcoal underline underline-offset-4 transition-colors hover:text-gold"
+                    >
+                      {BRAND.email}
+                    </a>{' '}
+                    <span className="text-sm text-stone">({DEMO_CONTACT_LABEL})</span>
+                  </dd>
+                </div>
+
+                <div className="border-t border-mist pt-5">
+                  <dt className="text-sm text-stone">Instagram</dt>
+                  <dd className="mt-2">
+                    <a
+                      href={`https://instagram.com/${BRAND.instagram}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-charcoal underline underline-offset-4 transition-colors hover:text-gold"
+                    >
+                      @{BRAND.instagram}
+                    </a>{' '}
+                    <span className="text-sm text-stone">({DEMO_CONTACT_LABEL})</span>
                   </dd>
                 </div>
               </dl>

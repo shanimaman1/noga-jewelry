@@ -1,4 +1,4 @@
-import { BRAND, whatsappUrl } from '@/lib/constants';
+import { BRAND, DEMO_CONTACT_LABEL, whatsappUrl } from '@/lib/constants';
 import { Container } from '@/components/common/Container';
 import { Seo } from '@/components/seo/Seo';
 
@@ -84,6 +84,7 @@ export function Accessibility() {
                 >
                   {BRAND.email}
                 </a>
+                {' '}<span className="text-sm">({DEMO_CONTACT_LABEL})</span>
               </li>
               <li>
                 וואטסאפ:{' '}
@@ -99,7 +100,7 @@ export function Accessibility() {
             </ul>
             <p className="mt-6 text-sm">הצהרה זו עודכנה לאחרונה ב{updated}.</p>
             <p className="mt-2 text-sm text-stone/80">
-              (זהו אתר הדגמה לפורטפוליו - פרטי הקשר הם לצורך המחשה בלבד.)
+              כתובת הדוא״ל משמשת להדגמה בלבד. מספר הוואטסאפ פעיל.
             </p>
           </section>
         </div>

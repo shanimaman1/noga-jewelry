@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from 'react';
-import { BRAND } from '@/lib/constants';
+import { BRAND, DEMO_CONTACT_LABEL } from '@/lib/constants';
 import { Container } from '@/components/common/Container';
 import { Reveal } from '@/components/common/Reveal';
 import { CatalogImage } from '@/components/common/CatalogImage';
@@ -64,7 +64,7 @@ export function InstagramNewsletter() {
               rel="noreferrer"
               className="text-sm tracking-wide text-charcoal underline-offset-4 transition-colors hover:text-gold hover:underline"
             >
-              @{BRAND.instagram}
+              @{BRAND.instagram} · {DEMO_CONTACT_LABEL}
             </a>
           </div>
         </Reveal>
@@ -77,7 +77,7 @@ export function InstagramNewsletter() {
                   href={`https://instagram.com/${BRAND.instagram}`}
                   target="_blank"
                   rel="noreferrer"
-                  aria-label={`פוסט ${i + 1} באינסטגרם של נוגה`}
+                  aria-label={`פוסט הדגמה ${i + 1} באינסטגרם של נוגה`}
                   className="block overflow-hidden rounded-sm"
                 >
                   <CatalogImage
@@ -98,13 +98,16 @@ export function InstagramNewsletter() {
             <p className="mx-auto mt-4 max-w-md leading-relaxed text-stone">
               מייל אחד בחודש, לפעמים פחות. רק כשיש משהו חדש באטלייה.
             </p>
+            <p className="mx-auto mt-3 max-w-md text-xs leading-relaxed text-stone">
+              מצב הדגמה - הכתובת אינה נשלחת ולא נשמרת.
+            </p>
 
             {done ? (
               <p
                 role="status"
                 className="mx-auto mt-8 max-w-md rounded-sm border border-gold/40 px-6 py-4 text-charcoal"
               >
-                נרשמת. נעדכן אותך כשיהיה משהו חדש.
+                הכתובת תקינה. מצב הדגמה - הכתובת אינה נשלחת ולא נשמרת.
               </p>
             ) : (
               <form
@@ -137,7 +140,7 @@ export function InstagramNewsletter() {
                   type="submit"
                   className="shrink-0 rounded-full bg-charcoal px-8 py-3 text-sm tracking-wide text-cream transition-colors hover:bg-charcoal/90"
                 >
-                  הרשמה
+                  בדיקת כתובת
                 </button>
               </form>
             )}
