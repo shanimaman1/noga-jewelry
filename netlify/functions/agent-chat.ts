@@ -12,8 +12,8 @@ import {
   DELIVERY_TIMES,
   SHIPPING,
   productDeliveryText,
+  shippingCostText,
 } from '../../src/lib/fulfillment';
-import { formatPrice } from '../../src/lib/format';
 import { stoneDescription } from '../../src/lib/productMaterials';
 import { STUDIO } from '../../src/lib/constants';
 import type { Availability, Category, Metal, Product } from '../../src/types/catalog';
@@ -428,7 +428,6 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
       includeShippingCost
         ? {
             home: SHIPPING.home,
-            freeThreshold: SHIPPING.freeThreshold,
             collection: SHIPPING.collection,
           }
         : null,
@@ -974,7 +973,7 @@ export default async function handler(request: Request): Promise<Response> {
     const output = deterministicOutput(state, modelText);
     const inspectedText = inspectOutgoingText(output.text, state);
     const verifiedShippingText = state.shippingCostRequested
-      ? `משלוח עד הבית עולה ${formatPrice(SHIPPING.home)}, וחינם בקנייה מעל ${formatPrice(SHIPPING.freeThreshold)}. איסוף מהסטודיו חינם.`
+      ? `משלוח עד הבית ${shippingCostText(SHIPPING.home)}. איסוף מהסטודיו ${shippingCostText(SHIPPING.collection)}.`
       : '';
     const responseText = [inspectedText, verifiedShippingText].filter(Boolean).join(' ');
     console.info(

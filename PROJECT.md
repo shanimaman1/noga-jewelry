@@ -219,10 +219,10 @@ both worlds — the dark atelier and everyday light.
 - User-facing labels are `מוכן בסטודיו`, `נוצר בהזמנה`, and `אזל זמנית`.
   Ready and made-to-order pieces use the existing cart and checkout unchanged.
   Made-to-order pieces take about two weeks to make before fulfilment.
-- Home delivery takes 3–5 business days and costs ₪35, or zero above a ₪1,000
-  subtotal. Collection from the studio takes up to 2 business days and costs
-  zero. These timings and prices live in `src/lib/fulfillment.ts` and are reused
-  on product pages, in the cart and checkout, and by the assistant.
+- Home delivery takes 3–5 business days and is free on every order. Collection
+  from the studio takes up to 2 business days and is also free. These timings
+  and prices live in `src/lib/fulfillment.ts` and are reused on product pages,
+  in the cart and checkout, and by the assistant.
 - An out-of-stock product cannot be added to the cart. Its product page opens
   a small restock-email form. The form is deliberately simulated: it validates
   and confirms locally, sends no network request and stores no address.
@@ -286,9 +286,9 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   `relaxationOptions()` is the safety net, not a normal path.
 - **Content rule, non-negotiable:** availability is read from each product in
   `products.ts`; delivery timing is read from the shared fulfilment constants.
-  Shipping cost is read from the same shared fulfilment source: ₪35 for home
-  delivery, free over ₪1,000, and free studio collection. Studio address and
-  hours are read from the shared `STUDIO` constant. Discounts, returns, warranty
+  Shipping cost is read from the same shared fulfilment source: home delivery
+  and studio collection are free on every order. Studio address and hours are
+  read from the shared `STUDIO` constant. Discounts, returns, warranty
   and custom-order pricing remain unknown and receive an honest handoff to
   WhatsApp. Product names, prices, metals, categories, stone details and
   approximate gold weights are never written as literals in the assistant

@@ -2,6 +2,7 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import type { CartLine } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
 import { formatPrice } from '@/lib/format';
+import { shippingCostText } from '@/lib/fulfillment';
 import { METAL_LABELS } from '@/types/catalog';
 import { Container } from '@/components/common/Container';
 import { Seo } from '@/components/seo/Seo';
@@ -85,9 +86,7 @@ export function OrderConfirmation() {
             </div>
             <div className="flex items-center justify-between">
               <dt className="text-stone">משלוח</dt>
-              <dd className="text-charcoal">
-                {order.shipping === 0 ? 'חינם' : formatPrice(order.shipping)}
-              </dd>
+              <dd className="text-charcoal">{shippingCostText(order.shipping)}</dd>
             </div>
             <div className="flex items-center justify-between border-t border-mist pt-3 text-base">
               <dt className="text-charcoal">סה״כ</dt>

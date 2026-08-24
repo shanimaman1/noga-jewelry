@@ -4,9 +4,8 @@ import { Link } from 'react-router-dom';
 import { useCart, useCartSubtotal } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
 import { formatPrice } from '@/lib/format';
-import { homeDeliveryCharge } from '@/lib/fulfillment';
+import { SHIPPING, shippingCostText } from '@/lib/fulfillment';
 import { LineItem } from './LineItem';
-import { FreeShippingBar } from './FreeShippingBar';
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])';
@@ -20,7 +19,6 @@ export function CartDrawer() {
   const close = useCart((s) => s.closeDrawer);
   const lines = useCart((s) => s.lines);
   const subtotal = useCartSubtotal();
-  const shipping = homeDeliveryCharge(subtotal);
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
@@ -116,16 +114,13 @@ export function CartDrawer() {
             </div>
 
             <footer className="space-y-4 border-t border-mist px-6 py-5">
-              <FreeShippingBar subtotal={subtotal} />
               <div className="flex items-center justify-between text-sm">
                 <span className="text-stone">סכום ביניים</span>
                 <span className="text-charcoal">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-stone">משלוח עד הבית</span>
-                <span className="text-charcoal">
-                  {shipping === 0 ? 'חינם' : formatPrice(shipping)}
-                </span>
+                <span className="text-charcoal">{shippingCostText(SHIPPING.home)}</span>
               </div>
               <Link
                 to={ROUTES.checkout}

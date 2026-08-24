@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useCart,
@@ -17,7 +17,7 @@ import {
 } from '@/components/checkout/PaymentFields';
 import { getProduct, productImage } from '@/data/products';
 import { METAL_LABELS } from '@/types/catalog';
-import { DELIVERY_TIMES, SHIPPING, homeDeliveryCharge } from '@/lib/fulfillment';
+import { DELIVERY_TIMES, SHIPPING, shippingCostText } from '@/lib/fulfillment';
 import { Cart } from './Cart';
 
 type Errors = Record<string, string>;
@@ -54,10 +54,7 @@ export function Checkout() {
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const shipping = useMemo(() => {
-    if (delivery === 'pickup') return 0;
-    return homeDeliveryCharge(subtotal);
-  }, [delivery, subtotal]);
+  const shipping = FULFILLMENT[delivery].price;
 
   const total = subtotal + shipping;
   const needsAddress = delivery !== 'pickup';
@@ -189,8 +186,8 @@ export function Checkout() {
                 אופן קבלת ההזמנה
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-stone">
-                משלוח עד הבית בתוך {DELIVERY_TIMES.home}, או איסוף מהסטודיו בתוך{' '}
-                {DELIVERY_TIMES.collection} וללא עלות.
+                משלוח עד הבית בתוך {DELIVERY_TIMES.home} וללא עלות, או איסוף מהסטודיו
+                בתוך {DELIVERY_TIMES.collection} וללא עלות.
               </p>
               {hasMadeToOrder && (
                 <p className="mt-3 rounded-sm border border-mist p-4 text-sm leading-relaxed text-charcoal">
@@ -210,13 +207,7 @@ export function Checkout() {
                     note: (
                       <span className="text-end leading-relaxed">
                         <span className="block">{FULFILLMENT[k].time}</span>
-                        <span className="block text-xs">
-                          {k === 'courier' && subtotal >= SHIPPING.freeThreshold
-                            ? 'חינם'
-                            : FULFILLMENT[k].price === 0
-                              ? 'חינם'
-                              : formatPrice(FULFILLMENT[k].price)}
-                        </span>
+                        <span className="block text-xs">{shippingCostText(FULFILLMENT[k].price)}</span>
                       </span>
                     ),
                   }))}
@@ -327,7 +318,7 @@ export function Checkout() {
                 </div>
                 <div className="flex items-center justify-between">
                   <dt className="text-stone">משלוח</dt>
-                  <dd className="text-charcoal">{shipping === 0 ? 'חינם' : formatPrice(shipping)}</dd>
+                  <dd className="text-charcoal">{shippingCostText(shipping)}</dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-mist pt-3 text-base">
                   <dt className="text-charcoal">סה״כ לתשלום</dt>

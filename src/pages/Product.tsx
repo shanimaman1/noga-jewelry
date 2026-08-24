@@ -23,6 +23,7 @@ import {
   SHIPPING,
   availabilityDetail,
   schemaAvailability,
+  shippingCostText,
 } from '@/lib/fulfillment';
 import { NotFound } from './NotFound';
 
@@ -349,8 +350,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">משלוח לבית</dt>
                     <dd className="text-charcoal">
-                      {DELIVERY_TIMES.home} · {formatPrice(SHIPPING.home)}, חינם מעל{' '}
-                      {formatPrice(SHIPPING.freeThreshold)}
+                      {DELIVERY_TIMES.home} · {shippingCostText(SHIPPING.home)}
                     </dd>
                   </div>
                   <div className="flex gap-3">
@@ -368,7 +368,7 @@ function ProductView({ product }: { product: NonNullable<ReturnType<typeof getPr
               </section>
 
               <div className="mt-4">
-                <TrustStrip stones={product.stones} price={product.price} />
+                <TrustStrip stones={product.stones} />
               </div>
 
               {/* Materials & care */}

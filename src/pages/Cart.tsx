@@ -2,10 +2,9 @@ import { Link } from 'react-router-dom';
 import { useCart, useCartSubtotal } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
 import { formatPrice } from '@/lib/format';
-import { homeDeliveryCharge } from '@/lib/fulfillment';
+import { SHIPPING, shippingCostText } from '@/lib/fulfillment';
 import { Container } from '@/components/common/Container';
 import { LineItem } from '@/components/cart/LineItem';
-import { FreeShippingBar } from '@/components/cart/FreeShippingBar';
 import { Seo } from '@/components/seo/Seo';
 
 const cartSeo = (
@@ -16,7 +15,6 @@ const cartSeo = (
 export function Cart() {
   const lines = useCart((s) => s.lines);
   const subtotal = useCartSubtotal();
-  const shipping = homeDeliveryCharge(subtotal);
 
   if (lines.length === 0) {
     return (
@@ -56,9 +54,6 @@ export function Cart() {
           <aside className="lg:sticky lg:top-28 lg:h-fit">
             <div className="rounded-sm border border-mist p-6">
               <h2 className="text-lg">סיכום</h2>
-              <div className="mt-5">
-                <FreeShippingBar subtotal={subtotal} />
-              </div>
               <dl className="mt-5 space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <dt className="text-stone">סכום ביניים</dt>
@@ -66,9 +61,7 @@ export function Cart() {
                 </div>
                 <div className="flex items-center justify-between">
                   <dt className="text-stone">משלוח עד הבית</dt>
-                  <dd className="text-charcoal">
-                    {shipping === 0 ? 'חינם' : formatPrice(shipping)}
-                  </dd>
+                  <dd className="text-charcoal">{shippingCostText(SHIPPING.home)}</dd>
                 </div>
               </dl>
               <Link

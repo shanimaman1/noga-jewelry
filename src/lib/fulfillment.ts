@@ -1,4 +1,5 @@
 import type { Availability, Product } from '@/types/catalog';
+import { formatPrice } from '@/lib/format';
 
 export const AVAILABILITY_LABELS: Record<Availability, string> = {
   ready: 'מוכן בסטודיו',
@@ -14,17 +15,12 @@ export const DELIVERY_TIMES = {
 
 /** Fulfilment prices in ILS. This is the single source used by every surface. */
 export const SHIPPING = {
-  home: 35,
-  freeThreshold: 1000,
+  home: 0,
   collection: 0,
 } as const;
 
-export function homeDeliveryCharge(subtotal: number): number {
-  return subtotal >= SHIPPING.freeThreshold ? 0 : SHIPPING.home;
-}
-
-export function amountUntilFreeDelivery(subtotal: number): number {
-  return Math.max(0, SHIPPING.freeThreshold - subtotal);
+export function shippingCostText(cost: number): string {
+  return cost === 0 ? 'חינם' : formatPrice(cost);
 }
 
 export function availabilityDetail(availability: Availability): string {

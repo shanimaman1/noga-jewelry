@@ -22,8 +22,8 @@ import {
   SHIPPING,
   availabilityDetail,
   productDeliveryText,
+  shippingCostText,
 } from '@/lib/fulfillment';
-import { formatPrice } from '@/lib/format';
 import type { AgentBrain, AgentChoice, AgentInput, AgentMessage, AgentTurn } from './types';
 import {
   CATEGORY_LABELS,
@@ -166,7 +166,7 @@ function deliveryReply(text: string): AgentMessage {
   if (product) return assistant(`${product.name}: ${productDeliveryText(product)}`);
 
   return assistant(
-    `משלוח עד הבית עולה ${formatPrice(SHIPPING.home)}, וחינם בקנייה מעל ${formatPrice(SHIPPING.freeThreshold)}. זמן המשלוח הוא ${DELIVERY_TIMES.home}. איסוף מהסטודיו חינם ואפשרי בתוך ${DELIVERY_TIMES.collection}. לפריט שנוצר בהזמנה יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ואז חל זמן המסירה שנבחר.`,
+    `משלוח עד הבית ${shippingCostText(SHIPPING.home)} ואורך ${DELIVERY_TIMES.home}. איסוף מהסטודיו ${shippingCostText(SHIPPING.collection)} ואפשרי בתוך ${DELIVERY_TIMES.collection}. לפריט שנוצר בהזמנה יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ואז חל זמן המסירה שנבחר.`,
   );
 }
 
