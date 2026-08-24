@@ -197,7 +197,7 @@ both worlds — the dark atelier and everyday light.
 
 ## Product page requirements (most important page)
 - Image gallery: **4–5 angles + an on-body shot**, plus the **360° sequence**.
-- Name, price, installment note.
+- Name, catalogue number, price, installment note.
 - Quiet availability status from real product data: ready / made-to-order /
   temporarily out of stock.
 - **Metal selector that actually swaps the images** (yellow / rose / white).
@@ -212,6 +212,7 @@ both worlds — the dark atelier and everyday light.
 - Home-delivery and studio-collection timing; made-to-order lead time is stated
   before the chosen fulfilment time.
 - Related products.
+- Quiet link from every product page to seeing the piece at the single atelier.
 
 ## Availability and fulfilment
 - `Product.availability` in `src/data/products.ts` is the single source of
@@ -232,7 +233,12 @@ both worlds — the dark atelier and everyday light.
   a small restock-email form. The form is deliberately simulated: it validates
   and confirms locally, sends no network request and stores no address.
 
-## Product materials
+## Product materials and catalogue identity
+- Every product has an explicit, unique `sku` in `src/data/products.ts`. The
+  shopper-facing scheme uses a category prefix and a three-digit sequence:
+  `RNG`, `NCK`, `EAR` and `BRC`. It is shown on the product page and stays on
+  the cart line through checkout and confirmation; the assistant reads it only
+  from its catalogue tool.
 - Every product has explicit `stones`, `goldWeightGrams` and `availableIn18K`
   fields in `src/data/products.ts`. There is no fallback stone claim in the UI.
 - `stones` distinguishes no stones, cultured freshwater pearl, natural diamonds
@@ -249,6 +255,9 @@ both worlds — the dark atelier and everyday light.
   payment, and the selected schedule is recorded in the order confirmation.
   Bit and Apple Pay stay single-payment options. Checkout remains a local demo
   with no charge.
+- Checkout includes an optional free-text field for order or delivery notes
+  beside the gift-message area. It is stored only in the local demo order
+  snapshot and shown on confirmation when it is not empty.
 - The product trust strip follows the homepage policy exactly: a diamond
   certificate is shown only for a single diamond above 0.3ct. Total melee
   weight does not qualify a multi-stone piece.
@@ -302,7 +311,7 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   read from the shared `STUDIO` constant. Explicit 18k variant prices are real
   catalogue data; discounts, returns, warranty and other custom-order pricing
   remain unknown and receive an honest handoff to
-  WhatsApp. Product names, prices, metals, categories, stone details and
+  WhatsApp. Product names, catalogue numbers, prices, metals, categories, stone details and
   approximate gold weights are never written as literals in the assistant
   code; they are read from `products.ts`. General jewellery knowledge may be
   answered without a tool, but it must never become a claim about a Noga product

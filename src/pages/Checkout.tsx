@@ -131,7 +131,9 @@ export function Checkout() {
     //   2. On payment success, create the order server-side and send the
     //      confirmation email (EmailJS / Formspree for a static build, or a
     //      transactional provider like Resend / SendGrid via a serverless fn).
-    const email = (new FormData(form).get('email') as string)?.trim();
+    const formData = new FormData(form);
+    const email = (formData.get('email') as string)?.trim();
+    const notes = (formData.get('notes') as string)?.trim() ?? '';
     const orderNumber = `NOGA-${new Date().getFullYear().toString().slice(2)}${String(
       Date.now(),
     ).slice(-5)}`;
@@ -145,6 +147,7 @@ export function Checkout() {
       total,
       delivery: `${FULFILLMENT[delivery].label} · ${FULFILLMENT[delivery].time}`,
       giftWrap,
+      notes,
       installments: effectiveInstallments,
     };
 
@@ -183,9 +186,6 @@ export function Checkout() {
                     <Field label="דירה / כניסה" name="apartment" optional autoComplete="address-line2" />
                   </>
                 )}
-                <div className="sm:col-span-2">
-                  <TextAreaField label="הערות להזמנה" name="notes" optional placeholder="קומה, קוד כניסה, שעות נוחות למסירה" />
-                </div>
               </div>
             </section>
 
@@ -245,6 +245,14 @@ export function Checkout() {
                   <TextAreaField label="הקדשה לכרטיס" name="giftMessage" optional placeholder="מה לכתוב בכרטיס" />
                 </div>
               )}
+              <div className="mt-4">
+                <TextAreaField
+                  label="הערות להזמנה או למשלוח"
+                  name="notes"
+                  optional
+                  placeholder="כל פרט שחשוב שנדע"
+                />
+              </div>
             </section>
 
             {/* Payment — real, editable fields; simulated authorization only */}
@@ -338,6 +346,7 @@ export function Checkout() {
                       <p className="mt-0.5 text-xs text-stone">
                         {METAL_LABELS[line.metal]}
                         {' '}· {line.karat} קראט
+                        {' '}· מק״ט <bdi>{line.sku}</bdi>
                         {line.size && ` · מידה ${line.size}`} · כמות {line.quantity}
                       </p>
                     </div>

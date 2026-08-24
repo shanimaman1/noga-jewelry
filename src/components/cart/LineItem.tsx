@@ -30,7 +30,9 @@ export function LineItem({ line, compact = false }: { line: CartLine; compact?: 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-sm text-charcoal">{line.name}</p>
-            <p className="mt-1 text-xs text-stone">{meta}</p>
+            <p className="mt-1 text-xs text-stone">
+              {meta} · מק״ט <bdi>{line.sku}</bdi>
+            </p>
           </div>
           <button
             type="button"

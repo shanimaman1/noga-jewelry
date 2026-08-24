@@ -206,6 +206,7 @@ export function ShoppingAssistant() {
         const variant = defaultVariant(product);
         addLine({
           slug: product.slug,
+          sku: product.sku,
           name: product.name,
           price: is18K ? product.price18K : product.price,
           image: variant.image,

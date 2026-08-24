@@ -46,6 +46,8 @@ export type MetalVariant = {
 
 type ProductBase = {
   slug: string;
+  /** Shopper-facing catalogue number, unique across the catalogue. */
+  sku: string;
   name: string;
   shortDescription: string;
   price: number;

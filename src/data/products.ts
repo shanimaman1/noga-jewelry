@@ -19,6 +19,7 @@ export const products: Product[] = [
   // ── Rings ──────────────────────────────────────────────────────────────
   {
     slug: 'solitaire-classic',
+    sku: 'RNG-001',
     name: 'סוליטר קלאסי',
     shortDescription: 'אבן בודדת על רצועה מחורצת דקה. הטבעת שלא יוצאת מהאופנה.',
     price: 8900,
@@ -55,6 +56,7 @@ export const products: Product[] = [
   },
   {
     slug: 'fine-diamond-band',
+    sku: 'RNG-002',
     name: 'טבעת יהלומים דקה',
     shortDescription: 'שורת יהלומים זעירים על רצועה דקה, לענידה לבד או בשכבות.',
     price: 3400,
@@ -80,6 +82,7 @@ export const products: Product[] = [
   },
   {
     slug: 'thin-band-daily',
+    sku: 'RNG-003',
     name: 'טבעת יומיום דקה',
     shortDescription: 'רצועה דקה בעבודת יד, נוחה לענידה רצופה.',
     price: 1290,
@@ -99,6 +102,7 @@ export const products: Product[] = [
   },
   {
     slug: 'stacking-rings',
+    sku: 'RNG-004',
     name: 'טבעות שכבות',
     shortDescription: 'שלוש רצועות דקות שנענדות יחד או בנפרד.',
     price: 3900,
@@ -126,6 +130,7 @@ export const products: Product[] = [
   // ── Necklaces ──────────────────────────────────────────────────────────
   {
     slug: 'single-diamond-necklace',
+    sku: 'NCK-001',
     name: 'שרשרת יהלום בודד',
     shortDescription: 'תליון קטן על שרשרת עדינה, באורך מתכוונן.',
     price: 3400,
@@ -152,6 +157,7 @@ export const products: Product[] = [
   },
   {
     slug: 'heart-pendant-necklace',
+    sku: 'NCK-002',
     name: 'תליון לב',
     shortDescription: 'קו לב פתוח משובץ יהלומים, על שרשרת כדורים דקה.',
     price: 3100,
@@ -176,6 +182,7 @@ export const products: Product[] = [
   },
   {
     slug: 'gold-pendant',
+    sku: 'NCK-003',
     name: 'תליון זהב',
     shortDescription: 'תליון בחיתוך ידני על שרשרת דקה, לענידה יומיומית.',
     price: 1890,
@@ -195,6 +202,7 @@ export const products: Product[] = [
   },
   {
     slug: 'pearl-drop-necklace',
+    sku: 'NCK-004',
     name: 'שרשרת פנינה',
     shortDescription: 'פנינה בודדת על שרשרת זהב דקה. קלאסי, בלי עודף.',
     price: 1650,
@@ -220,6 +228,7 @@ export const products: Product[] = [
   },
   {
     slug: 'layered-necklace',
+    sku: 'NCK-005',
     name: 'שרשרת שכבות',
     shortDescription: 'שלוש שרשראות דקות באורכים שונים, נענדות יחד.',
     price: 2100,
@@ -239,6 +248,7 @@ export const products: Product[] = [
   },
   {
     slug: 'bezel-chain-necklace',
+    sku: 'NCK-006',
     name: 'שרשרת נקודות',
     shortDescription: 'אבנים זעירות משובצות לאורך שרשרת דקה.',
     price: 2950,
@@ -263,6 +273,7 @@ export const products: Product[] = [
   },
   {
     slug: 'floral-chain-necklace',
+    sku: 'NCK-007',
     name: 'שרשרת פרחים',
     shortDescription: 'פרחים זעירים לאורך שרשרת עדינה במיוחד.',
     price: 1490,
@@ -284,6 +295,7 @@ export const products: Product[] = [
   // ── Earrings ───────────────────────────────────────────────────────────
   {
     slug: 'mini-hoop-earrings',
+    sku: 'EAR-001',
     name: 'עגילי חישוק קטנים',
     shortDescription: 'חישוק בקוטר 10 מ״מ עם יהלומי בגט, קל מספיק לשכוח שהוא שם.',
     price: 2200,
@@ -309,6 +321,7 @@ export const products: Product[] = [
   },
   {
     slug: 'tiny-stud-earrings',
+    sku: 'EAR-002',
     name: 'עגילים צמודים זעירים',
     shortDescription: 'עיגול זהב קטן במרקם עדין. העגיל שנשאר באוזן גם בלילה.',
     price: 890,
@@ -330,6 +343,7 @@ export const products: Product[] = [
   // ── Bracelets ──────────────────────────────────────────────────────────
   {
     slug: 'fine-chain-bracelet',
+    sku: 'BRC-001',
     name: 'צמיד חוליות דק',
     shortDescription: 'חוליות מוארכות בזהב מלא, עם סוגר בטחון.',
     price: 2100,
@@ -349,6 +363,7 @@ export const products: Product[] = [
   },
   {
     slug: 'beaded-bracelet',
+    sku: 'BRC-002',
     name: 'צמיד חרוזים',
     shortDescription: 'שני צמידים דקים בעבודת חרוזים זעירים.',
     price: 2400,
@@ -368,6 +383,7 @@ export const products: Product[] = [
   },
   {
     slug: 'slim-bangle',
+    sku: 'BRC-003',
     name: 'צמיד קשיח דק',
     shortDescription: 'צמיד קשיח בקו נקי, עם שורת אבנים עדינה.',
     price: 5900,

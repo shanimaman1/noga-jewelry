@@ -92,6 +92,7 @@ function ProductView({
     setSizeError(false);
     add({
       slug: product.slug,
+      sku: product.sku,
       name: product.name,
       price: selectedPrice,
       image: variant.image,
@@ -130,6 +131,7 @@ function ProductView({
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
+    sku: product.sku,
     description: product.shortDescription,
     image: `${SITE_URL}${productImage(variant.image, 'full')}`,
     brand: { '@type': 'Brand', name: 'NOGA Fine Jewelry' },
@@ -183,6 +185,9 @@ function ProductView({
             {/* Details */}
             <div>
               <h1 className="text-3xl sm:text-4xl">{product.name}</h1>
+              <p className="mt-2 text-xs text-stone">
+                מספר קטלוגי: <bdi>{product.sku}</bdi>
+              </p>
               <p className="mt-4 text-xl text-charcoal">{formatPrice(selectedPrice)}</p>
               <p className="mt-1 text-sm text-stone">{installmentNote()}</p>
               <div className="mt-4">
@@ -413,6 +418,13 @@ function ProductView({
                   </p>
                 )}
               </section>
+
+              <Link
+                to={ROUTES.visit}
+                className="mt-4 inline-block text-sm text-stone underline underline-offset-4 transition-colors hover:text-charcoal"
+              >
+                לראות את התכשיט באטלייה
+              </Link>
 
               <div className="mt-4">
                 <TrustStrip stones={product.stones} />

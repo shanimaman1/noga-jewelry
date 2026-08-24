@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getProduct } from '@/data/products';
 import type { GoldKarat, Metal } from '@/types/catalog';
 
 export type CartLine = {
   /** Stable key: same product in a different metal, karat or size is a separate line. */
   id: string;
   slug: string;
+  sku: string;
   name: string;
   price: number;
   image: string;
@@ -70,13 +72,18 @@ export const useCart = create<CartState>()(
     }),
     {
       name: 'noga_cart_v1',
-      version: 2,
+      version: 3,
       migrate: (persistedState) => {
-        const state = persistedState as { lines?: Array<Omit<CartLine, 'karat'> & { karat?: GoldKarat }> };
+        type PersistedCartLine = Omit<CartLine, 'karat' | 'sku'> & {
+          karat?: GoldKarat;
+          sku?: string;
+        };
+        const state = persistedState as { lines?: PersistedCartLine[] };
         const lines = (state.lines ?? []).map((line) => {
           const karat = line.karat === 18 ? 18 : 14;
           return {
             ...line,
+            sku: line.sku ?? getProduct(line.slug)?.sku ?? line.slug,
             karat,
             id: lineId(line.slug, line.metal, karat, line.size),
           } satisfies CartLine;

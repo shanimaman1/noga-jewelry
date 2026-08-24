@@ -72,6 +72,7 @@ type FunctionCallingConfig = {
 };
 
 type RequestedField =
+  | 'sku'
   | 'description'
   | 'category'
   | 'metals'
@@ -117,8 +118,9 @@ CONVERSATION FIRST:
 
 NON-NEGOTIABLE BUSINESS DATA RULES:
 - You have no catalogue knowledge until a tool returns it in THIS request. Never rely on memory or prior turns.
-- Before making any claim about a Noga product name, price, category, metal, stones, gold weight, 18-karat availability, availability or delivery, call search_products or get_product in this same request.
+- Before making any claim about a Noga product name, catalogue number, price, category, metal, stones, gold weight, 18-karat availability, availability or delivery, call search_products or get_product in this same request.
 - For a question about one identifiable product, search for that exact product first, then call get_product with the requested fields. Availability questions must request availability, and 18-karat questions, including price or lead time, must request 18k_availability, so application code renders the answer and the matching structured card.
+- A question about a catalogue number or SKU must request sku. The application renders it from the tool record; do not repeat it in prose.
 - Studio address and opening hours, delivery or collection times, and shipping cost are business facts. State them only when a tool returns them in this request.
 - For delivery or collection times call search_products with include_delivery_policy. For shipping cost call it with include_shipping_cost. For studio address or hours call it with include_studio_info. Do not present product cards for an information-only request.
 - Use get_product.requested_fields to state exactly which facts the shopper asked to see. The application renders those facts from the tool record; do not repeat their values in prose.
@@ -177,7 +179,7 @@ const TOOL_DECLARATIONS = [
           type: 'array',
           items: {
             type: 'string',
-            enum: ['description', 'category', 'metals', 'stones', 'gold_weight', '18k_availability', 'availability', 'delivery', 'price'],
+            enum: ['sku', 'description', 'category', 'metals', 'stones', 'gold_weight', '18k_availability', 'availability', 'delivery', 'price'],
           },
         },
       },
@@ -312,6 +314,7 @@ function searchHaystack(product: Product): string {
   return normalize(
     [
       product.slug,
+      product.sku,
       product.name,
       product.shortDescription,
       stoneDescription(product.stones),
@@ -324,6 +327,7 @@ function searchHaystack(product: Product): string {
 function catalogueRecord(product: Product) {
   return {
     slug: product.slug,
+    sku: product.sku,
     name: product.name,
     description: product.shortDescription,
     price: product.price,
@@ -357,6 +361,7 @@ function isAvailability(value: unknown): value is Availability {
 }
 
 const REQUESTED_FIELDS: RequestedField[] = [
+  'sku',
   'description',
   'category',
   'metals',
@@ -696,6 +701,7 @@ function oneQuestionOnly(text: string, message: string): string {
 
 function requestedFactLine(product: Product, fields: Set<RequestedField>): string | null {
   const facts: string[] = [];
+  if (fields.has('sku')) facts.push(`מספר קטלוגי: ${product.sku}`);
   if (fields.has('description')) facts.push(product.shortDescription);
   if (fields.has('category')) facts.push(`קטגוריה: ${CATEGORY_LABELS[product.category]}`);
   if (fields.has('metals')) {

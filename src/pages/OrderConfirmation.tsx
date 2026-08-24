@@ -16,6 +16,7 @@ type OrderSnapshot = {
   total: number;
   delivery: string;
   giftWrap: boolean;
+  notes: string;
   installments: InstallmentCount;
 };
 
@@ -60,6 +61,7 @@ export function OrderConfirmation() {
                   <span className="text-stone">
                     {' '}
                     · {METAL_LABELS[line.metal]} · {line.karat} קראט
+                    {' '}· מק״ט <bdi>{line.sku}</bdi>
                     {line.size && ` · מידה ${line.size}`} · כמות {line.quantity}
                   </span>
                 </span>
@@ -79,6 +81,12 @@ export function OrderConfirmation() {
               <div className="flex items-center justify-between">
                 <dt className="text-stone">אריזה</dt>
                 <dd className="text-charcoal">אריזת מתנה</dd>
+              </div>
+            )}
+            {order.notes && (
+              <div className="flex items-start justify-between gap-4">
+                <dt className="shrink-0 text-stone">הערות להזמנה</dt>
+                <dd className="whitespace-pre-wrap text-end text-charcoal">{order.notes}</dd>
               </div>
             )}
             <div className="flex items-center justify-between">

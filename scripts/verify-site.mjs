@@ -212,11 +212,25 @@ async function checkInstallments(browser) {
   if (!productText.includes('עד 12 תשלומים ללא תוספת תשלום')) {
     fail('installments', 'product page does not state the 12-payment option');
   }
+  if (!productText.includes('מספר קטלוגי: NCK-001')) {
+    fail('order-details', 'product page does not show the catalogue number');
+  }
+  const atelierLink = page.getByRole('link', { name: 'לראות את התכשיט באטלייה', exact: true });
+  if ((await atelierLink.getAttribute('href')) !== '/visit') {
+    fail('order-details', 'product page atelier link does not point to /visit');
+  }
 
   await page.getByRole('button', { name: '40 ס״מ', exact: true }).click();
   await page.getByRole('button', { name: 'הוסף לעגלה', exact: true }).first().click();
+  if (!/מק״ט\s*NCK-001/.test((await page.locator('body').textContent()) ?? '')) {
+    fail('order-details', 'cart drawer does not show the catalogue number');
+  }
   await page.getByRole('link', { name: 'המשך לתשלום', exact: true }).click();
   await page.waitForURL('**/checkout');
+  await page.locator('h1').waitFor();
+  if (!/מק״ט\s*NCK-001/.test((await page.locator('main').textContent()) ?? '')) {
+    fail('order-details', 'checkout does not show the catalogue number');
+  }
 
   const select = page.locator('#installments');
   const options = await select.locator('option').allTextContents();
@@ -262,6 +276,9 @@ async function checkInstallments(browser) {
   await page.getByLabel('טלפון', { exact: true }).fill('0500000000');
   await page.getByLabel('אימייל', { exact: true }).fill('demo@example.com');
   await page.getByRole('radio', { name: /איסוף מהסטודיו/ }).check();
+  await page
+    .getByLabel(/^הערות להזמנה או למשלוח/)
+    .fill('למסור בשעות הערב');
   await page.getByLabel('מספר כרטיס', { exact: true }).fill('4111 1111 1111 1111');
   await page.getByLabel('שם בעל הכרטיס', { exact: true }).fill('DEMO USER');
   await page.getByLabel('תוקף', { exact: true }).fill('12/30');
@@ -276,6 +293,12 @@ async function checkInstallments(browser) {
     .replace(/\s+/g, ' ');
   if (!normalizedConfirmation.includes('תשלום ראשון של') || !normalizedConfirmation.includes('11 תשלומים')) {
     fail('installments', '12-payment choice did not survive into confirmation');
+  }
+  if (!/מק״ט\s*NCK-001/.test(confirmationText)) {
+    fail('order-details', 'catalogue number did not survive into confirmation');
+  }
+  if (!normalizedConfirmation.includes('הערות להזמנה') || !normalizedConfirmation.includes('למסור בשעות הערב')) {
+    fail('order-details', 'order notes did not survive into confirmation');
   }
   if (confirmationText.includes('ריבית')) {
     fail('installments', 'confirmation displays forbidden interest wording');
