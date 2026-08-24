@@ -34,7 +34,8 @@ setup and commands in [README.md](README.md), and image work in
 
 ## Brand
 - **Name:** NOGA Fine Jewelry / נוגה
-- Tel Aviv atelier, handmade 14/18k gold, natural & lab diamonds
+- Tel Aviv atelier for handmade 14k gold; selected made-to-order designs are
+  available in 18k by request. Natural and lab-grown diamonds.
 - **Positioning:** "תכשיט אחד שתלבשי כל יום — לא עשרה נשכחים במגירה"
 - **Founder:** Dana (דנה), Bezalel-trained goldsmith, 12 years' experience
 - **Name origin:** Dana named the atelier Noga after her daughter.
@@ -234,7 +235,9 @@ both worlds — the dark atelier and everyday light.
   solitaire also carries colour and clarity.
 - `goldWeightGrams` is an approximate net gold weight and excludes stones.
 - The 18-karat request note is shown only for the three made-to-order products;
-  no 18-karat price is stated.
+  no 18-karat price is stated. The assistant receives the same
+  `availableIn18K` value through its catalogue tool and renders a fixed answer
+  from code when that fact is requested.
 - The product trust strip follows the homepage policy exactly: a diamond
   certificate is shown only for a single diamond above 0.3ct. Total melee
   weight does not qualify a multi-stone piece.

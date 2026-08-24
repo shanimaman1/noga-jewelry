@@ -121,7 +121,7 @@ export const products: Product[] = [
     slug: 'single-diamond-necklace',
     name: 'שרשרת יהלום בודד',
     shortDescription: 'תליון קטן על שרשרת עדינה, באורך מתכוונן.',
-    price: 2450,
+    price: 3400,
     category: 'necklaces',
     availability: 'ready',
     stones: {

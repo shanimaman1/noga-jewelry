@@ -16,7 +16,7 @@ export const localBusinessJsonLd = {
   name: BRAND.nameEn,
   alternateName: BRAND.nameHe,
   description:
-    'אטלייה תכשיטים בתל אביב - זהב 14/18 קראט בעבודת יד, יהלומים טבעיים ומעבדה.',
+    'אטלייה בתל אביב לתכשיטי זהב 14 קראט בעבודת יד. 18 קראט לפי בקשה בדגמים נבחרים שנוצרים בהזמנה. יהלומים טבעיים ומעבדה.',
   url: SITE_URL,
   image: `${SITE_URL}${DEFAULT_OG_IMAGE}`,
   telephone: BRAND.whatsapp,

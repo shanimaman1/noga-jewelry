@@ -28,7 +28,9 @@ export default function Styleguide() {
             <h2 className="text-2xl sm:text-3xl">העבודה שלנו מתחילה בסטודיו בתל אביב</h2>
           </Row>
           <Row label="H3 · תת-כותרת">
-            <h3 className="text-xl sm:text-2xl">זהב 14 ו-18 קראט, יהלומים טבעיים ומעבדה</h3>
+            <h3 className="text-xl sm:text-2xl">
+              זהב 14 קראט, עם אפשרות לזהב 18 קראט לפי בקשה בדגמים נבחרים שנוצרים בהזמנה
+            </h3>
           </Row>
           <Row label="H4 · כותרת משנה">
             <h4 className="text-lg">ליווי אישי מהבחירה ועד התכשיט המוגמר</h4>
