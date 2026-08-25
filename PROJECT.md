@@ -343,6 +343,11 @@ unchanged: no LLM, API key or network call, and every answer is computed from
 - Layering: launcher/scrim z-30, panel z-41 (above the WhatsApp FAB's z-40 so it
   is not pierced, below the cart drawer / modals at z-50). The panel is
   bottom-anchored at `min(82svh, 100svh - 9rem)` so it never reaches the header.
+- On mobile the panel is explicitly contained to the viewport's inline width.
+  Its header, log and input row cannot shrink or expand beyond that width;
+  message text uses emergency wrapping for long tokens. The free-text input is
+  at least 16px on mobile so iOS Safari does not zoom the visual viewport and
+  move the close or send buttons off-screen.
 - One deliberate layering exception: `lib/agent/catalog.ts` imports
   `CATEGORY_LABELS` and `PRICE_BANDS` from `components/catalog/FilterBar.tsx`.
   Those are the app's existing user-facing vocabulary — offering different tiers

@@ -46,7 +46,10 @@ export function TrustStrip({ stones, availability }: { stones: StoneDetails; ava
             <path d={item.icon} />
           </svg>
           {item.to ? (
-            <Link to={item.to} className="underline-offset-4 transition-colors hover:text-charcoal hover:underline">
+            <Link
+              to={item.to}
+              className="underline decoration-stone/50 underline-offset-4 transition-colors hover:text-charcoal hover:decoration-charcoal"
+            >
               {item.label}
             </Link>
           ) : (

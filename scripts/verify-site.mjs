@@ -195,6 +195,103 @@ async function checkNoJs(browser) {
   await ctx.close();
 }
 
+/** Mobile assistant containment: long RTL turns must never push controls off-screen. */
+async function checkAssistantMobile(browser) {
+  const ctx = await browser.newContext({
+    viewport: { width: 375, height: 812 },
+    deviceScaleFactor: 2,
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text().slice(0, 160));
+  });
+  page.on('pageerror', (error) => errors.push(`pageerror: ${String(error).slice(0, 160)}`));
+
+  const longReply =
+    'החלפה אפשרית בתוך 30 יום מקבלת הפריט, והחזר כספי מלא אפשרי בתוך 14 יום. ' +
+    'הפריט צריך להיות ללא סימני ענידה ובאריזה המקורית. מתחילים בכתיבה בוואטסאפ, ' +
+    'והאטלייה מתאמת את האיסוף. פריט שמיוצר לפי מידה או דרישה מיוחדת אינו ניתן ' +
+    'להחלפה או להחזר לאחר תחילת הייצור, בכפוף לזכויות לפי חוק הגנת הצרכן.';
+
+  await page.route('**/.netlify/functions/agent-chat', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        mode: 'ok',
+        sessionId: 'layout-verification',
+        text: longReply,
+        recommendationSlugs: [],
+        eighteenKSlugs: [],
+        actions: [],
+      }),
+    }),
+  );
+
+  await page.goto(BASE + '/catalog', { waitUntil: 'networkidle', timeout: 30000 });
+  await page.getByRole('button', { name: 'פתיחת עוזר בחירה' }).click();
+  const input = page.getByLabel('הודעה לעוזר הבחירה', { exact: true });
+  await input.fill(
+    'שלום, אני מחפשת מתנה עדינה לאימא שלי ליום הולדת ורוצה לדעת איזו שרשרת יכולה להתאים לה לענידה יומיומית',
+  );
+  await page.getByRole('button', { name: 'שליחת ההודעה' }).click();
+  await page.getByText(longReply, { exact: true }).waitFor({ state: 'visible', timeout: 10000 });
+
+  const metrics = await page.evaluate(() => {
+    const panel = document.querySelector('[role="dialog"][aria-label="עוזר בחירה"]');
+    if (!panel) return null;
+    const panelRect = panel.getBoundingClientRect();
+    const contained = (element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.left >= panelRect.left - 0.5 && rect.right <= panelRect.right + 0.5;
+    };
+    const bubbles = [...panel.querySelectorAll('[role="log"] p')];
+    const controls = [
+      panel.querySelector('header'),
+      panel.querySelector('form'),
+      panel.querySelector('[aria-label="סגירת עוזר הבחירה"]'),
+      panel.querySelector('[aria-label="שליחת ההודעה"]'),
+      panel.querySelector('#assistant-draft'),
+    ].filter(Boolean);
+    return {
+      panelWidth: panelRect.width,
+      panelOverflow: panel.scrollWidth - panel.clientWidth,
+      documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      inputFontSize: parseFloat(getComputedStyle(panel.querySelector('#assistant-draft')).fontSize),
+      controlsInside: controls.every(contained),
+      bubblesInside: bubbles.every(
+        (bubble) => contained(bubble) && bubble.scrollWidth <= bubble.clientWidth + 1,
+      ),
+    };
+  });
+
+  if (!metrics) {
+    fail('assistant-mobile', 'assistant panel did not render');
+  } else {
+    if (Math.abs(metrics.panelWidth - 375) > 1) {
+      fail('assistant-mobile', `panel width is ${metrics.panelWidth}px instead of 375px`);
+    }
+    if (metrics.panelOverflow > 1 || metrics.documentOverflow > 1) {
+      fail(
+        'assistant-mobile',
+        `horizontal overflow: panel ${metrics.panelOverflow}px, document ${metrics.documentOverflow}px`,
+      );
+    }
+    if (!metrics.controlsInside) fail('assistant-mobile', 'header, input or action buttons leave the panel');
+    if (!metrics.bubblesInside) fail('assistant-mobile', 'a long RTL message bubble leaves the panel');
+    if (metrics.inputFontSize < 16) {
+      fail('assistant-mobile', `mobile input is ${metrics.inputFontSize}px and can trigger Safari zoom`);
+    }
+  }
+  if (errors.length) fail('assistant-mobile', `console errors: ${errors.join(' | ')}`);
+
+  await page.screenshot({ path: join(SHOTS, 'assistant-mobile-375.png') });
+  await ctx.close();
+}
+
 /** Credit-card instalments: every count keeps the total exact and survives confirmation. */
 async function checkInstallments(browser) {
   const ctx = await browser.newContext({ viewport: { width: 375, height: 812 } });
@@ -359,6 +456,31 @@ async function checkPolicies(browser) {
     !footerText.includes('10:00–19:00')
   ) {
     fail('policies', 'footer is missing the studio address or opening hours');
+  }
+  const footerReturnsLink = page.getByRole('link', {
+    name: 'החלפות, החזרות ושירות',
+    exact: true,
+  });
+  if ((await footerReturnsLink.getAttribute('href')) !== '/returns-service') {
+    fail('policies', 'footer does not link to the returns and service page');
+  }
+
+  await page.goto(BASE + '/catalog', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const productPaths = await page.locator('main a[href^="/product/"]').evaluateAll((links) =>
+    [...new Set(links.map((link) => link.getAttribute('href')).filter(Boolean))],
+  );
+  if (productPaths.length !== 16) {
+    fail('policies', `catalog exposed ${productPaths.length} product routes instead of 16`);
+  }
+  for (const productPath of productPaths) {
+    await page.goto(BASE + productPath, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    const policyLink = page.getByRole('link', { name: 'החלפה תוך 30 יום', exact: true });
+    if (
+      (await policyLink.count()) !== 1 ||
+      (await policyLink.first().getAttribute('href')) !== '/returns-service'
+    ) {
+      fail('policies', `${productPath} does not link its exchange promise to the policy page`);
+    }
   }
 
   await page.goto(BASE + '/product/solitaire-classic', { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -529,6 +651,9 @@ async function main() {
   process.stdout.write('  checking policies and service connections … ');
   try { await checkPolicies(browser); console.log('done'); } catch (e) { fail('policies', String(e).slice(0, 160)); console.log('ERROR'); }
 
+  process.stdout.write('  checking assistant containment at 375px … ');
+  try { await checkAssistantMobile(browser); console.log('done'); } catch (e) { fail('assistant-mobile', String(e).slice(0, 160)); console.log('ERROR'); }
+
   process.stdout.write('  checking hero-3d … ');
   try { await checkHero3D(page); console.log('done'); } catch (e) { fail('hero-3d', String(e).slice(0, 160)); console.log('ERROR'); }
 
@@ -544,7 +669,7 @@ async function main() {
 
   console.log('\n' + '='.repeat(60));
   if (failures.length === 0) {
-    console.log(`PASS — ${ROUTES.length} routes, instalments 1–12, policies, contact/demo consistency, 3D hero, reduced-motion, fail-open CSS.`);
+    console.log(`PASS — ${ROUTES.length} routes, instalments 1–12, policies, assistant mobile layout, contact/demo consistency, 3D hero, reduced-motion, fail-open CSS.`);
     console.log(`Screenshots: ${SHOTS}`);
   } else {
     console.log(`FAIL — ${failures.length} problem(s):\n`);

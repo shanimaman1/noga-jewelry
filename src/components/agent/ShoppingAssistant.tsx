@@ -268,16 +268,16 @@ export function ShoppingAssistant() {
            win. The header is also z-40, but the panel is bottom-anchored and its
            height always leaves 9rem clear at the top, so the two never overlap —
            on the shortest viewports it is the `100svh - 9rem` term that binds. */
-        className="fixed inset-x-0 bottom-0 z-[41] flex h-[min(82svh,calc(100svh-9rem))] flex-col rounded-t-lg border border-mist bg-cream shadow-xl outline-none sm:inset-x-auto sm:bottom-5 sm:end-5 sm:h-[min(34rem,calc(100svh-9rem))] sm:w-[22rem] sm:rounded-lg"
+        className="fixed inset-x-0 bottom-0 z-[41] flex h-[min(82svh,calc(100svh-9rem))] w-full max-w-full min-w-0 flex-col overflow-hidden rounded-t-lg border border-mist bg-cream shadow-xl outline-none sm:inset-x-auto sm:bottom-5 sm:end-5 sm:h-[min(34rem,calc(100svh-9rem))] sm:w-[22rem] sm:rounded-lg"
       >
-        <header className="flex items-center gap-2 border-b border-mist px-4 py-3">
+        <header className="flex w-full min-w-0 shrink-0 items-center gap-2 border-b border-mist px-4 py-3">
           {turn?.canGoBack && (
             <button
               type="button"
               onClick={() => void runTurn((b) => b.back(), 'choices')}
               disabled={pending}
               aria-label="חזרה לשאלה הקודמת"
-              className="rounded-full p-1.5 text-stone hover:text-charcoal disabled:opacity-40"
+              className="shrink-0 rounded-full p-1.5 text-stone hover:text-charcoal disabled:opacity-40"
             >
               {/* Points along the reading direction; mirrored under dir=rtl. */}
               <svg
@@ -299,13 +299,13 @@ export function ShoppingAssistant() {
             </button>
           )}
 
-          <h2 className="me-auto text-base">עוזר בחירה</h2>
+          <h2 className="me-auto min-w-0 text-base">עוזר בחירה</h2>
 
           <button
             type="button"
             onClick={closePanel}
             aria-label="סגירת עוזר הבחירה"
-            className="rounded-full p-1.5 text-stone hover:text-charcoal"
+            className="shrink-0 rounded-full p-1.5 text-stone hover:text-charcoal"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -323,22 +323,24 @@ export function ShoppingAssistant() {
           role="log"
           aria-live="polite"
           aria-label="שיחה עם עוזר הבחירה"
-          className="flex-1 space-y-4 overflow-y-auto px-4 py-4"
+          className="min-h-0 w-full min-w-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-4 py-4"
         >
           {turn?.messages.map((message) => {
             const isLast = message.id === lastMessageId;
             return (
-              <div key={message.id} className="space-y-2">
+              <div key={message.id} className="max-w-full min-w-0 space-y-2">
                 <p
                   className={
                     message.sender === 'user'
-                      ? // `w-fit` so the bubble hugs its text: a block element would
-                        // otherwise stretch to the full 85% whatever the answer was.
-                        'ms-auto w-fit max-w-[85%] rounded-lg bg-charcoal px-3 py-2 text-sm text-cream'
-                      : 'me-auto max-w-[90%] text-sm leading-relaxed text-charcoal'
+                      ? // Avoid Safari's `fit-content` sizing bug in RTL. The fixed
+                        // maximum plus explicit wrapping contains every bubble.
+                        'ms-auto block max-w-[85%] whitespace-pre-wrap rounded-lg bg-charcoal px-3 py-2 text-sm text-cream break-words [overflow-wrap:anywhere]'
+                      : 'me-auto block max-w-[90%] whitespace-pre-wrap text-sm leading-relaxed text-charcoal break-words [overflow-wrap:anywhere]'
                   }
                 >
-                  <bdi>{message.text}</bdi>
+                  <bdi className="block max-w-full break-words [overflow-wrap:anywhere]">
+                    {message.text}
+                  </bdi>
                 </p>
 
                 {message.recommendations && (
@@ -408,7 +410,10 @@ export function ShoppingAssistant() {
           })}
         </div>
 
-        <form onSubmit={submitDraft} className="flex items-center gap-2 border-t border-mist p-3">
+        <form
+          onSubmit={submitDraft}
+          className="flex w-full min-w-0 shrink-0 items-center gap-2 border-t border-mist p-3"
+        >
           <label htmlFor="assistant-draft" className="sr-only">
             הודעה לעוזר הבחירה
           </label>
@@ -420,13 +425,13 @@ export function ShoppingAssistant() {
             disabled={!turn?.acceptsText || pending}
             placeholder="או כתבו לי שאלה"
             autoComplete="off"
-            className="min-w-0 flex-1 rounded-full border border-mist bg-mist/25 px-3.5 py-2 text-sm text-charcoal placeholder:text-stone/70 focus:border-stone focus:outline-none"
+            className="w-0 min-w-0 flex-1 rounded-full border border-mist bg-mist/25 px-3.5 py-2 text-base text-charcoal placeholder:text-stone/70 focus:border-stone focus:outline-none sm:text-sm"
           />
           <button
             type="submit"
             disabled={!draft.trim() || pending}
             aria-label="שליחת ההודעה"
-            className="rounded-full bg-charcoal p-2 text-cream disabled:opacity-40"
+            className="shrink-0 rounded-full bg-charcoal p-2 text-cream disabled:opacity-40"
           >
             <svg
               width="16"
