@@ -60,9 +60,12 @@
   `netlify/functions/agent-chat.ts`, לצד האשף הקיים וללא שינוי בקומפוננטת
   הווידג׳ט. `resilientBrain` מחזיק את שני המוחות ועובר לצמיתות לאשף באותו
   סשן כאשר ה־LLM, המפתח, המכסה או אחסון המכסה אינם זמינים.
-* חמשת כלי שלב 2: `search_products`,‏ `get_product`,‏
-  `present_recommendations`,‏ `open_size_guide` ו־`offer_whatsapp`. הכלים
-  קוראים את הקטלוג הקיים או מציגים כפתור בלבד; אף כלי אינו מבצע פעולה.
+* עשרת כלי שלב 2: `search_products`,‏ `get_product`,‏ `get_fulfilment`,‏
+  `get_payment_options`,‏ `get_service_policies`,‏ `get_atelier_info`,‏
+  `check_business_information`,‏ `present_recommendations`,‏ `open_size_guide`
+  ו־`offer_whatsapp`. כל מקור אמת עסקי מחובר לכלי מפורש; כלי הבדיקה מאשר
+  כשמידע על הנחות או תמחור מיוחד אינו קיים ומאפשר handoff. אף כלי אינו מבצע
+  פעולה.
 * הגנות server-side לעוזר: origin allowlist, עד 500 תווים להודעה, 20 הודעות
   בסשן חתום, עד ארבע קריאות מודל להודעה ומכסה של 200 קריאות Gemini ביום UTC.
   המונים משתמשים ב־Netlify Blobs עם consistency חזק וכתיבות ETag אטומיות.
@@ -77,6 +80,11 @@
 
 ### Changed
 
+* עוזר Gemini אינו מסווג עוד הודעות לפני המודל: ניתוב קנייה/מדיניות/נושא לא
+  ידוע, מצבי `ANY` ו־`NONE` כפויים וטקסטי מעבר קבועים הוסרו. כל הסבבים רצים
+  ב־`AUTO`; Gemini מנהל שיחה ובוחר כלים, בעוד שנתוני העסק מוצגים בקוד רק אחרי
+  קריאת כלי באותו תור. מנגנון ההארקה, אימות ה־slugs וה־fallback לאשף נשארו
+  ללא שינוי.
 * פאנל עוזר הבחירה מגיב כעת ל־VisualViewport של iOS Safari בזמן שהמקלדת
   פתוחה. הגיליון מתקצר ומוצב בתוך האזור הגלוי בפועל, הכותרת ושורת ההקלדה
   נשארות על המסך, ורק יומן ההודעות נעשה נמוך וגליל. סגירת המקלדת מחזירה את

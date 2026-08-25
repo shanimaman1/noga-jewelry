@@ -364,11 +364,14 @@ unchanged: no LLM, API key or network call, and every answer is computed from
 exists only as the Netlify environment variable `GEMINI_API_KEY`; never prefix
 it with `VITE_`, place it in `netlify.toml`, or expose it to client code.
 
-The function exposes exactly five non-acting tools: `search_products`,
-`get_product`, `present_recommendations`, `open_size_guide` and
-`offer_whatsapp`. Search and product lookup read the existing
-`lib/agent/catalog.ts` and `products.ts`; there is no second catalogue. Actions
-remain buttons the shopper must click.
+The function exposes ten non-acting tools: `search_products`, `get_product`,
+`get_fulfilment`, `get_payment_options`, `get_service_policies`,
+`get_atelier_info`, `check_business_information`, `present_recommendations`,
+`open_size_guide` and `offer_whatsapp`. Each business source of truth therefore
+has an explicit tool; the check tool records that discounts or unlisted custom
+pricing are absent and enables the handoff without inventing an answer. There
+is no second catalogue or policy copy. Actions remain buttons the shopper must
+click.
 
 **Zero fabrication is structural wherever possible:**
 
@@ -376,36 +379,29 @@ remain buttons the shopper must click.
   earlier shopper messages for conversational intent. Previous assistant prose,
   cards and catalogue facts are not sent. Context is explicitly untrusted and
   never counts as evidence; product facts must be fetched again in that turn.
-- Gemini normally uses `AUTO` function calling on every round. Greetings and
-  general jewellery questions may therefore receive natural prose without a
-  tool, and an underspecified shopping request gets one clarifying question
-  before any products are shown. Once there is enough detail to filter, the
-  model must search and may present only results from that turn. A narrow
-  `NONE` exception disables tools for a recognisably underspecified shopping
-  request so it cannot dump arbitrary products before asking. A second narrow
-  exception uses `ANY` with only `offer_whatsapp` allowed for recognisable
-  questions about discounts or custom-order pricing other than explicit 18k
-  variants. Questions about returns or aftercare use a narrow `ANY` call to
-  `search_products`, with the matching policy flag forced by the server. A shipping-cost question uses a narrow
-  `ANY` call to `search_products`; the server guarantees that call receives the
-  shipping-cost flag before the fixed code template is rendered.
+- Every Gemini round uses `AUTO`. There is no server-side intent classifier, no
+  forced `ANY`, no blocked `NONE`, no policy/browsing/unknown router and no
+  post-generation question or transition normaliser. Gemini handles greetings,
+  general knowledge and clarifying questions itself, and chooses a data tool
+  only when it needs a business fact.
 - The model never supplies recommendation-card data. It returns tool calls;
   the server derives card slugs only from the sorted catalogue result in that
   turn, and the client resolves every accepted slug against `products.ts`
   again. An unknown slug renders nothing.
 - Catalogue selection is deterministic after the model chooses filters.
   `findProducts` ranks by preferred category, featured status, price and slug;
-  the server always displays the first three. `present_recommendations` cannot
-  reorder or choose a different subset. Filter/tool decisions run at zero
-  temperature, while greetings, general knowledge and safe transition prose
-  retain conversational sampling.
+  the server always displays the first three. An explicit cheapest-item search
+  uses a stable price/slug order and returns one record.
+  `present_recommendations` cannot reorder or choose a different subset.
 - Product-specific prose, stone details, approximate gold weight, availability
   and delivery lines are assembled by application code from that turn's tool
   records. Product names, prices and
   card descriptions are rendered from catalogue records, not model text.
-  Availability, delivery, collection, shipping-cost and service-policy facts
-  use fixed code templates. Shipping and service-policy text is appended only
-  from the verified tool result, after the unchanged model-prose grounding scan.
+  Availability, delivery, collection, shipping-cost, payment, atelier and
+  service-policy facts use fixed code templates. The model receives only a
+  success marker and the requested topic/slug; it cannot copy those values into
+  prose. The corresponding application text is emitted only after the same-turn
+  tool call.
 - Before returning, the function scans outgoing prose for `₪`, price-range
   numbers and catalogue names without matching tool evidence. It also rejects
   unbacked metal, category, stone, availability and delivery vocabulary and
@@ -413,21 +409,15 @@ remain buttons the shopper must click.
 - Discounts and custom-order pricing other than explicit 18k variants remain
   unknown and are handed off to WhatsApp.
 
-The remaining instruction-only boundary is semantic intent: under `AUTO`, the
-model decides whether a message is small talk, an open request, general
-jewellery knowledge or detailed shopping intent, then chooses the matching
-tool and requested fields. A model can misunderstand that intent or produce
-subtle subjective wording that no finite scanner recognizes. It still cannot
-inject a product, price or card record; catalogue facts are ignored from model
-prose and rendered by code. This is the residual risk, and systemic failure
-never reaches the shopper: the resilient brain switches permanently to the
-unchanged wizard for that browser session after one short line.
-
-An underspecified shopping turn is also checked after generation: if Gemini
-asks more than one question or combines dimensions with "or", code replaces it
-with one short question about the next missing dimension. Known bureaucratic
-recommendation phrases are similarly normalised to plain Hebrew; greetings and
-general jewellery answers are not templated.
+The remaining instruction-only boundary is Gemini's semantic decision under
+`AUTO`: whether a turn needs a tool, which tool and which fields/topics to ask
+for. There is deliberately no regex or routing layer to second-guess it. The
+residual risk is a missed or unnecessary lookup, or awkward conversational
+wording. It still cannot inject a product, price or card record; catalogue and
+policy facts are rendered by code only after same-turn tool evidence. The
+unchanged outgoing scanner remains a final backstop, and systemic failure never
+reaches the shopper: the resilient brain switches permanently to the unchanged
+wizard for that browser session after one short line.
 
 Function logs record each called tool, privacy-safe arguments and result count,
 plus whether the outgoing grounding scan replaced the text and a safe category

@@ -16,9 +16,6 @@ import {
 } from '../../src/lib/fulfillment';
 import { stoneDescription } from '../../src/lib/productMaterials';
 import {
-  AFTERCARE_POLICY,
-  RESIZING_POLICY,
-  RETURNS_POLICY,
   careServiceText,
   resizingPolicyText,
   returnsPolicyText,
@@ -26,6 +23,7 @@ import {
   warrantyPolicyText,
 } from '../../src/lib/servicePolicies';
 import { STUDIO } from '../../src/lib/constants';
+import { installmentNote } from '../../src/lib/format';
 import type { Availability, Category, Metal, Product } from '../../src/types/catalog';
 import type { AgentChatResponse, LlmClientAction } from '../../src/lib/agent/llmProtocol';
 
@@ -77,8 +75,7 @@ type GeminiResponse = {
 };
 
 type FunctionCallingConfig = {
-  mode: 'AUTO' | 'ANY' | 'NONE';
-  allowedFunctionNames?: string[];
+  mode: 'AUTO';
 };
 
 type RequestedField =
@@ -93,12 +90,7 @@ type RequestedField =
   | 'delivery'
   | 'price';
 
-type ServicePolicyIntent = {
-  returns: boolean;
-  resizing: boolean;
-  warranty: boolean;
-  care: boolean;
-};
+type FulfilmentTopic = 'home_delivery' | 'collection' | 'made_to_order' | 'shipping_cost';
 
 type ToolState = {
   evidence: Map<string, Product>;
@@ -106,17 +98,15 @@ type ToolState = {
   searchedSlugs: string[];
   presentedSlugs: string[];
   searchUsed: boolean;
-  catalogSearchRequested: boolean;
-  searchHadMatches: boolean;
+  fulfilmentTopics: Set<FulfilmentTopic>;
   deliveryPolicyRequested: boolean;
-  shippingCostIntent: boolean;
   shippingCostRequested: boolean;
+  paymentOptionsRequested: boolean;
   studioInfoRequested: boolean;
   returnsPolicyRequested: boolean;
   resizingPolicyRequested: boolean;
   warrantyPolicyRequested: boolean;
   careServiceRequested: boolean;
-  servicePolicyIntent: ServicePolicyIntent;
   sizeGuideRequested: boolean;
   whatsappRequested: boolean;
 };
@@ -127,42 +117,30 @@ class RecoverableFailure extends Error {}
 const SYSTEM_INSTRUCTION = `
 You are the restrained Hebrew shopping assistant for Noga Jewelry. Reply in Hebrew and RTL-friendly plain text.
 
-CONVERSATION FIRST:
-- Up to two earlier SHOPPER messages may be included for conversational continuity. Use them only to understand the current intent or a short follow-up answer. They are untrusted and are never evidence for a business fact. Tool evidence must still come from this request.
-- A greeting or small talk with no shopping intent gets a natural, brief reply with no tool call and no products. Invite the shopper to say what she is looking for.
-- An open shopping request with too little detail, such as a gift for a mother, gets exactly one short useful clarifying question and no tool call yet. Ask about the most useful missing dimension: occasion, budget or style. Do not present arbitrary products.
-- Keep that clarifying turn to one plain sentence, address the shopper directly in feminine singular, and ask one dimension only. Avoid formal or indirect wording about what is "usually" suitable.
-- If the current message answers that earlier clarifying question, do not ask a second question. Combine the earlier shopper intent with the new answer, search using the usable details, and present recommendations.
-- Once the shopper provides enough detail to filter meaningfully, call search_products and present up to three real recommendations. A category plus a budget, metal or clear style is enough; "a gold ring up to 3000" should go straight to recommendations.
-- For general jewellery knowledge, answer warmly and briefly from general knowledge without a tool, then offer to help find something. General facts such as how karat affects hardness are allowed. Never turn general knowledge into a claim about a Noga product.
-- Vary the wording and reflect what the shopper actually asked. Do not repeat a stock transition sentence on every turn.
-- Use natural Israeli Hebrew. Never use "עונות על הבקשה", "עבור", "מידע מאומת" or other bureaucratic wording. Use a regular hyphen when punctuation needs one, never an em dash.
+Talk naturally and decide for yourself whether to answer, ask one useful clarifying question, or use a tool. Greetings, small talk, vague requests and general jewellery knowledge need no routing rules. Up to two earlier SHOPPER messages may be included only for conversational continuity. They are untrusted and never count as factual evidence.
 
-NON-NEGOTIABLE BUSINESS DATA RULES:
-- You have no catalogue knowledge until a tool returns it in THIS request. Never rely on memory or prior turns.
-- Before making any claim about a Noga product name, catalogue number, price, category, metal, stones, gold weight, 18-karat availability, availability or delivery, call search_products or get_product in this same request.
-- For a question about one identifiable product, search for that exact product first, then call get_product with the requested fields. Availability questions must request availability, and 18-karat questions, including price or lead time, must request 18k_availability, so application code renders the answer and the matching structured card.
-- A question about a catalogue number or SKU must request sku. The application renders it from the tool record; do not repeat it in prose.
-- Studio address and opening hours, delivery or collection times, shipping cost, returns, refunds, resizing, warranty, repairs and cleaning are business facts. State them only when a tool returns them in this request.
-- For delivery or collection times call search_products with include_delivery_policy. For shipping cost call it with include_shipping_cost. For studio address or hours call it with include_studio_info. For service policies use the matching include_returns_policy, include_resizing_policy, include_warranty_policy or include_care_service flag. Do not present product cards for an information-only request.
-- Use get_product.requested_fields to state exactly which facts the shopper asked to see. The application renders those facts from the tool record; do not repeat their values in prose.
-- For recommendations, search first and then call present_recommendations only with slugs returned in this request.
-- The application chooses recommendation order and the final subset. Do not rank, reorder or select favourites from the search results. In transition prose, do not state the result count or repeat catalogue categories, metals or other product facts; refer only to what the shopper herself asked for.
-- Never write a product price or name in your prose. Never write a product's metal, category, stone description, gold weight, 18-karat availability, availability label, delivery time or a shipping-cost figure in prose. The application renders those facts from tool results.
-- A slug not returned by a catalogue tool is invalid. Never repair or guess it.
-- Discounts and custom-order pricing other than the explicit 18-karat catalogue variants are unknown business policies. Say the exact price depends on the order and call offer_whatsapp. Do not answer them from general knowledge.
-- Do not repeat service-policy values in model prose. Application code renders the verified wording returned by the tool.
-- Tools never perform actions. open_size_guide and offer_whatsapp only make buttons available for the shopper to click.
-- If no tool supports a factual answer, give a brief generic line and offer WhatsApp.
+ONE STRUCTURAL RULE:
+- Every fact about this business must come from a tool result in THIS request. Never use memory, earlier turns or assumptions for a business fact.
+- Business facts include product names, catalogue numbers, prices, categories, metals, karat, stones, gold weight, availability, delivery and collection, shipping cost, instalments, returns, exchanges, refunds, warranty, repairs, resizing, cleaning, and the atelier address and hours.
+- Use search_products when the shopper asks to see, find, compare or choose products. A broad catalogue request such as asking to see rings is a valid search with a category and no other filter.
+- Use get_product for facts about one identifiable product. The product must first have been returned by search_products in this request.
+- Use get_fulfilment for delivery, collection and shipping facts; get_payment_options for instalments; get_service_policies for returns and aftercare; and get_atelier_info for the address or hours.
+- For recommendations, search first and then call present_recommendations. The application chooses the stable order and renders only verified catalogue records.
+- Never write a product name or price in prose. Do not repeat product attributes or policy values in prose; application code renders verified facts from the tool results. You may write a short natural introduction that reflects what the shopper asked.
+- If a search or lookup returns nothing, say so honestly. If the requested business information has no supporting tool data, such as discounts or custom-order pricing beyond listed 18-karat variants, say you do not know and call offer_whatsapp.
+- Tools never perform actions. open_size_guide and offer_whatsapp only offer buttons for the shopper to click.
+- If you ask a clarifying question before searching, do not suggest catalogue categories, metals or stones. Ask exactly one neutral question about budget, occasion or style. Do not join alternatives with "or" and do not give examples.
+- Request only the product fields the shopper explicitly asked for. If a recommendation card already answers the question, such as the price of the cheapest matching item, present the card and do not request unrelated product fields.
+- Discounts and unlisted custom-order pricing are not in the data. Never claim that a discount exists or does not exist. Call check_business_information for those questions, then say you do not have that information and offer WhatsApp.
 
-Voice: concise, warm and helpful, no exclamation marks, no superlatives. Catalogue facts are rendered by application code.
+Everything that is not a business fact is yours to handle as a capable assistant: greetings, small talk, clarifying questions and general jewellery knowledge. When a shopping request is too open for a useful recommendation, ask one useful question before searching instead of guessing. Keep replies concise, warm and natural in Israeli Hebrew only, addressing the shopper in feminine singular. Use no Arabic words and no vowel-point diacritics. Ask one question at a time. Vary the wording. Avoid bureaucratic language, exclamation marks, superlatives and em dashes.
 `.trim();
 
 const TOOL_DECLARATIONS = [
   {
     name: 'search_products',
     description:
-      'Search the live catalogue when the request has enough detail for meaningful filtering, before recommendations or product facts. Do not call for greetings, small talk, an initial vague shopping request or general jewellery knowledge. Use query only for exact catalogue product words. It can also return verified fulfilment, studio and service-policy data without searching products.',
+      'Search the live catalogue for any request to see, find, compare or choose products. Broad searches are valid: asking to see rings means category=rings with no other filter. Use query only for exact catalogue product words.',
     parameters: {
       type: 'object',
       properties: {
@@ -175,33 +153,10 @@ const TOOL_DECLARATIONS = [
           description: 'Maximum price explicitly stated by the shopper.',
         },
         availability: { type: 'string', enum: ['ready', 'made-to-order', 'out-of-stock'] },
-        include_delivery_policy: {
-          type: 'boolean',
-          description: 'True when the shopper asks about general delivery or collection times.',
-        },
-        include_shipping_cost: {
-          type: 'boolean',
-          description: 'True when the shopper asks how much home delivery or collection costs.',
-        },
-        include_studio_info: {
-          type: 'boolean',
-          description: 'True when the shopper asks for the studio address or opening hours.',
-        },
-        include_returns_policy: {
-          type: 'boolean',
-          description: 'True for exchanges, refunds, cancellations or special-order return terms.',
-        },
-        include_resizing_policy: {
-          type: 'boolean',
-          description: 'True for ring resizing availability, cost or timing.',
-        },
-        include_warranty_policy: {
-          type: 'boolean',
-          description: 'True for manufacturing-defect warranty or wear-and-tear repairs.',
-        },
-        include_care_service: {
-          type: 'boolean',
-          description: 'True for atelier cleaning or setting-inspection service.',
+        selection: {
+          type: 'string',
+          enum: ['lowest_price'],
+          description: 'Use lowest_price only when the shopper explicitly asks for the cheapest item.',
         },
       },
     },
@@ -209,7 +164,7 @@ const TOOL_DECLARATIONS = [
   {
     name: 'get_product',
     description:
-      'Read one exact product by a slug returned by search_products in this request. requested_fields tells the application which catalogue facts to render.',
+      'Read one exact product by a slug returned by search_products in this request. Request only fields explicitly asked for. Do not use this tool when a recommendation card alone answers the question.',
     parameters: {
       type: 'object',
       properties: {
@@ -223,6 +178,67 @@ const TOOL_DECLARATIONS = [
         },
       },
       required: ['slug', 'requested_fields'],
+    },
+  },
+  {
+    name: 'get_fulfilment',
+    description:
+      'Read the current home-delivery, studio-collection, made-to-order lead-time and shipping-cost facts.',
+    parameters: {
+      type: 'object',
+      properties: {
+        topics: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: ['home_delivery', 'collection', 'made_to_order', 'shipping_cost'],
+          },
+        },
+      },
+      required: ['topics'],
+    },
+  },
+  {
+    name: 'get_payment_options',
+    description: 'Read the current credit-card instalment options and single-payment wallet rules.',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'get_service_policies',
+    description:
+      'Read current returns, exchanges, refunds, resizing, warranty, repairs and cleaning policies. Request only the topics the shopper asked about.',
+    parameters: {
+      type: 'object',
+      properties: {
+        topics: {
+          type: 'array',
+          items: {
+            type: 'string',
+            enum: ['returns', 'resizing', 'warranty', 'repairs', 'cleaning'],
+          },
+        },
+      },
+      required: ['topics'],
+    },
+  },
+  {
+    name: 'get_atelier_info',
+    description: 'Read the atelier address and opening hours.',
+    parameters: { type: 'object', properties: {} },
+  },
+  {
+    name: 'check_business_information',
+    description:
+      'Check a business topic that is absent from all data sources. Always use this for discounts or unlisted custom-order pricing; it verifies that the information is unavailable and makes the WhatsApp handoff available.',
+    parameters: {
+      type: 'object',
+      properties: {
+        topic: {
+          type: 'string',
+          enum: ['discounts', 'custom_order_pricing'],
+        },
+      },
+      required: ['topic'],
     },
   },
   {
@@ -245,7 +261,7 @@ const TOOL_DECLARATIONS = [
   {
     name: 'offer_whatsapp',
     description:
-      'Offer the existing WhatsApp handoff button for unknown information or when human help is useful. This does not send or open anything automatically.',
+      'Offer the existing WhatsApp handoff button for business information absent from all data tools, especially discounts or unlisted custom-order pricing. This does not send or open anything automatically.',
     parameters: { type: 'object', properties: {} },
   },
 ] as const;
@@ -363,26 +379,6 @@ function searchHaystack(product: Product): string {
   );
 }
 
-function catalogueRecord(product: Product) {
-  return {
-    slug: product.slug,
-    sku: product.sku,
-    name: product.name,
-    description: product.shortDescription,
-    price: product.price,
-    category: CATEGORY_LABELS[product.category],
-    metals: product.metals.map((variant) => METAL_LABELS[variant.id]),
-    stonesDescription: stoneDescription(product.stones),
-    goldWeightGrams: product.goldWeightGrams,
-    availableIn18K: product.availableIn18K,
-    price18K: product.availableIn18K ? product.price18K : null,
-    eighteenKExclusionReason: product.availableIn18K ? null : product.eighteenKExclusionReason,
-    eighteenKLeadTime: product.availableIn18K ? DELIVERY_TIMES.madeToOrder : null,
-    availability: AVAILABILITY_LABELS[product.availability],
-    delivery: productDeliveryText(product),
-  };
-}
-
 function isCategory(value: unknown): value is Category {
   return value === 'rings' || value === 'necklaces' || value === 'earrings' || value === 'bracelets';
 }
@@ -414,15 +410,6 @@ const REQUESTED_FIELDS: RequestedField[] = [
 
 function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
   state.searchUsed = true;
-  if (args.include_delivery_policy === true) state.deliveryPolicyRequested = true;
-  const includeShippingCost = args.include_shipping_cost === true || state.shippingCostIntent;
-  if (includeShippingCost) state.shippingCostRequested = true;
-  if (args.include_studio_info === true) state.studioInfoRequested = true;
-  if (args.include_returns_policy === true) state.returnsPolicyRequested = true;
-  if (args.include_resizing_policy === true) state.resizingPolicyRequested = true;
-  if (args.include_warranty_policy === true) state.warrantyPolicyRequested = true;
-  if (args.include_care_service === true) state.careServiceRequested = true;
-
   const filters: CatalogFilters = {
     category: isCategory(args.category) ? args.category : undefined,
     metal: isMetal(args.metal) ? args.metal : undefined,
@@ -436,79 +423,97 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
     typeof args.max_price === 'number' && Number.isFinite(args.max_price) && args.max_price > 0
       ? args.max_price
       : undefined;
-  const hasProductCriteria = Boolean(
-    query || filters.category || filters.metal || filters.band || availability || maxPrice,
-  );
-  const isBusinessInfoOnly =
-    !hasProductCriteria &&
-    (args.include_delivery_policy === true ||
-      includeShippingCost ||
-      args.include_studio_info === true ||
-      args.include_returns_policy === true ||
-      args.include_resizing_policy === true ||
-      args.include_warranty_policy === true ||
-      args.include_care_service === true);
-  const shouldSearchCatalogue =
-    !state.shippingCostIntent &&
-    !hasServicePolicyIntent(state.servicePolicyIntent) &&
-    !isBusinessInfoOnly;
-  state.catalogSearchRequested ||= shouldSearchCatalogue;
-
-  const matches = shouldSearchCatalogue
-    ? findProducts(filters)
-        .filter((product) => !availability || product.availability === availability)
-        .filter((product) => maxPrice === undefined || product.price <= maxPrice)
-        .filter(
-          (product) =>
-            words.length === 0 || words.every((word) => searchHaystack(product).includes(word)),
-        )
-        .slice(0, 8)
-    : [];
+  const filtered = findProducts(filters)
+    .filter((product) => !availability || product.availability === availability)
+    .filter((product) => maxPrice === undefined || product.price <= maxPrice)
+    .filter(
+      (product) =>
+        words.length === 0 || words.every((word) => searchHaystack(product).includes(word)),
+    );
+  const matches =
+    args.selection === 'lowest_price'
+      ? [...filtered].sort((a, b) => a.price - b.price || a.slug.localeCompare(b.slug)).slice(0, 1)
+      : filtered.slice(0, 8);
 
   // `findProducts` has a stable rank (preferred category, featured, price,
   // slug). The latest filter set fully replaces the candidate order, and the
   // first three are always the displayed subset.
-  state.searchHadMatches = matches.length > 0;
   state.searchedSlugs = matches.map((product) => product.slug);
   for (const product of matches) {
     state.evidence.set(product.slug, product);
   }
 
   return {
-    products: matches.map(catalogueRecord),
-    deliveryPolicy:
-      args.include_delivery_policy === true
-        ? {
-            home: DELIVERY_TIMES.home,
-            collection: DELIVERY_TIMES.collection,
-            madeToOrder: DELIVERY_TIMES.madeToOrder,
-          }
-        : null,
-    shippingCost:
-      includeShippingCost
-        ? {
-            home: SHIPPING.home,
-            collection: SHIPPING.collection,
-          }
-        : null,
-    studioInfo:
-      args.include_studio_info === true
-        ? {
-            address: STUDIO.address,
-            hours: STUDIO.hours,
-          }
-        : null,
-    returnsPolicy: args.include_returns_policy === true ? RETURNS_POLICY : null,
-    resizingPolicy: args.include_resizing_policy === true ? RESIZING_POLICY : null,
-    warrantyPolicy: args.include_warranty_policy === true ? AFTERCARE_POLICY : null,
-    careService:
-      args.include_care_service === true
-        ? {
-            cleaningFree: AFTERCARE_POLICY.cleaningFree,
-            settingInspectionFree: AFTERCARE_POLICY.settingInspectionFree,
-          }
-        : null,
+    matchedSlugs: matches.map((product) => product.slug),
+    resultCount: matches.length,
   };
+}
+
+const FULFILMENT_TOPICS: FulfilmentTopic[] = [
+  'home_delivery',
+  'collection',
+  'made_to_order',
+  'shipping_cost',
+];
+
+function getFulfilmentTool(args: Record<string, unknown>, state: ToolState) {
+  const topics = Array.isArray(args.topics)
+    ? args.topics.filter(
+        (topic): topic is FulfilmentTopic =>
+          typeof topic === 'string' && FULFILMENT_TOPICS.includes(topic as FulfilmentTopic),
+      )
+    : [];
+  topics.forEach((topic) => state.fulfilmentTopics.add(topic));
+  state.deliveryPolicyRequested ||= topics.some((topic) => topic !== 'shipping_cost');
+  state.shippingCostRequested ||= topics.includes('shipping_cost');
+  return {
+    found: topics.length > 0,
+    topics,
+    renderedByApplication: true,
+  };
+}
+
+function getPaymentOptionsTool(state: ToolState) {
+  state.paymentOptionsRequested = true;
+  return {
+    found: true,
+    renderedByApplication: true,
+  };
+}
+
+const SERVICE_TOPICS = ['returns', 'resizing', 'warranty', 'repairs', 'cleaning'] as const;
+type ServiceTopic = (typeof SERVICE_TOPICS)[number];
+
+function getServicePoliciesTool(args: Record<string, unknown>, state: ToolState) {
+  const topics = Array.isArray(args.topics)
+    ? args.topics.filter(
+        (topic): topic is ServiceTopic =>
+          typeof topic === 'string' && SERVICE_TOPICS.includes(topic as ServiceTopic),
+      )
+    : [];
+
+  state.returnsPolicyRequested ||= topics.includes('returns');
+  state.resizingPolicyRequested ||= topics.includes('resizing');
+  state.warrantyPolicyRequested ||= topics.includes('warranty') || topics.includes('repairs');
+  state.careServiceRequested ||= topics.includes('cleaning');
+
+  return {
+    found: topics.length > 0,
+    topics,
+    renderedByApplication: true,
+  };
+}
+
+function getAtelierInfoTool(state: ToolState) {
+  state.studioInfoRequested = true;
+  return { found: true, renderedByApplication: true };
+}
+
+function checkBusinessInformationTool(args: Record<string, unknown>, state: ToolState) {
+  const topic =
+    args.topic === 'discounts' || args.topic === 'custom_order_pricing' ? args.topic : null;
+  if (topic) state.whatsappRequested = true;
+  return { topic, available: false, handoffAvailable: Boolean(topic) };
 }
 
 function getProductTool(args: Record<string, unknown>, state: ToolState) {
@@ -524,7 +529,13 @@ function getProductTool(args: Record<string, unknown>, state: ToolState) {
       )
     : [];
   state.requestedFields.set(product.slug, new Set(fields.length > 0 ? fields : ['description']));
-  return { product: catalogueRecord(product) };
+  return {
+    product: {
+      slug: product.slug,
+      requestedFields: fields,
+      renderedByApplication: true,
+    },
+  };
 }
 
 function presentRecommendationsTool(_args: Record<string, unknown>, state: ToolState) {
@@ -542,6 +553,16 @@ function executeTool(call: GeminiFunctionCall, state: ToolState): Record<string,
       return searchProductsTool(args, state);
     case 'get_product':
       return getProductTool(args, state);
+    case 'get_fulfilment':
+      return getFulfilmentTool(args, state);
+    case 'get_payment_options':
+      return getPaymentOptionsTool(state);
+    case 'get_service_policies':
+      return getServicePoliciesTool(args, state);
+    case 'get_atelier_info':
+      return getAtelierInfoTool(state);
+    case 'check_business_information':
+      return checkBusinessInformationTool(args, state);
     case 'present_recommendations':
       return presentRecommendationsTool(args, state);
     case 'open_size_guide':
@@ -556,23 +577,9 @@ function executeTool(call: GeminiFunctionCall, state: ToolState): Record<string,
 }
 
 function executeCalls(calls: GeminiFunctionCall[], state: ToolState): Record<string, unknown>[] {
-  if (state.shippingCostIntent || Object.values(state.servicePolicyIntent).some(Boolean)) {
-    for (const call of calls) {
-      if (call.name === 'search_products') {
-        call.args = {
-          ...(call.args ?? {}),
-          ...(state.shippingCostIntent ? { include_shipping_cost: true } : {}),
-          ...(state.servicePolicyIntent.returns ? { include_returns_policy: true } : {}),
-          ...(state.servicePolicyIntent.resizing ? { include_resizing_policy: true } : {}),
-          ...(state.servicePolicyIntent.warranty ? { include_warranty_policy: true } : {}),
-          ...(state.servicePolicyIntent.care ? { include_care_service: true } : {}),
-        };
-      }
-    }
-  }
   const results: Record<string, unknown>[] = new Array(calls.length);
   const isDataCall = (call: GeminiFunctionCall) =>
-    call.name === 'search_products' || call.name === 'get_product';
+    call.name !== 'present_recommendations';
 
   calls.forEach((call, index) => {
     if (isDataCall(call)) results[index] = executeTool(call, state);
@@ -609,13 +616,7 @@ function safeToolArguments(call: GeminiFunctionCall): Record<string, unknown> {
           ? { maxPriceProvided: true }
           : {}),
         ...(isAvailability(args.availability) ? { availability: args.availability } : {}),
-        ...(args.include_delivery_policy === true ? { includeDeliveryPolicy: true } : {}),
-        ...(args.include_shipping_cost === true ? { includeShippingCost: true } : {}),
-        ...(args.include_studio_info === true ? { includeStudioInfo: true } : {}),
-        ...(args.include_returns_policy === true ? { includeReturnsPolicy: true } : {}),
-        ...(args.include_resizing_policy === true ? { includeResizingPolicy: true } : {}),
-        ...(args.include_warranty_policy === true ? { includeWarrantyPolicy: true } : {}),
-        ...(args.include_care_service === true ? { includeCareService: true } : {}),
+        ...(args.selection === 'lowest_price' ? { selection: args.selection } : {}),
         queryProvided: typeof args.query === 'string' && args.query.trim().length > 0,
         ...(typeof args.query === 'string' ? { queryLength: args.query.length } : {}),
       };
@@ -642,6 +643,31 @@ function safeToolArguments(call: GeminiFunctionCall): Record<string, unknown> {
           : [],
         requestedSlugCount: Array.isArray(args.slugs) ? args.slugs.length : 0,
       };
+    case 'get_service_policies':
+      return {
+        topics: Array.isArray(args.topics)
+          ? args.topics.filter(
+              (topic): topic is ServiceTopic =>
+                typeof topic === 'string' && SERVICE_TOPICS.includes(topic as ServiceTopic),
+            )
+          : [],
+      };
+    case 'get_fulfilment':
+      return {
+        topics: Array.isArray(args.topics)
+          ? args.topics.filter(
+              (topic): topic is FulfilmentTopic =>
+                typeof topic === 'string' && FULFILMENT_TOPICS.includes(topic as FulfilmentTopic),
+            )
+          : [],
+      };
+    case 'check_business_information':
+      return {
+        topic:
+          args.topic === 'discounts' || args.topic === 'custom_order_pricing'
+            ? args.topic
+            : 'unrecognized',
+      };
     default:
       return {};
   }
@@ -653,11 +679,20 @@ function toolResultCount(
 ): number {
   if (!result) return 0;
   if (call.name === 'search_products') {
-    return Array.isArray(result.products) ? result.products.length : 0;
+    return typeof result.resultCount === 'number' ? result.resultCount : 0;
   }
   if (call.name === 'get_product') return result.product ? 1 : 0;
   if (call.name === 'present_recommendations') {
     return Array.isArray(result.acceptedSlugs) ? result.acceptedSlugs.length : 0;
+  }
+  if (
+    call.name === 'get_fulfilment' ||
+    call.name === 'get_payment_options' ||
+    call.name === 'get_service_policies' ||
+    call.name === 'get_atelier_info' ||
+    call.name === 'check_business_information'
+  ) {
+    return Object.values(result).filter((value) => value !== null).length;
   }
   return result.offered === true ? 1 : 0;
 }
@@ -711,83 +746,6 @@ async function callGemini(
   throw new SystemicFailure(payload.error?.status ?? `Gemini HTTP ${response.status}`);
 }
 
-function requiresUnknownPolicyHandoff(message: string): boolean {
-  const normalized = normalize(message);
-  const asksCustomPrice =
-    /(?:עיצוב אישי|הזמנה אישית|הזמנה מיוחדת).*(?:עולה|עלות|מחיר|תמחור)/.test(normalized) ||
-    /(?:עולה|עלות|מחיר|תמחור).*(?:עיצוב אישי|הזמנה אישית|הזמנה מיוחדת)/.test(normalized);
-  return /הנח|קופון|מבצע/.test(normalized) || asksCustomPrice;
-}
-
-function servicePolicyIntent(message: string): ServicePolicyIntent {
-  const normalized = normalize(message);
-  const resizing = /הקטנ|להקטין|להגדיל|שינוי מידה|התאמת מידה|תיקון מידה/.test(normalized);
-  return {
-    returns: /החזר|להחזיר|מחזיר|החזרה|החזרות|החלפ|ביטול/.test(normalized),
-    resizing,
-    warranty:
-      !resizing && /אחריות|פגם בייצור|פגמי ייצור|תיקון|תיקונים|נקרע|נשבר/.test(normalized),
-    care: /ניקוי|לנקות|בדיקת שיבוץ|בדיקת אבנים|פוליש/.test(normalized),
-  };
-}
-
-function hasServicePolicyIntent(intent: ServicePolicyIntent): boolean {
-  return Object.values(intent).some(Boolean);
-}
-
-function asksShippingCost(message: string): boolean {
-  const normalized = normalize(message);
-  return /(?:משלוח|שליחות|איסוף)/.test(normalized) && /(?:כמה.*עולה|עלות|מחיר|דמי|חינם)/.test(normalized);
-}
-
-function shoppingFilterSignalCount(normalized: string): number {
-  return [
-    /טבעת|שרשרת|עגיל|צמיד/.test(normalized),
-    /תקציב|עד\s*\d|\d\s*(?:שח|שקל)/.test(normalized),
-    /זהב צהוב|זהב אדום|זהב לבן|רוז גולד/.test(normalized),
-    /עדין|עדינה|קלאסי|קלאסית|בולט|בולטת|יומיום/.test(normalized),
-  ].filter(Boolean).length;
-}
-
-function isUnderspecifiedShoppingRequest(message: string): boolean {
-  const normalized = normalize(message);
-  const hasOpenShoppingIntent =
-    /מחפש|מחפשת|מתנה|לא יודע מה|לא יודעת מה|רוצה לקנות|בא לי/.test(normalized);
-  if (!hasOpenShoppingIntent) return false;
-
-  return shoppingFilterSignalCount(normalized) < 2;
-}
-
-function deterministicCatalogTurn(message: string, context: string[], state: ToolState): boolean {
-  if (state.searchUsed) return true;
-  const normalized = normalize([...context, message].join(' '));
-  const filterSignals = shoppingFilterSignalCount(normalized);
-  return (
-    filterSignals >= 2 ||
-    (context.length > 0 && filterSignals >= 1) ||
-    /מלאי|זמינ|זמן משלוח|זמן איסוף|כתובת|שעות פתיחה|החזר|החלפ|אחריות|תיקון|ניקוי|שינוי מידה|התאמת מידה/.test(normalized)
-  );
-}
-
-function oneQuestionOnly(text: string, message: string): string {
-  const normalized = normalize(text);
-  const questionMarks = (text.match(/[?؟]/g) ?? []).length;
-  const dimensions = [
-    /תקציב/.test(normalized),
-    /אירוע/.test(normalized),
-    /סגנון/.test(normalized),
-  ].filter(Boolean).length;
-  if (questionMarks === 1 && !/\sאו\s/.test(normalized) && dimensions <= 1) {
-    return text.trim();
-  }
-
-  const request = normalize(message);
-  if (!/תקציב|עד\s*\d|\d\s*(?:שח|שקל)/.test(request)) {
-    return 'איזה תקציב תרצי להקדיש לזה?';
-  }
-  return 'איזה סגנון היא אוהבת לענוד?';
-}
-
 function requestedFactLine(product: Product, fields: Set<RequestedField>): string | null {
   const facts: string[] = [];
   if (fields.has('sku')) facts.push(`מספר קטלוגי: ${product.sku}`);
@@ -817,23 +775,7 @@ function requestedFactLine(product: Product, fields: Set<RequestedField>): strin
   return facts.length > 0 ? facts.join('. ') : null;
 }
 
-function naturalRecommendationTransition(text: string): string {
-  const trimmed = text.trim();
-  if (!trimmed) return 'הנה כמה אפשרויות שיכולות להתאים למה שחיפשת.';
-  if (/עונות על (?:ה)?בקשה|מתאימות ל(?:ה)?בקשה|לבקשה שלך/.test(trimmed)) {
-    return 'הנה כמה אפשרויות שיכולות להתאים למה שחיפשת.';
-  }
-
-  const natural = trimmed
-    .replace(/אלו האפשרויות/g, 'הנה כמה אפשרויות')
-    .replace(/עבור יום ההולדת/g, 'ליום ההולדת')
-    .replace(/—/g, ',');
-  return /עבור/.test(natural)
-    ? 'הנה כמה כיוונים שיכולים להתאים למה שתיארת.'
-    : natural;
-}
-
-function deterministicOutput(state: ToolState, modelText: string) {
+function assembleGroundedOutput(state: ToolState, modelText: string) {
   const factLines = [...state.requestedFields.entries()].flatMap(([slug, fields]) => {
     const product = state.evidence.get(slug);
     if (!product) return [];
@@ -842,29 +784,34 @@ function deterministicOutput(state: ToolState, modelText: string) {
   });
 
   const recommendationSlugs = (
-    state.catalogSearchRequested
-      ? state.searchedSlugs.slice(0, MAX_RECOMMENDATIONS)
+    state.presentedSlugs.length > 0
+      ? state.presentedSlugs
       : [...state.requestedFields.keys()].slice(0, MAX_RECOMMENDATIONS)
   ).filter((slug) => state.evidence.has(slug));
   const eighteenKSlugs = [...state.requestedFields.entries()]
     .filter(([slug, fields]) => fields.has('18k_availability') && state.evidence.get(slug)?.availableIn18K)
     .map(([slug]) => slug);
 
-  const lines = [...factLines];
-  if (state.deliveryPolicyRequested) {
-    lines.push(
-      `משלוח עד הבית אורך ${DELIVERY_TIMES.home}, ואיסוף מהסטודיו אפשרי בתוך ${DELIVERY_TIMES.collection}. לפריט שנוצר בהזמנה יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ואז חל זמן המסירה שנבחר.`,
-    );
-  }
-  if (state.shippingCostRequested) lines.push('הנה הפרטים על עלות המשלוח והאיסוף.');
-  if (
+  const hasRenderedBusinessFacts =
+    state.requestedFields.size > 0 ||
+    state.deliveryPolicyRequested ||
+    state.paymentOptionsRequested ||
+    state.studioInfoRequested ||
     state.returnsPolicyRequested ||
     state.resizingPolicyRequested ||
     state.warrantyPolicyRequested ||
-    state.careServiceRequested
-  ) {
-    lines.push('הנה פרטי המדיניות והשירות.');
+    state.careServiceRequested;
+  const lines = [hasRenderedBusinessFacts ? '' : modelText.trim(), ...factLines].filter(Boolean);
+  if (state.fulfilmentTopics.has('home_delivery')) {
+    lines.push(`משלוח עד הבית אורך ${DELIVERY_TIMES.home}.`);
   }
+  if (state.fulfilmentTopics.has('collection')) {
+    lines.push(`איסוף מהסטודיו אפשרי בתוך ${DELIVERY_TIMES.collection}.`);
+  }
+  if (state.fulfilmentTopics.has('made_to_order')) {
+    lines.push(`לפריט שנוצר בהזמנה יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ואז חל זמן המסירה שנבחר.`);
+  }
+  if (state.paymentOptionsRequested) lines.push(installmentNote());
   if (state.studioInfoRequested) {
     lines.push(
       `כתובת הסטודיו היא ${STUDIO.address}. שעות הפתיחה: ${STUDIO.hours
@@ -872,30 +819,8 @@ function deterministicOutput(state: ToolState, modelText: string) {
         .join('; ')}.`,
     );
   }
-  if (recommendationSlugs.length > 0 && factLines.length === 0) {
-    lines.push(naturalRecommendationTransition(modelText));
-  }
-  if (state.catalogSearchRequested && !state.searchHadMatches) {
-    lines.push('לא מצאתי התאמה בקטלוג לפי הבקשה הזאת.');
-  }
-  if (state.sizeGuideRequested) lines.push('אפשר לפתוח כאן את מדריך המידות.');
-  if (state.whatsappRequested) lines.push(SAFE_GENERIC);
-
-  const hasToolBackedOutput =
-    state.evidence.size > 0 ||
-    state.deliveryPolicyRequested ||
-    state.shippingCostRequested ||
-    state.studioInfoRequested ||
-    state.returnsPolicyRequested ||
-    state.resizingPolicyRequested ||
-    state.warrantyPolicyRequested ||
-    state.careServiceRequested ||
-    state.sizeGuideRequested ||
-    state.whatsappRequested ||
-    state.searchUsed;
-
   return {
-    text: lines.join(' ').trim() || (hasToolBackedOutput ? SAFE_GENERIC : modelText.trim() || SAFE_GENERIC),
+    text: lines.join(' ').trim(),
     recommendationSlugs,
     eighteenKSlugs,
   };
@@ -952,34 +877,7 @@ async function runToolLoop(
   let finalText = '';
 
   for (let callNumber = 0; callNumber < MAX_GEMINI_CALLS_PER_MESSAGE; callNumber += 1) {
-    let functionCallingConfig: FunctionCallingConfig = { mode: 'AUTO' };
-    if (callNumber === 0 && asksShippingCost(message)) {
-      functionCallingConfig = { mode: 'ANY', allowedFunctionNames: ['search_products'] };
-    } else if (callNumber === 0 && hasServicePolicyIntent(state.servicePolicyIntent)) {
-      functionCallingConfig = { mode: 'ANY', allowedFunctionNames: ['search_products'] };
-    } else if (callNumber === 0 && requiresUnknownPolicyHandoff(message)) {
-      functionCallingConfig = { mode: 'ANY', allowedFunctionNames: ['offer_whatsapp'] };
-    } else if (callNumber === 0 && isUnderspecifiedShoppingRequest(message)) {
-      functionCallingConfig = { mode: 'NONE' };
-    }
-    const toolFactsComplete =
-      state.presentedSlugs.length > 0 ||
-      state.requestedFields.size > 0 ||
-      state.deliveryPolicyRequested ||
-      state.shippingCostRequested ||
-      state.studioInfoRequested ||
-      state.returnsPolicyRequested ||
-      state.resizingPolicyRequested ||
-      state.warrantyPolicyRequested ||
-      state.careServiceRequested ||
-      state.whatsappRequested ||
-      state.sizeGuideRequested;
-    const temperature =
-      functionCallingConfig.mode === 'ANY' ||
-      (!toolFactsComplete && deterministicCatalogTurn(message, context, state))
-        ? 0
-        : 0.55;
-    const response = await callGemini(apiKey, contents, functionCallingConfig, temperature);
+    const response = await callGemini(apiKey, contents, { mode: 'AUTO' }, 0.55);
     const content = response.candidates?.[0]?.content;
     if (!content?.parts?.length) {
       const hasCompletedToolWork =
@@ -988,6 +886,7 @@ async function runToolLoop(
         state.whatsappRequested ||
         state.deliveryPolicyRequested ||
         state.shippingCostRequested ||
+        state.paymentOptionsRequested ||
         state.studioInfoRequested ||
         state.returnsPolicyRequested ||
         state.resizingPolicyRequested ||
@@ -1003,20 +902,10 @@ async function runToolLoop(
       finalText = text.trim().replace(/\s*—\s*/g, ', ').replace(/[!！]/g, '');
     }
     if (calls.length === 0) {
-      return functionCallingConfig.mode === 'NONE'
-        ? oneQuestionOnly(finalText, message)
-        : finalText;
+      return finalText;
     }
 
     const results = executeCalls(calls, state);
-    if (
-      state.returnsPolicyRequested ||
-      state.resizingPolicyRequested ||
-      state.warrantyPolicyRequested ||
-      state.careServiceRequested
-    ) {
-      return finalText;
-    }
     contents.push(content);
     contents.push({
       role: 'user',
@@ -1091,23 +980,21 @@ export default async function handler(request: Request): Promise<Response> {
       searchedSlugs: [],
       presentedSlugs: [],
       searchUsed: false,
-      catalogSearchRequested: false,
-      searchHadMatches: false,
+      fulfilmentTopics: new Set(),
       deliveryPolicyRequested: false,
-      shippingCostIntent: asksShippingCost(message),
       shippingCostRequested: false,
+      paymentOptionsRequested: false,
       studioInfoRequested: false,
       returnsPolicyRequested: false,
       resizingPolicyRequested: false,
       warrantyPolicyRequested: false,
       careServiceRequested: false,
-      servicePolicyIntent: servicePolicyIntent(message),
       sizeGuideRequested: false,
       whatsappRequested: false,
     };
 
     const modelText = await runToolLoop(apiKey, message, context, state);
-    const output = deterministicOutput(state, modelText);
+    const output = assembleGroundedOutput(state, modelText);
     const inspectedText = inspectOutgoingText(output.text, state);
     const verifiedShippingText = state.shippingCostRequested
       ? `משלוח עד הבית ${shippingCostText(SHIPPING.home)}. איסוף מהסטודיו ${shippingCostText(SHIPPING.collection)}.`
