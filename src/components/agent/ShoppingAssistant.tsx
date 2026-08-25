@@ -47,6 +47,7 @@ export function ShoppingAssistant() {
   const [open, setOpen] = useState(false);
   const [turn, setTurn] = useState<AgentTurn | null>(null);
   const [pending, setPending] = useState(false);
+  const [pendingUserText, setPendingUserText] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
@@ -126,6 +127,14 @@ export function ShoppingAssistant() {
       (first ?? panelRef.current)?.focus();
     }
   }, [turn, open, reduced]);
+
+  useEffect(() => {
+    if (!open || !pendingUserText) return;
+    logRef.current?.scrollTo({
+      top: logRef.current.scrollHeight,
+      behavior: reduced ? 'auto' : 'smooth',
+    });
+  }, [pendingUserText, open, reduced]);
 
   /* ── focus trap, scoped to the panel ──────────────────────────────────────
      Scoped to the panel element rather than `document` on purpose: the cart
@@ -299,7 +308,10 @@ export function ShoppingAssistant() {
     const text = draft.trim();
     if (!text || pending) return;
     setDraft('');
-    void runTurn((b) => b.send({ type: 'text', text }), 'input');
+    setPendingUserText(text);
+    void runTurn((b) => b.send({ type: 'text', text }), 'input').finally(() => {
+      setPendingUserText(null);
+    });
   };
 
   /* ── rendering ────────────────────────────────────────────────────────── */
@@ -470,6 +482,23 @@ export function ShoppingAssistant() {
               </div>
             );
           })}
+
+          {pendingUserText && (
+            <div className="max-w-full min-w-0 space-y-3">
+              <p className="ms-auto block max-w-[85%] whitespace-pre-wrap rounded-lg bg-charcoal px-3 py-2 text-sm text-cream break-words [overflow-wrap:anywhere]">
+                <bdi className="block max-w-full break-words [overflow-wrap:anywhere]">
+                  {pendingUserText}
+                </bdi>
+              </p>
+              <p
+                role="status"
+                aria-live="polite"
+                className="me-auto text-sm text-stone motion-safe:animate-pulse"
+              >
+                בודקת באתר...
+              </p>
+            </div>
+          )}
         </div>
 
         <form
