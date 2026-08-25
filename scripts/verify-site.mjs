@@ -210,6 +210,35 @@ async function checkAssistantMobile(browser) {
   });
   page.on('pageerror', (error) => errors.push(`pageerror: ${String(error).slice(0, 160)}`));
 
+  // Chromium resizes its layout viewport with the virtual keyboard, while
+  // Safari keeps the layout viewport tall and shrinks/scrolls VisualViewport.
+  // Model the Safari geometry so this regression test covers that difference.
+  await page.addInitScript(() => {
+    const nativeViewport = window.visualViewport;
+    if (!nativeViewport) return;
+    let height = nativeViewport.height;
+    let offsetTop = nativeViewport.offsetTop;
+    const mockViewport = new EventTarget();
+    Object.defineProperties(mockViewport, {
+      height: { get: () => height },
+      offsetTop: { get: () => offsetTop },
+      width: { get: () => nativeViewport.width },
+      offsetLeft: { get: () => nativeViewport.offsetLeft },
+      pageLeft: { get: () => nativeViewport.pageLeft },
+      pageTop: { get: () => nativeViewport.pageTop },
+      scale: { get: () => nativeViewport.scale },
+    });
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: mockViewport,
+    });
+    window.__setAssistantVisualViewport = (next) => {
+      height = next.height;
+      offsetTop = next.offsetTop;
+      mockViewport.dispatchEvent(new Event('resize'));
+    };
+  });
+
   const longReply =
     'החלפה אפשרית בתוך 30 יום מקבלת הפריט, והחזר כספי מלא אפשרי בתוך 14 יום. ' +
     'הפריט צריך להיות ללא סימני ענידה ובאריזה המקורית. מתחילים בכתיבה בוואטסאפ, ' +
@@ -287,6 +316,72 @@ async function checkAssistantMobile(browser) {
     }
   }
   if (errors.length) fail('assistant-mobile', `console errors: ${errors.join(' | ')}`);
+
+  const keyboardViewport = { height: 430, offsetTop: 382 };
+  const visualViewportMocked = await page.evaluate((next) => {
+    if (!window.__setAssistantVisualViewport) return false;
+    window.__setAssistantVisualViewport(next);
+    return true;
+  }, keyboardViewport);
+  await page.waitForTimeout(100);
+  if (!visualViewportMocked) {
+    fail('assistant-mobile', 'could not model Safari visual viewport geometry');
+  } else {
+    const keyboardMetrics = await page.evaluate(({ height, offsetTop }) => {
+      const panel = document.querySelector('[role="dialog"][aria-label="עוזר בחירה"]');
+      if (!panel) return null;
+      const header = panel.querySelector('header');
+      const form = panel.querySelector('form');
+      const close = panel.querySelector('[aria-label="סגירת עוזר הבחירה"]');
+      const send = panel.querySelector('[aria-label="שליחת ההודעה"]');
+      const log = panel.querySelector('[role="log"]');
+      const visibleTop = offsetTop;
+      const visibleBottom = offsetTop + height;
+      const insideVisibleViewport = (element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.top >= visibleTop - 1 && rect.bottom <= visibleBottom + 1;
+      };
+      const panelRect = panel.getBoundingClientRect();
+      return {
+        panelTop: panelRect.top,
+        panelBottom: panelRect.bottom,
+        panelHeight: panelRect.height,
+        logHeight: log.getBoundingClientRect().height,
+        controlsVisible: [header, form, close, send].every(insideVisibleViewport),
+        cssVisualHeight: panel.style.getPropertyValue('--assistant-visual-height'),
+        cssVisualBottom: panel.style.getPropertyValue('--assistant-visual-bottom'),
+      };
+    }, keyboardViewport);
+
+    if (!keyboardMetrics) {
+      fail('assistant-mobile', 'assistant panel disappeared in keyboard state');
+    } else {
+      if (
+        Math.abs(keyboardMetrics.panelTop - keyboardViewport.offsetTop) > 1 ||
+        Math.abs(
+          keyboardMetrics.panelBottom -
+            (keyboardViewport.offsetTop + keyboardViewport.height),
+        ) > 1
+      ) {
+        fail(
+          'assistant-mobile',
+          `keyboard viewport maps to ${keyboardMetrics.panelTop}–${keyboardMetrics.panelBottom}`,
+        );
+      }
+      if (!keyboardMetrics.controlsVisible) {
+        fail('assistant-mobile', 'header, close, input row or send button leave the keyboard viewport');
+      }
+      if (keyboardMetrics.logHeight < 1) {
+        fail('assistant-mobile', 'keyboard state leaves no scrollable transcript area');
+      }
+      if (
+        keyboardMetrics.cssVisualHeight !== `${keyboardViewport.height}px` ||
+        keyboardMetrics.cssVisualBottom !== '0px'
+      ) {
+        fail('assistant-mobile', 'VisualViewport dimensions were not applied to the panel');
+      }
+    }
+  }
 
   await page.screenshot({ path: join(SHOTS, 'assistant-mobile-375.png') });
   await ctx.close();

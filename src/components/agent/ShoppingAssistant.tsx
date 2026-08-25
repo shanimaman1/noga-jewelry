@@ -184,6 +184,68 @@ export function ShoppingAssistant() {
     };
   }, [open]);
 
+  /* ── iOS keyboard / visual viewport ──────────────────────────────────────
+     Safari keeps `svh` tied to the layout viewport while the software keyboard
+     shrinks and may scroll the visual viewport. A bottom sheet sized only with
+     viewport units can therefore leave its header above the visible slice.
+     Map the sheet to the VisualViewport rectangle on mobile; the middle log is
+     the only region allowed to shrink, so both fixed control rows stay visible. */
+
+  useEffect(() => {
+    if (!open) return;
+    const panel = panelRef.current;
+    const viewport = window.visualViewport;
+    if (!panel || !viewport) return;
+
+    const query = window.matchMedia(MOBILE_QUERY);
+    let frame = 0;
+
+    const clear = () => {
+      panel.style.removeProperty('--assistant-visual-height');
+      panel.style.removeProperty('--assistant-visual-bottom');
+    };
+
+    const update = () => {
+      cancelAnimationFrame(frame);
+      if (!query.matches) {
+        clear();
+        return;
+      }
+
+      const log = logRef.current;
+      const keepAtBottom = log
+        ? log.scrollHeight - log.scrollTop - log.clientHeight < 48
+        : true;
+      const visibleHeight = Math.max(0, viewport.height);
+      const bottomGap = Math.max(
+        0,
+        window.innerHeight - viewport.offsetTop - visibleHeight,
+      );
+
+      panel.style.setProperty('--assistant-visual-height', `${visibleHeight}px`);
+      panel.style.setProperty('--assistant-visual-bottom', `${bottomGap}px`);
+
+      frame = requestAnimationFrame(() => {
+        if (keepAtBottom && log) log.scrollTop = log.scrollHeight;
+      });
+    };
+
+    update();
+    viewport.addEventListener('resize', update);
+    viewport.addEventListener('scroll', update);
+    query.addEventListener('change', update);
+    window.addEventListener('orientationchange', update);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      viewport.removeEventListener('resize', update);
+      viewport.removeEventListener('scroll', update);
+      query.removeEventListener('change', update);
+      window.removeEventListener('orientationchange', update);
+      clear();
+    };
+  }, [open]);
+
   /* ── actions, wired to the real app ───────────────────────────────────── */
 
   const runAction = (action: AgentAction) => {
@@ -268,7 +330,7 @@ export function ShoppingAssistant() {
            win. The header is also z-40, but the panel is bottom-anchored and its
            height always leaves 9rem clear at the top, so the two never overlap —
            on the shortest viewports it is the `100svh - 9rem` term that binds. */
-        className="fixed inset-x-0 bottom-0 z-[41] flex h-[min(82svh,calc(100svh-9rem))] w-full max-w-full min-w-0 flex-col overflow-hidden rounded-t-lg border border-mist bg-cream shadow-xl outline-none sm:inset-x-auto sm:bottom-5 sm:end-5 sm:h-[min(34rem,calc(100svh-9rem))] sm:w-[22rem] sm:rounded-lg"
+        className="fixed inset-x-0 bottom-[var(--assistant-visual-bottom,0px)] z-[41] flex h-[min(82svh,calc(100svh-9rem),var(--assistant-visual-height,100svh))] w-full max-w-full min-w-0 flex-col overflow-hidden rounded-t-lg border border-mist bg-cream shadow-xl outline-none sm:inset-x-auto sm:bottom-5 sm:end-5 sm:h-[min(34rem,calc(100svh-9rem))] sm:w-[22rem] sm:rounded-lg"
       >
         <header className="flex w-full min-w-0 shrink-0 items-center gap-2 border-b border-mist px-4 py-3">
           {turn?.canGoBack && (

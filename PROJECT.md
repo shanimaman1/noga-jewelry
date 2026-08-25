@@ -347,7 +347,11 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   Its header, log and input row cannot shrink or expand beyond that width;
   message text uses emergency wrapping for long tokens. The free-text input is
   at least 16px on mobile so iOS Safari does not zoom the visual viewport and
-  move the close or send buttons off-screen.
+  move the close or send buttons off-screen. While the software keyboard is
+  open, the panel maps itself to the current `VisualViewport` height and bottom
+  offset: header and composer remain visible, and only the transcript shrinks
+  into its existing scroll region. Closing the keyboard restores the normal
+  `svh`-bounded sheet.
 - One deliberate layering exception: `lib/agent/catalog.ts` imports
   `CATEGORY_LABELS` and `PRICE_BANDS` from `components/catalog/FilterBar.tsx`.
   Those are the app's existing user-facing vocabulary — offering different tiers
