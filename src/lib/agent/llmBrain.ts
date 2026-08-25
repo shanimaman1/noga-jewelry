@@ -2,7 +2,7 @@ import { getProduct } from '@/data/products';
 import type { AgentBrain, AgentInput, AgentMessage, AgentTurn } from './types';
 import {
   AGENT_CHAT_ENDPOINT,
-  type AgentChatContextMessage,
+  type AgentChatHistoryMessage,
   type AgentChatRequest,
   type AgentChatResponse,
   type AgentChatStreamEvent,
@@ -14,10 +14,6 @@ const GENTLE_ERROR = 'לא הצלחתי לענות כרגע. אפשר לנסות
 
 let messageCounter = 0;
 const nextId = () => `llm-agent-${++messageCounter}`;
-
-function lastQuestion(text: string): string | undefined {
-  return text.match(/[^.!?\n]*\?/g)?.at(-1)?.trim();
-}
 
 const assistant = (text: string, extra: Partial<AgentMessage> = {}): AgentMessage => ({
   id: nextId(),
@@ -116,18 +112,17 @@ export function createLlmBrain(): AgentBrain {
     text: string,
     onProgress?: (progress: AgentProgress) => void,
   ): Promise<AgentTurn> => {
-    const context = current()
-      .flatMap((message): AgentChatContextMessage[] => {
-        if (message.sender === 'user') return [{ role: 'user', text: message.text }];
-        const question = lastQuestion(message.text);
-        return question ? [{ role: 'assistant', text: question }] : [];
-      })
-      .slice(-4);
+    const firstUserIndex = current().findIndex((message) => message.sender === 'user');
+    const conversation = firstUserIndex < 0 ? [] : current().slice(firstUserIndex);
+    const history: AgentChatHistoryMessage[] = conversation.map((message) => ({
+      role: message.sender === 'user' ? 'user' : 'assistant',
+      text: message.text,
+    }));
     const base = [...current(), user(text)];
     const requestBody: AgentChatRequest = {
       sessionId,
       message: text,
-      ...(context.length > 0 ? { context } : {}),
+      ...(history.length > 0 ? { history } : {}),
     };
 
     let response: Response;

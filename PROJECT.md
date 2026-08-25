@@ -381,11 +381,10 @@ or policy copy. Actions remain buttons the shopper must click.
 
 **Zero fabrication is structural wherever possible:**
 
-- Each function request contains the current shopper message and at most two
-  earlier continuity entries: shopper messages and the final question sentence
-  from an assistant reply. The factual body of previous assistant prose, cards
-  and catalogue facts is not sent. Context is explicitly untrusted and never
-  counts as evidence; product and business facts must be fetched again in that turn.
+- Each function request contains the current shopper message and the full prior
+  conversation from both sides. Earlier prose is continuity only and never
+  counts as evidence; product and business facts must still be fetched again in
+  the current turn.
 - There is no server-side intent classifier, no forced `ANY`, no blocked
   `NONE`, no policy/browsing/unknown router and no post-generation question or
   transition normaliser. Gemini receives the shopper message and all eleven site
@@ -430,14 +429,12 @@ for server errors. Free-text query values, shopper messages, API keys and
 session identifiers are never logged.
 
 Server protections are fixed in the function: an origin allowlist, 500
-characters per message, 20 messages per signed session, at most five Gemini
-calls per message when the one permitted post-tool retry is used, a 25-second
-timeout per Gemini call and an atomic cap of 200 Gemini calls per UTC day in a
+characters per message, 20 messages per signed session, at most four Gemini
+tool-loop calls per message and an atomic cap of 200 Gemini calls per UTC day in a
 strongly consistent Netlify Blobs store. Missing configuration, invalid session,
 quota/cap errors or unavailable limit storage cause permanent wizard fallback.
-One recoverable Gemini transport failure is retried once per message, whether it
-happens before a tool call or while Gemini phrases an answer from returned site
-data. A later recoverable failure keeps the LLM path available for the next message.
+There is no application timeout or retry layer around the model call; provider
+or platform limits remain the outer boundary.
 
 ### Pinned versions (3D-related = EXACT, no caret) — verified vs npm 2026-07-24
 - `react` **19.2.8**, `react-dom` **19.2.8** (inside fiber peer `>=19 <19.3`)

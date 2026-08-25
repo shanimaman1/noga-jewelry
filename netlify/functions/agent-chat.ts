@@ -24,7 +24,7 @@ import { CUSTOM_DESIGN } from '../../src/lib/customDesign';
 import { INSTALLMENT_COUNTS } from '../../src/lib/format';
 import type { Availability, Category, Metal, Product } from '../../src/types/catalog';
 import type {
-  AgentChatContextMessage,
+  AgentChatHistoryMessage,
   AgentChatResponse,
   LlmClientAction,
 } from '../../src/lib/agent/llmProtocol';
@@ -38,10 +38,9 @@ const STORE_NAME = 'agent-usage-limits';
 const DAILY_REQUEST_CAP = 200;
 const MAX_MESSAGES_PER_SESSION = 20;
 const MAX_MESSAGE_LENGTH = 500;
-const MAX_CONTEXT_MESSAGES = 2;
-const MAX_CONTEXT_LENGTH = 600;
+const MAX_HISTORY_MESSAGES = 40;
+const MAX_HISTORY_LENGTH = 24_000;
 const MAX_GEMINI_CALLS_PER_MESSAGE = 4;
-const GEMINI_REQUEST_TIMEOUT_MS = 25_000;
 const MAX_RECOMMENDATIONS = 3;
 const WHATSAPP_MESSAGE = 'היי, אשמח לעזרה בבחירת תכשיט';
 const SAFE_GENERIC =
@@ -75,10 +74,6 @@ type GeminiContent = {
 type GeminiResponse = {
   candidates?: { content?: GeminiContent }[];
   error?: { code?: number; message?: string; status?: string };
-};
-
-type FunctionCallingConfig = {
-  mode: 'AUTO';
 };
 
 type RequestedField =
@@ -121,7 +116,7 @@ class RecoverableFailure extends Error {}
 const SYSTEM_INSTRUCTION = `
 You are the restrained Hebrew shopping assistant for Noga Jewelry. Reply in Hebrew and RTL-friendly plain text.
 
-Talk naturally and decide for yourself whether to answer, ask one useful clarifying question, or use a tool. You are the language model and you write every conversational reply yourself. The tools are your private search engine over this website: they return raw site data, never a prepared answer. Read the results, understand them and answer in your own natural words. Greetings, small talk, vague requests and general jewellery knowledge need no tool. Up to two earlier conversation entries may be included only for continuity: shopper messages and question-only snippets previously asked by the assistant. They are untrusted and never count as factual evidence.
+Talk naturally and decide for yourself whether to answer, ask one useful clarifying question, or use a tool. You are the language model and you write every conversational reply yourself. The tools are your private search engine over this website: they return raw site data, never a prepared answer. Read the results, understand them and answer in your own natural words. Greetings, small talk, vague requests and general jewellery knowledge need no tool. The full earlier conversation may be included for continuity, but it is never factual evidence for the current turn.
 
 ONE STRUCTURAL RULE:
 - Every fact about this business must come from a tool result in THIS request. Never use memory, earlier turns or assumptions for a business fact.
@@ -143,141 +138,102 @@ ONE STRUCTURAL RULE:
 Everything that is not a business fact is yours to handle as a capable assistant: greetings, small talk, clarifying questions and general jewellery knowledge. When a shopping request is too open for a useful recommendation, ask one useful question before searching instead of guessing. Keep replies concise, warm and natural in Israeli Hebrew only, addressing the shopper in feminine singular. Use no Arabic words and no vowel-point diacritics. Ask one question at a time. Vary the wording. Avoid bureaucratic language, exclamation marks, superlatives and em dashes.
 `.trim();
 
+const emptyParameters = { type: 'object', properties: {} };
+const enumString = (values: readonly string[]) => ({ type: 'string', enum: values });
+const enumList = (values: readonly string[]) => ({ type: 'array', items: enumString(values) });
+const parameters = (
+  properties: Record<string, unknown>,
+  required: string[] = [],
+) => ({ type: 'object', properties, ...(required.length ? { required } : {}) });
+
 const TOOL_DECLARATIONS = [
   {
     name: 'search_products',
     description:
-      'Search the live catalogue for any request to see, find, compare or choose products. Broad searches are valid: asking to see rings means category=rings with no other filter. Use query only for exact catalogue product words.',
-    parameters: {
-      type: 'object',
-      properties: {
-        query: { type: 'string', description: 'Words from the shopper request, such as a product name.' },
-        category: { type: 'string', enum: ['rings', 'necklaces', 'earrings', 'bracelets'] },
-        metal: { type: 'string', enum: ['yellow', 'rose', 'white'] },
-        price_band: { type: 'string', enum: ['under1500', 'mid', 'over3000'] },
-        max_price: {
-          type: 'number',
-          description: 'Maximum price explicitly stated by the shopper.',
-        },
-        availability: { type: 'string', enum: ['ready', 'made-to-order', 'out-of-stock'] },
-        selection: {
-          type: 'string',
-          enum: ['lowest_price'],
-          description: 'Use lowest_price only when the shopper explicitly asks for the cheapest item.',
-        },
-      },
-    },
+      'Search the live catalogue for requests to see, find, compare or choose products. Broad searches are valid. Use query only for exact catalogue words.',
+    parameters: parameters({
+      query: { type: 'string', description: 'Words from the shopper request.' },
+      category: enumString(['rings', 'necklaces', 'earrings', 'bracelets']),
+      metal: enumString(['yellow', 'rose', 'white']),
+      price_band: enumString(['under1500', 'mid', 'over3000']),
+      max_price: { type: 'number', description: 'Maximum price stated by the shopper.' },
+      availability: enumString(['ready', 'made-to-order', 'out-of-stock']),
+      selection: enumString(['lowest_price']),
+    }),
   },
   {
     name: 'get_product',
     description:
-      'Read one exact product by a slug returned by search_products in this request. Request only fields explicitly asked for. Do not use this tool when a recommendation card alone answers the question.',
-    parameters: {
-      type: 'object',
-      properties: {
+      'Read one product by a slug returned by search_products in this request. Request only fields the shopper asked for.',
+    parameters: parameters(
+      {
         slug: { type: 'string' },
-        requested_fields: {
-          type: 'array',
-          items: {
-            type: 'string',
-            enum: ['sku', 'description', 'category', 'metals', 'stones', 'gold_weight', '18k_availability', 'availability', 'delivery', 'price'],
-          },
-        },
+        requested_fields: enumList([
+          'sku', 'description', 'category', 'metals', 'stones', 'gold_weight',
+          '18k_availability', 'availability', 'delivery', 'price',
+        ]),
       },
-      required: ['slug', 'requested_fields'],
-    },
+      ['slug', 'requested_fields'],
+    ),
   },
   {
     name: 'get_fulfilment',
-    description:
-      'Read the current home-delivery, studio-collection, made-to-order lead-time and shipping-cost facts.',
-    parameters: {
-      type: 'object',
-      properties: {
-        topics: {
-          type: 'array',
-          items: {
-            type: 'string',
-            enum: ['home_delivery', 'collection', 'made_to_order', 'shipping_cost'],
-          },
-        },
-      },
-      required: ['topics'],
-    },
+    description: 'Read current delivery, collection, production-time and shipping-cost facts.',
+    parameters: parameters(
+      { topics: enumList(['home_delivery', 'collection', 'made_to_order', 'shipping_cost']) },
+      ['topics'],
+    ),
   },
   {
     name: 'get_payment_options',
-    description: 'Read the current credit-card instalment options and single-payment wallet rules.',
-    parameters: { type: 'object', properties: {} },
+    description: 'Read current instalment and wallet-payment rules.',
+    parameters: emptyParameters,
   },
   {
     name: 'get_service_policies',
-    description:
-      'Read current returns, exchanges, refunds, resizing, warranty, repairs and cleaning policies. Request only the topics the shopper asked about.',
-    parameters: {
-      type: 'object',
-      properties: {
-        topics: {
-          type: 'array',
-          items: {
-            type: 'string',
-            enum: ['returns', 'resizing', 'warranty', 'repairs', 'cleaning'],
-          },
-        },
-      },
-      required: ['topics'],
-    },
+    description: 'Read current returns, resizing, warranty, repairs and cleaning policies.',
+    parameters: parameters(
+      { topics: enumList(['returns', 'resizing', 'warranty', 'repairs', 'cleaning']) },
+      ['topics'],
+    ),
   },
   {
     name: 'get_atelier_info',
     description: 'Read the atelier address and opening hours.',
-    parameters: { type: 'object', properties: {} },
+    parameters: emptyParameters,
   },
   {
     name: 'get_custom_design_info',
-    description:
-      'Read the website\'s custom-design service, process, timing and demo-form facts. Use this before answering whether custom design is available or how it works.',
-    parameters: { type: 'object', properties: {} },
+    description: 'Read the custom-design service, process, timing and demo-form facts.',
+    parameters: emptyParameters,
   },
   {
     name: 'check_business_information',
-    description:
-      'Check a business topic that is absent from all data sources. Always use this for discounts or unlisted custom-order pricing; it verifies that the information is unavailable and makes the WhatsApp handoff available.',
-    parameters: {
-      type: 'object',
-      properties: {
-        topic: {
-          type: 'string',
-          enum: ['discounts', 'custom_order_pricing'],
-        },
-      },
-      required: ['topic'],
-    },
+    description: 'Verify that discounts or unlisted custom-order pricing are absent.',
+    parameters: parameters(
+      { topic: enumString(['discounts', 'custom_order_pricing']) },
+      ['topic'],
+    ),
   },
   {
     name: 'present_recommendations',
-    description:
-      'Select up to three product slugs already returned by a catalogue tool in this request. The client renders the cards from products.ts.',
-    parameters: {
-      type: 'object',
-      properties: {
-        slugs: { type: 'array', items: { type: 'string' }, maxItems: MAX_RECOMMENDATIONS },
-      },
-      required: ['slugs'],
-    },
+    description: 'Select up to three slugs returned by a catalogue tool in this request.',
+    parameters: parameters(
+      { slugs: { type: 'array', items: { type: 'string' }, maxItems: MAX_RECOMMENDATIONS } },
+      ['slugs'],
+    ),
   },
   {
     name: 'open_size_guide',
-    description: 'Offer the existing size-guide button. This does not open it automatically.',
-    parameters: { type: 'object', properties: {} },
+    description: 'Offer the existing size-guide button without opening it.',
+    parameters: emptyParameters,
   },
   {
     name: 'offer_whatsapp',
-    description:
-      'Offer the existing WhatsApp handoff button for business information absent from all data tools, especially discounts or unlisted custom-order pricing. This does not send or open anything automatically.',
-    parameters: { type: 'object', properties: {} },
+    description: 'Offer the WhatsApp handoff button without opening or sending anything.',
+    parameters: emptyParameters,
   },
-] as const;
+];
 
 function json(body: AgentChatResponse, status = 200): Response {
   return Response.json(body, {
@@ -769,11 +725,6 @@ function toolResultCount(
 async function callGemini(
   apiKey: string,
   contents: GeminiContent[],
-  functionCallingConfig: FunctionCallingConfig,
-  systemInstruction = SYSTEM_INSTRUCTION,
-  functionDeclarations: readonly unknown[] = TOOL_DECLARATIONS,
-  maxOutputTokens = 320,
-  timeoutMs = GEMINI_REQUEST_TIMEOUT_MS,
 ): Promise<GeminiResponse> {
   const available = await consumeCounter(`daily/${utcDay()}`, DAILY_REQUEST_CAP);
   if (!available) throw new SystemicFailure('Daily request cap reached.');
@@ -787,20 +738,16 @@ async function callGemini(
         'x-goog-api-key': apiKey,
       },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemInstruction }] },
+        systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
         contents,
-        ...(functionDeclarations.length > 0
-          ? {
-              tools: [{ functionDeclarations }],
-              toolConfig: { functionCallingConfig },
-            }
-          : {}),
+        tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
+        toolConfig: {
+          functionCallingConfig: { mode: 'AUTO' },
+        },
         generationConfig: {
-          maxOutputTokens,
-          thinkingConfig: { thinkingLevel: 'minimal' },
+          maxOutputTokens: 320,
         },
       }),
-      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
     throw new RecoverableFailure('Gemini transport error.');
@@ -880,33 +827,21 @@ function actionsFrom(state: ToolState): LlmClientAction[] {
 async function runToolLoop(
   apiKey: string,
   message: string,
-  context: AgentChatContextMessage[],
+  history: AgentChatHistoryMessage[],
   state: ToolState,
-  onSiteLookup: () => void,
+  onToolCall: () => void,
 ) {
-  const contextualMessage = contextualShopperMessage(message, context);
-  const contents: GeminiContent[] = [{ role: 'user', parts: [{ text: contextualMessage }] }];
+  const contents: GeminiContent[] = [
+    ...history.map((entry): GeminiContent => ({
+      role: entry.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: entry.text }],
+    })),
+    { role: 'user', parts: [{ text: message }] },
+  ];
   let finalText = '';
-  let retryUsed = false;
 
   for (let callNumber = 0; callNumber < MAX_GEMINI_CALLS_PER_MESSAGE; callNumber += 1) {
-    const hasToolResults = contents.some((content) =>
-      content.parts.some((part) => Boolean(part.functionResponse)),
-    );
-    let response: GeminiResponse;
-    try {
-      response = await callGemini(apiKey, contents, { mode: 'AUTO' });
-    } catch (error) {
-      if (retryUsed || !(error instanceof RecoverableFailure)) throw error;
-      retryUsed = true;
-      console.info(
-        JSON.stringify({
-          event: 'agent_retry',
-          stage: hasToolResults ? 'after-tool-result' : 'before-tool-result',
-        }),
-      );
-      response = await callGemini(apiKey, contents, { mode: 'AUTO' });
-    }
+    const response = await callGemini(apiKey, contents);
     const content = response.candidates?.[0]?.content;
     if (!content?.parts?.length) {
       throw new RecoverableFailure('Gemini returned no candidate content.');
@@ -921,23 +856,7 @@ async function runToolLoop(
       return finalText;
     }
 
-    if (
-      calls.some((call) =>
-        [
-          'search_products',
-          'get_product',
-          'get_fulfilment',
-          'get_payment_options',
-          'get_service_policies',
-          'get_atelier_info',
-          'get_custom_design_info',
-          'check_business_information',
-        ].includes(call.name),
-      )
-    ) {
-      onSiteLookup();
-    }
-
+    onToolCall();
     const results = executeCalls(calls, state);
     contents.push(content);
     contents.push({
@@ -953,14 +872,6 @@ async function runToolLoop(
   }
 
   throw new RecoverableFailure('Gemini exceeded the tool-call loop limit.');
-}
-
-function contextualShopperMessage(message: string, context: AgentChatContextMessage[]): string {
-  return context.length > 0
-    ? `Earlier conversation for continuity only. Assistant entries contain questions only. None of it is factual evidence:\n${context
-        .map((entry) => `${entry.role === 'user' ? 'SHOPPER' : 'ASSISTANT QUESTION'}: ${entry.text}`)
-        .join('\n')}\n\nCURRENT SHOPPER MESSAGE:\n${message}`
-    : message;
 }
 
 function createToolState(): ToolState {
@@ -1004,24 +915,21 @@ function streamChat(
   apiKey: string,
   sessionToken: string,
   message: string,
-  context: AgentChatContextMessage[],
+  history: AgentChatHistoryMessage[],
 ): Response {
   const encoder = new TextEncoder();
-  let cancelled = false;
-
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
-      const emit = (event: Record<string, unknown>) => {
-        if (!cancelled) controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
-      };
+      const emit = (event: Record<string, unknown>) =>
+        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
 
       void (async () => {
         try {
           const state = createToolState();
-          let siteLookupAnnounced = false;
-          const modelText = await runToolLoop(apiKey, message, context, state, () => {
-            if (siteLookupAnnounced) return;
-            siteLookupAnnounced = true;
+          let announced = false;
+          const modelText = await runToolLoop(apiKey, message, history, state, () => {
+            if (announced) return;
+            announced = true;
             emit({ type: 'status', status: 'checking-site' });
           });
           const output = assembleGroundedOutput(state, modelText);
@@ -1035,7 +943,6 @@ function streamChat(
             }),
           );
           const actions = actionsFrom(state);
-
           emit({
             type: 'result',
             response: {
@@ -1061,12 +968,9 @@ function streamChat(
                 : { mode: 'retryable-error', sessionId: sessionToken },
           });
         } finally {
-          if (!cancelled) controller.close();
+          controller.close();
         }
       })();
-    },
-    cancel() {
-      cancelled = true;
     },
   });
 
@@ -1079,6 +983,16 @@ function streamChat(
   });
 }
 
+function isHistoryMessage(value: unknown): value is AgentChatHistoryMessage {
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as { role?: unknown; text?: unknown };
+  return (
+    (entry.role === 'user' || entry.role === 'assistant') &&
+    typeof entry.text === 'string' &&
+    entry.text.trim().length > 0
+  );
+}
+
 export default async function handler(request: Request): Promise<Response> {
   if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
   if (!originIsAllowed(request)) return new Response('Forbidden', { status: 403 });
@@ -1086,17 +1000,11 @@ export default async function handler(request: Request): Promise<Response> {
   const apiKey = environment().GEMINI_API_KEY;
   if (!apiKey) return json({ mode: 'fallback' });
 
-  let rawBody: string;
+  let body: { sessionId?: unknown; message?: unknown; history?: unknown };
   try {
-    rawBody = await request.text();
-  } catch {
-    return json({ mode: 'retryable-error' }, 400);
-  }
-  if (rawBody.length > 2_000) return json({ mode: 'retryable-error' }, 413);
-
-  let body: { sessionId?: unknown; message?: unknown; context?: unknown };
-  try {
-    body = JSON.parse(rawBody) as { sessionId?: unknown; message?: unknown; context?: unknown };
+    const rawBody = await request.text();
+    if (rawBody.length > 32_000) return json({ mode: 'retryable-error' }, 413);
+    body = JSON.parse(rawBody) as typeof body;
   } catch {
     return json({ mode: 'retryable-error' }, 400);
   }
@@ -1110,34 +1018,26 @@ export default async function handler(request: Request): Promise<Response> {
   if (message.length > MAX_MESSAGE_LENGTH) {
     return json({ mode: 'retryable-error', sessionId: session.token }, 413);
   }
-  const context = Array.isArray(body.context)
-    ? body.context
-        .filter(
-          (entry): entry is AgentChatContextMessage =>
-            Boolean(entry) &&
-            typeof entry === 'object' &&
-            'role' in entry &&
-            (entry.role === 'user' || entry.role === 'assistant') &&
-            'text' in entry &&
-            typeof entry.text === 'string',
-        )
-        .map((entry) => ({ role: entry.role, text: entry.text.trim() }))
-        .filter((entry) => entry.text.length > 0)
-        .slice(-MAX_CONTEXT_MESSAGES)
-    : [];
+
+  const rawHistory = body.history ?? [];
+  if (!Array.isArray(rawHistory) || rawHistory.some((entry) => !isHistoryMessage(entry))) {
+    return json({ mode: 'retryable-error', sessionId: session.token }, 400);
+  }
+  const history = rawHistory.map((entry) => ({
+    role: entry.role,
+    text: entry.text.trim(),
+  }));
   if (
-    context.some((entry) => entry.text.length > MAX_MESSAGE_LENGTH) ||
-    context.reduce((total, entry) => total + entry.text.length, 0) > MAX_CONTEXT_LENGTH
+    history.length > MAX_HISTORY_MESSAGES ||
+    history.some((entry) => entry.text.length > 2_000) ||
+    history.reduce((total, entry) => total + entry.text.length, 0) > MAX_HISTORY_LENGTH
   ) {
     return json({ mode: 'retryable-error', sessionId: session.token }, 413);
   }
 
   try {
-    const sessionAvailable = await consumeCounter(
-      `sessions/${session.id}`,
-      MAX_MESSAGES_PER_SESSION,
-    );
-    if (!sessionAvailable) return json({ mode: 'fallback' });
+    const available = await consumeCounter(`sessions/${session.id}`, MAX_MESSAGES_PER_SESSION);
+    if (!available) return json({ mode: 'fallback' });
   } catch (error) {
     logAgentError(error);
     return json(
@@ -1148,5 +1048,5 @@ export default async function handler(request: Request): Promise<Response> {
     );
   }
 
-  return streamChat(apiKey, session.token, message, context);
+  return streamChat(apiKey, session.token, message, history);
 }
