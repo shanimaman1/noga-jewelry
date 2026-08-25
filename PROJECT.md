@@ -353,9 +353,10 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   into its existing scroll region. Closing the keyboard restores the normal
   `svh`-bounded sheet.
 - A submitted free-text message appears in the transcript immediately. While
-  the LLM and its site tools are working, the transcript shows the understated
-  Hebrew status `בודקת באתר...`; it disappears when the real turn arrives. This
-  is UI feedback only and never supplies or templates an assistant answer.
+  the LLM is working, the transcript shows the understated Hebrew status
+  `חושבת...`; it disappears when the real turn arrives. The neutral wording is
+  deliberate because a greeting may require no site tool. This is UI feedback
+  only and never supplies or templates an assistant answer.
 - One deliberate layering exception: `lib/agent/catalog.ts` imports
   `CATEGORY_LABELS` and `PRICE_BANDS` from `components/catalog/FilterBar.tsx`.
   Those are the app's existing user-facing vocabulary — offering different tiers

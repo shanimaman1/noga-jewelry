@@ -495,7 +495,7 @@ export function ShoppingAssistant() {
                 aria-live="polite"
                 className="me-auto text-sm text-stone motion-safe:animate-pulse"
               >
-                בודקת באתר...
+                חושבת...
               </p>
             </div>
           )}
