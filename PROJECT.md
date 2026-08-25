@@ -382,9 +382,10 @@ or policy copy. Actions remain buttons the shopper must click.
 **Zero fabrication is structural wherever possible:**
 
 - Each function request contains the current shopper message and at most two
-  earlier shopper messages for conversational intent. Previous assistant prose,
-  cards and catalogue facts are not sent. Context is explicitly untrusted and
-  never counts as evidence; product facts must be fetched again in that turn.
+  earlier continuity entries: shopper messages and the final question sentence
+  from an assistant reply. The factual body of previous assistant prose, cards
+  and catalogue facts is not sent. Context is explicitly untrusted and never
+  counts as evidence; product and business facts must be fetched again in that turn.
 - There is no server-side intent classifier, no forced `ANY`, no blocked
   `NONE`, no policy/browsing/unknown router and no post-generation question or
   transition normaliser. Gemini receives the shopper message and all eleven site
@@ -434,9 +435,9 @@ calls per message when the one permitted post-tool retry is used, a 25-second
 timeout per Gemini call and an atomic cap of 200 Gemini calls per UTC day in a
 strongly consistent Netlify Blobs store. Missing configuration, invalid session,
 quota/cap errors or unavailable limit storage cause permanent wizard fallback.
-When site data has already been returned by a tool, one recoverable failure while
-Gemini phrases the answer is retried once; otherwise a single recoverable message
-failure keeps the LLM path available.
+One recoverable Gemini transport failure is retried once per message, whether it
+happens before a tool call or while Gemini phrases an answer from returned site
+data. A later recoverable failure keeps the LLM path available for the next message.
 
 ### Pinned versions (3D-related = EXACT, no caret) — verified vs npm 2026-07-24
 - `react` **19.2.8**, `react-dom` **19.2.8** (inside fiber peer `>=19 <19.3`)

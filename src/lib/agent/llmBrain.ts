@@ -2,6 +2,7 @@ import { getProduct } from '@/data/products';
 import type { AgentBrain, AgentInput, AgentMessage, AgentTurn } from './types';
 import {
   AGENT_CHAT_ENDPOINT,
+  type AgentChatContextMessage,
   type AgentChatRequest,
   type AgentChatResponse,
   type AgentChatStreamEvent,
@@ -13,6 +14,10 @@ const GENTLE_ERROR = 'לא הצלחתי לענות כרגע. אפשר לנסות
 
 let messageCounter = 0;
 const nextId = () => `llm-agent-${++messageCounter}`;
+
+function lastQuestion(text: string): string | undefined {
+  return text.match(/[^.!?\n]*\?/g)?.at(-1)?.trim();
+}
 
 const assistant = (text: string, extra: Partial<AgentMessage> = {}): AgentMessage => ({
   id: nextId(),
@@ -112,9 +117,12 @@ export function createLlmBrain(): AgentBrain {
     onProgress?: (progress: AgentProgress) => void,
   ): Promise<AgentTurn> => {
     const context = current()
-      .filter((message) => message.sender === 'user')
-      .slice(-2)
-      .map((message) => message.text);
+      .flatMap((message): AgentChatContextMessage[] => {
+        if (message.sender === 'user') return [{ role: 'user', text: message.text }];
+        const question = lastQuestion(message.text);
+        return question ? [{ role: 'assistant', text: question }] : [];
+      })
+      .slice(-4);
     const base = [...current(), user(text)];
     const requestBody: AgentChatRequest = {
       sessionId,
