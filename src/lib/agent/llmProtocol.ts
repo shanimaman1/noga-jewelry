@@ -28,3 +28,7 @@ export type AgentChatResponse =
   | {
       mode: 'fallback';
     };
+
+export type AgentChatStreamEvent =
+  | { type: 'status'; status: 'checking-site' }
+  | { type: 'result'; response: AgentChatResponse };

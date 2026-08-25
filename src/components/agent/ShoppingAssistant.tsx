@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import type { AgentAction, AgentBrain, AgentTurn } from '@/lib/agent';
+import type { AgentAction, AgentBrain, AgentProgress, AgentTurn } from '@/lib/agent';
 import { createAgentBrain } from '@/lib/agent';
 import { defaultVariant, getProduct } from '@/data/products';
 import { useCart } from '@/lib/cart/store';
@@ -48,6 +48,7 @@ export function ShoppingAssistant() {
   const [turn, setTurn] = useState<AgentTurn | null>(null);
   const [pending, setPending] = useState(false);
   const [pendingUserText, setPendingUserText] = useState<string | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<AgentProgress | null>(null);
   const [draft, setDraft] = useState('');
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
@@ -134,7 +135,7 @@ export function ShoppingAssistant() {
       top: logRef.current.scrollHeight,
       behavior: reduced ? 'auto' : 'smooth',
     });
-  }, [pendingUserText, open, reduced]);
+  }, [pendingUserText, pendingStatus, open, reduced]);
 
   /* ── focus trap, scoped to the panel ──────────────────────────────────────
      Scoped to the panel element rather than `document` on purpose: the cart
@@ -309,8 +310,13 @@ export function ShoppingAssistant() {
     if (!text || pending) return;
     setDraft('');
     setPendingUserText(text);
-    void runTurn((b) => b.send({ type: 'text', text }), 'input').finally(() => {
+    setPendingStatus(null);
+    void runTurn(
+      (b) => b.send({ type: 'text', text, onProgress: setPendingStatus }),
+      'input',
+    ).finally(() => {
       setPendingUserText(null);
+      setPendingStatus(null);
     });
   };
 
@@ -490,13 +496,15 @@ export function ShoppingAssistant() {
                   {pendingUserText}
                 </bdi>
               </p>
-              <p
-                role="status"
-                aria-live="polite"
-                className="me-auto text-sm text-stone motion-safe:animate-pulse"
-              >
-                חושבת...
-              </p>
+              {pendingStatus === 'checking-site' && (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="me-auto text-sm text-stone motion-safe:animate-pulse"
+                >
+                  בודקת באתר...
+                </p>
+              )}
             </div>
           )}
         </div>

@@ -26,6 +26,7 @@ export type {
   AgentChoice,
   AgentInput,
   AgentMessage,
+  AgentProgress,
   AgentRecommendation,
   AgentSender,
   AgentTurn,

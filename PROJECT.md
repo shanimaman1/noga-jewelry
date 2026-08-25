@@ -352,11 +352,14 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   offset: header and composer remain visible, and only the transcript shrinks
   into its existing scroll region. Closing the keyboard restores the normal
   `svh`-bounded sheet.
-- A submitted free-text message appears in the transcript immediately. While
-  the LLM is working, the transcript shows the understated Hebrew status
-  `חושבת...`; it disappears when the real turn arrives. The neutral wording is
-  deliberate because a greeting may require no site tool. This is UI feedback
-  only and never supplies or templates an assistant answer.
+- A submitted free-text message appears in the transcript immediately. There is
+  no generic thinking indicator. Gemini first receives a lightweight normal
+  conversation request with no catalogue or policy tool schemas. If Gemini
+  decides that Noga-specific information is needed, it returns an internal site
+  marker; the function then streams `checking-site`, loads the full site tools
+  and the UI shows `בודקת באתר...`. Greetings, small talk and general knowledge
+  receive no lookup status. This is UI feedback only and never supplies or
+  templates an assistant answer.
 - One deliberate layering exception: `lib/agent/catalog.ts` imports
   `CATEGORY_LABELS` and `PRICE_BANDS` from `components/catalog/FilterBar.tsx`.
   Those are the app's existing user-facing vocabulary — offering different tiers
@@ -384,11 +387,13 @@ or policy copy. Actions remain buttons the shopper must click.
   earlier shopper messages for conversational intent. Previous assistant prose,
   cards and catalogue facts are not sent. Context is explicitly untrusted and
   never counts as evidence; product facts must be fetched again in that turn.
-- Every Gemini round uses `AUTO`. There is no server-side intent classifier, no
-  forced `ANY`, no blocked `NONE`, no policy/browsing/unknown router and no
-  post-generation question or transition normaliser. Gemini handles greetings,
-  general knowledge and clarifying questions itself, and chooses a data tool
-  only when it needs a business fact.
+- There is no server-side intent classifier, no forced `ANY`, no blocked
+  `NONE`, no policy/browsing/unknown router and no post-generation question or
+  transition normaliser. A lightweight first Gemini call has no site tool
+  schemas: it either answers normal conversation directly or returns one
+  internal marker when it decides the website is needed. Only the latter path
+  opens the full tools, whose rounds use `AUTO`. The marker is never shown to
+  the shopper.
 - The model never supplies recommendation-card data. Catalogue tools return raw
   records from `products.ts`; Gemini may use those records to choose the relevant
   subset, but the server accepts only slugs returned by a search in that turn
@@ -429,7 +434,8 @@ session identifiers are never logged.
 
 Server protections are fixed in the function: an origin allowlist, 500
 characters per message, 20 messages per signed session, at most four Gemini
-calls per message and an atomic cap of 200 Gemini calls per UTC day in a
+calls per message, an 8-second conversational timeout, a 12-second site-call
+timeout and an atomic cap of 200 Gemini calls per UTC day in a
 strongly consistent Netlify Blobs store. Missing configuration, invalid session,
 quota/cap errors or unavailable limit storage cause permanent wizard fallback;
 a single recoverable message failure keeps the LLM path available.

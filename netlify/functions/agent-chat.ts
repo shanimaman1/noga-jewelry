@@ -36,8 +36,11 @@ const MAX_MESSAGES_PER_SESSION = 20;
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_CONTEXT_MESSAGES = 2;
 const MAX_CONTEXT_LENGTH = 600;
-const MAX_GEMINI_CALLS_PER_MESSAGE = 4;
+const MAX_SITE_GEMINI_CALLS = 3;
+const GEMINI_GATE_TIMEOUT_MS = 8_000;
+const GEMINI_REQUEST_TIMEOUT_MS = 12_000;
 const MAX_RECOMMENDATIONS = 3;
+const SITE_GATE_MARKER = '[[CONSULT_NOGA_SITE]]';
 const WHATSAPP_MESSAGE = 'היי, אשמח לעזרה בבחירת תכשיט';
 const SAFE_GENERIC =
   'הפרטים האלה יכולים להשתנות לפי ההזמנה, אז הכי טוב לבדוק ישירות עם דנה בוואטסאפ.';
@@ -136,6 +139,12 @@ ONE STRUCTURAL RULE:
 - When one message contains more than one request, complete every supported part before replying. You may make several website searches in the same turn; do not postpone the second part to another question when the request is already clear.
 
 Everything that is not a business fact is yours to handle as a capable assistant: greetings, small talk, clarifying questions and general jewellery knowledge. When a shopping request is too open for a useful recommendation, ask one useful question before searching instead of guessing. Keep replies concise, warm and natural in Israeli Hebrew only, addressing the shopper in feminine singular. Use no Arabic words and no vowel-point diacritics. Ask one question at a time. Vary the wording. Avoid bureaucratic language, exclamation marks, superlatives and em dashes.
+`.trim();
+
+const GATE_SYSTEM_INSTRUCTION = `
+You are Gemini speaking naturally with a shopper in concise, warm Israeli Hebrew.
+Answer greetings, small talk, clarifying questions and general jewellery knowledge yourself.
+The website is your only source for any fact about Noga Jewelry, its products, services or policies. If the current message needs any such fact, reply with exactly ${SITE_GATE_MARKER} and nothing else. Never answer a Noga business fact from memory. Decide this yourself. Earlier shopper messages are context only and never factual evidence.
 `.trim();
 
 const TOOL_DECLARATIONS = [
@@ -765,7 +774,10 @@ async function callGemini(
   apiKey: string,
   contents: GeminiContent[],
   functionCallingConfig: FunctionCallingConfig,
-  temperature: number,
+  systemInstruction = SYSTEM_INSTRUCTION,
+  functionDeclarations: readonly unknown[] = TOOL_DECLARATIONS,
+  maxOutputTokens = 320,
+  timeoutMs = GEMINI_REQUEST_TIMEOUT_MS,
 ): Promise<GeminiResponse> {
   const available = await consumeCounter(`daily/${utcDay()}`, DAILY_REQUEST_CAP);
   if (!available) throw new SystemicFailure('Daily request cap reached.');
@@ -779,17 +791,20 @@ async function callGemini(
         'x-goog-api-key': apiKey,
       },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+        systemInstruction: { parts: [{ text: systemInstruction }] },
         contents,
-        tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
-        toolConfig: {
-          functionCallingConfig,
-        },
+        ...(functionDeclarations.length > 0
+          ? {
+              tools: [{ functionDeclarations }],
+              toolConfig: { functionCallingConfig },
+            }
+          : {}),
         generationConfig: {
-          temperature,
-          maxOutputTokens: 320,
+          maxOutputTokens,
+          thinkingConfig: { thinkingLevel: 'minimal' },
         },
       }),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
     throw new RecoverableFailure('Gemini transport error.');
@@ -871,18 +886,14 @@ async function runToolLoop(
   message: string,
   context: string[],
   state: ToolState,
+  onSiteLookup: () => void,
 ) {
-  const contextualMessage =
-    context.length > 0
-      ? `Earlier shopper messages for intent only:\n${context
-          .map((entry, index) => `${index + 1}. ${entry}`)
-          .join('\n')}\n\nCurrent shopper message:\n${message}`
-      : message;
+  const contextualMessage = contextualShopperMessage(message, context);
   const contents: GeminiContent[] = [{ role: 'user', parts: [{ text: contextualMessage }] }];
   let finalText = '';
 
-  for (let callNumber = 0; callNumber < MAX_GEMINI_CALLS_PER_MESSAGE; callNumber += 1) {
-    const response = await callGemini(apiKey, contents, { mode: 'AUTO' }, 0.55);
+  for (let callNumber = 0; callNumber < MAX_SITE_GEMINI_CALLS; callNumber += 1) {
+    const response = await callGemini(apiKey, contents, { mode: 'AUTO' });
     const content = response.candidates?.[0]?.content;
     if (!content?.parts?.length) {
       throw new RecoverableFailure('Gemini returned no candidate content.');
@@ -895,6 +906,23 @@ async function runToolLoop(
     }
     if (calls.length === 0) {
       return finalText;
+    }
+
+    if (
+      calls.some((call) =>
+        [
+          'search_products',
+          'get_product',
+          'get_fulfilment',
+          'get_payment_options',
+          'get_service_policies',
+          'get_atelier_info',
+          'get_custom_design_info',
+          'check_business_information',
+        ].includes(call.name),
+      )
+    ) {
+      onSiteLookup();
     }
 
     const results = executeCalls(calls, state);
@@ -912,6 +940,162 @@ async function runToolLoop(
   }
 
   throw new RecoverableFailure('Gemini exceeded the tool-call loop limit.');
+}
+
+function contextualShopperMessage(message: string, context: string[]): string {
+  return context.length > 0
+    ? `Earlier shopper messages for intent only:\n${context
+        .map((entry, index) => `${index + 1}. ${entry}`)
+        .join('\n')}\n\nCurrent shopper message:\n${message}`
+    : message;
+}
+
+async function runGeminiConversation(
+  apiKey: string,
+  message: string,
+  context: string[],
+  state: ToolState,
+  onSiteLookup: () => void,
+): Promise<string> {
+  const gateResponse = await callGemini(
+    apiKey,
+    [{ role: 'user', parts: [{ text: contextualShopperMessage(message, context) }] }],
+    { mode: 'AUTO' },
+    GATE_SYSTEM_INSTRUCTION,
+    [],
+    160,
+    GEMINI_GATE_TIMEOUT_MS,
+  );
+  const gateContent = gateResponse.candidates?.[0]?.content;
+  if (!gateContent?.parts?.length) {
+    throw new RecoverableFailure('Gemini returned no gate content.');
+  }
+  const gateText = gateContent.parts
+    .flatMap((part) => (typeof part.text === 'string' ? [part.text] : []))
+    .join(' ')
+    .trim();
+  if (gateText !== SITE_GATE_MARKER) {
+    return gateText.replace(/\s*—\s*/g, ', ').replace(/[!！]/g, '');
+  }
+
+  onSiteLookup();
+  return runToolLoop(apiKey, message, context, state, onSiteLookup);
+}
+
+function createToolState(): ToolState {
+  return {
+    evidence: new Map(),
+    requestedFields: new Map(),
+    searchedSlugs: [],
+    presentedSlugs: [],
+    searchUsed: false,
+    fulfilmentTopics: new Set(),
+    deliveryPolicyRequested: false,
+    shippingCostRequested: false,
+    paymentOptionsRequested: false,
+    studioInfoRequested: false,
+    returnsPolicyRequested: false,
+    resizingPolicyRequested: false,
+    warrantyPolicyRequested: false,
+    careServiceRequested: false,
+    customDesignRequested: false,
+    sizeGuideRequested: false,
+    whatsappRequested: false,
+  };
+}
+
+function logAgentError(error: unknown) {
+  console.error(
+    JSON.stringify({
+      event: 'agent_error',
+      kind:
+        error instanceof SystemicFailure
+          ? 'systemic'
+          : error instanceof RecoverableFailure
+            ? 'recoverable'
+            : 'unexpected',
+      reason: error instanceof Error ? error.message : 'Unknown error.',
+    }),
+  );
+}
+
+function streamChat(
+  apiKey: string,
+  sessionToken: string,
+  message: string,
+  context: string[],
+): Response {
+  const encoder = new TextEncoder();
+  let cancelled = false;
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const emit = (event: Record<string, unknown>) => {
+        if (!cancelled) controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+      };
+
+      void (async () => {
+        try {
+          const state = createToolState();
+          let siteLookupAnnounced = false;
+          const modelText = await runGeminiConversation(apiKey, message, context, state, () => {
+            if (siteLookupAnnounced) return;
+            siteLookupAnnounced = true;
+            emit({ type: 'status', status: 'checking-site' });
+          });
+          const output = assembleGroundedOutput(state, modelText);
+          const inspectedText = inspectOutgoingText(output.text, state);
+          console.info(
+            JSON.stringify({
+              event: 'agent_grounding',
+              replaced: inspectedText !== output.text,
+              evidenceCount: state.evidence.size,
+              recommendationCount: output.recommendationSlugs.length,
+            }),
+          );
+          const actions = actionsFrom(state);
+
+          emit({
+            type: 'result',
+            response: {
+              mode: 'ok',
+              sessionId: sessionToken,
+              text: inspectedText,
+              recommendationSlugs: output.recommendationSlugs,
+              eighteenKSlugs: output.eighteenKSlugs,
+              actions:
+                inspectedText === SAFE_GENERIC &&
+                actions.every((action) => action.kind !== 'whatsapp')
+                  ? [...actions, { kind: 'whatsapp', message: WHATSAPP_MESSAGE }]
+                  : actions,
+            },
+          });
+        } catch (error) {
+          logAgentError(error);
+          emit({
+            type: 'result',
+            response:
+              error instanceof SystemicFailure
+                ? { mode: 'fallback' }
+                : { mode: 'retryable-error', sessionId: sessionToken },
+          });
+        } finally {
+          if (!cancelled) controller.close();
+        }
+      })();
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Cache-Control': 'no-store',
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
 }
 
 export default async function handler(request: Request): Promise<Response> {
@@ -965,65 +1149,15 @@ export default async function handler(request: Request): Promise<Response> {
       MAX_MESSAGES_PER_SESSION,
     );
     if (!sessionAvailable) return json({ mode: 'fallback' });
-
-    const state: ToolState = {
-      evidence: new Map(),
-      requestedFields: new Map(),
-      searchedSlugs: [],
-      presentedSlugs: [],
-      searchUsed: false,
-      fulfilmentTopics: new Set(),
-      deliveryPolicyRequested: false,
-      shippingCostRequested: false,
-      paymentOptionsRequested: false,
-      studioInfoRequested: false,
-      returnsPolicyRequested: false,
-      resizingPolicyRequested: false,
-      warrantyPolicyRequested: false,
-      careServiceRequested: false,
-      customDesignRequested: false,
-      sizeGuideRequested: false,
-      whatsappRequested: false,
-    };
-
-    const modelText = await runToolLoop(apiKey, message, context, state);
-    const output = assembleGroundedOutput(state, modelText);
-    const inspectedText = inspectOutgoingText(output.text, state);
-    console.info(
-      JSON.stringify({
-        event: 'agent_grounding',
-        replaced: inspectedText !== output.text,
-        evidenceCount: state.evidence.size,
-        recommendationCount: output.recommendationSlugs.length,
-      }),
-    );
-    const actions = actionsFrom(state);
-
-    return json({
-      mode: 'ok',
-      sessionId: session.token,
-      text: inspectedText,
-      recommendationSlugs: output.recommendationSlugs,
-      eighteenKSlugs: output.eighteenKSlugs,
-      actions:
-        inspectedText === SAFE_GENERIC && actions.every((action) => action.kind !== 'whatsapp')
-          ? [...actions, { kind: 'whatsapp', message: WHATSAPP_MESSAGE }]
-          : actions,
-    });
   } catch (error) {
-    console.error(
-      JSON.stringify({
-        event: 'agent_error',
-        kind:
-          error instanceof SystemicFailure
-            ? 'systemic'
-            : error instanceof RecoverableFailure
-              ? 'recoverable'
-              : 'unexpected',
-        reason: error instanceof Error ? error.message : 'Unknown error.',
-      }),
+    logAgentError(error);
+    return json(
+      error instanceof SystemicFailure
+        ? { mode: 'fallback' }
+        : { mode: 'retryable-error', sessionId: session.token },
+      error instanceof SystemicFailure ? 200 : 503,
     );
-    if (error instanceof SystemicFailure) return json({ mode: 'fallback' });
-    return json({ mode: 'retryable-error', sessionId: session.token }, 503);
   }
+
+  return streamChat(apiKey, session.token, message, context);
 }

@@ -66,9 +66,11 @@ export type AgentTurn = {
   acceptsText: boolean;
 };
 
+export type AgentProgress = 'checking-site';
+
 export type AgentInput =
   | { type: 'choice'; choiceId: string }
-  | { type: 'text'; text: string };
+  | { type: 'text'; text: string; onProgress?: (progress: AgentProgress) => void };
 
 export interface AgentBrain {
   /** Stable identifier, for diagnostics only. Never branched on by the UI. */

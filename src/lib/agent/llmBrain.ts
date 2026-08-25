@@ -4,10 +4,12 @@ import {
   AGENT_CHAT_ENDPOINT,
   type AgentChatRequest,
   type AgentChatResponse,
+  type AgentChatStreamEvent,
 } from './llmProtocol';
+import type { AgentProgress } from './types';
 
 const OPENING = 'אפשר לכתוב לי מה מחפשים, ואני אבדוק מול הקטלוג.';
-const GENTLE_ERROR = 'לא הצלחתי לבדוק את זה כרגע. אפשר לנסות שוב בעוד רגע.';
+const GENTLE_ERROR = 'לא הצלחתי לענות כרגע. אפשר לנסות שוב בעוד רגע.';
 
 let messageCounter = 0;
 const nextId = () => `llm-agent-${++messageCounter}`;
@@ -32,6 +34,46 @@ function isAgentChatResponse(value: unknown): value is AgentChatResponse {
   if (!value || typeof value !== 'object' || !('mode' in value)) return false;
   const mode = (value as { mode?: unknown }).mode;
   return mode === 'ok' || mode === 'retryable-error' || mode === 'fallback';
+}
+
+function isStreamEvent(value: unknown): value is AgentChatStreamEvent {
+  if (!value || typeof value !== 'object' || !('type' in value)) return false;
+  const event = value as { type?: unknown; status?: unknown; response?: unknown };
+  return (
+    (event.type === 'status' && event.status === 'checking-site') ||
+    (event.type === 'result' && isAgentChatResponse(event.response))
+  );
+}
+
+async function readStreamResponse(
+  response: Response,
+  onProgress?: (progress: AgentProgress) => void,
+): Promise<AgentChatResponse> {
+  if (!response.body) throw new Error('Assistant stream has no body.');
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let result: AgentChatResponse | undefined;
+
+  const readLine = (line: string) => {
+    if (!line.trim()) return;
+    const event: unknown = JSON.parse(line);
+    if (!isStreamEvent(event)) throw new Error('Assistant stream event is invalid.');
+    if (event.type === 'status') onProgress?.(event.status);
+    else result = event.response;
+  };
+
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+    lines.forEach(readLine);
+    if (done) break;
+  }
+  readLine(buffer);
+  if (!result) throw new Error('Assistant stream ended without a result.');
+  return result;
 }
 
 /**
@@ -65,7 +107,10 @@ export function createLlmBrain(): AgentBrain {
     return turn();
   };
 
-  const sendText = async (text: string): Promise<AgentTurn> => {
+  const sendText = async (
+    text: string,
+    onProgress?: (progress: AgentProgress) => void,
+  ): Promise<AgentTurn> => {
     const context = current()
       .filter((message) => message.sender === 'user')
       .slice(-2)
@@ -96,7 +141,9 @@ export function createLlmBrain(): AgentBrain {
 
     let payload: unknown;
     try {
-      payload = await response.json();
+      payload = response.headers.get('content-type')?.includes('application/x-ndjson')
+        ? await readStreamResponse(response, onProgress)
+        : await response.json();
     } catch {
       consecutiveTransportFailures += 1;
       if (consecutiveTransportFailures >= 2 || response.status < 500) {
@@ -151,7 +198,7 @@ export function createLlmBrain(): AgentBrain {
       if (input.type !== 'text') return turn();
       const text = input.text.trim();
       if (!text) return turn();
-      return sendText(text);
+      return sendText(text, input.onProgress);
     },
 
     async back() {
