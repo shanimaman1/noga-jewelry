@@ -353,14 +353,11 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   into its existing scroll region. Closing the keyboard restores the normal
   `svh`-bounded sheet.
 - A submitted free-text message appears in the transcript immediately. There is
-  no generic thinking indicator. Gemini first receives a lightweight normal
-  conversation request with no catalogue or policy tool schemas. If Gemini
-  decides that Noga-specific information is needed, it returns an internal site
-  marker; the function recognises it even with invisible characters or formatting,
-  never exposes it to the shopper, then streams `checking-site` and loads the full site tools
-  and the UI shows `בודקת באתר...`. Greetings, small talk and general knowledge
-  receive no lookup status. This is UI feedback only and never supplies or
-  templates an assistant answer.
+  no generic thinking indicator. Gemini receives the message directly with the
+  site tools available in `AUTO` mode. If it actually calls a site-data tool, the
+  function streams `checking-site` and the UI shows `בודקת באתר...`. Greetings,
+  small talk and general knowledge require no tool and receive no lookup status.
+  This is UI feedback only and never supplies or templates an assistant answer.
 - One deliberate layering exception: `lib/agent/catalog.ts` imports
   `CATEGORY_LABELS` and `PRICE_BANDS` from `components/catalog/FilterBar.tsx`.
   Those are the app's existing user-facing vocabulary — offering different tiers
@@ -390,11 +387,9 @@ or policy copy. Actions remain buttons the shopper must click.
   never counts as evidence; product facts must be fetched again in that turn.
 - There is no server-side intent classifier, no forced `ANY`, no blocked
   `NONE`, no policy/browsing/unknown router and no post-generation question or
-  transition normaliser. A lightweight first Gemini call has no site tool
-  schemas: it either answers normal conversation directly or returns one
-  internal marker when it decides the website is needed. Only the latter path
-  opens the full tools, whose rounds use `AUTO`. The marker is never shown to
-  the shopper.
+  transition normaliser. Gemini receives the shopper message and all eleven site
+  tools in one normal `AUTO` request, then decides whether to answer directly or
+  call the relevant source of truth.
 - The model never supplies recommendation-card data. Catalogue tools return raw
   records from `products.ts`; Gemini may use those records to choose the relevant
   subset, but the server accepts only slugs returned by a search in that turn
@@ -435,9 +430,8 @@ session identifiers are never logged.
 
 Server protections are fixed in the function: an origin allowlist, 500
 characters per message, 20 messages per signed session, at most five Gemini
-calls per message when the one permitted post-tool retry is used, an 8-second
-conversational timeout, a 12-second site-call
-timeout and an atomic cap of 200 Gemini calls per UTC day in a
+calls per message when the one permitted post-tool retry is used, a 25-second
+timeout per Gemini call and an atomic cap of 200 Gemini calls per UTC day in a
 strongly consistent Netlify Blobs store. Missing configuration, invalid session,
 quota/cap errors or unavailable limit storage cause permanent wizard fallback.
 When site data has already been returned by a tool, one recoverable failure while

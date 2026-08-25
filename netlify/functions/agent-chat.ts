@@ -36,12 +36,9 @@ const MAX_MESSAGES_PER_SESSION = 20;
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_CONTEXT_MESSAGES = 2;
 const MAX_CONTEXT_LENGTH = 600;
-const MAX_SITE_GEMINI_CALLS = 3;
-const GEMINI_GATE_TIMEOUT_MS = 8_000;
-const GEMINI_REQUEST_TIMEOUT_MS = 12_000;
+const MAX_GEMINI_CALLS_PER_MESSAGE = 4;
+const GEMINI_REQUEST_TIMEOUT_MS = 25_000;
 const MAX_RECOMMENDATIONS = 3;
-const SITE_GATE_MARKER = '[[CONSULT_NOGA_SITE]]';
-const SITE_GATE_MARKER_PATTERN = /\[\[\s*CONSULT_NOGA_SITE\s*\]\]/i;
 const WHATSAPP_MESSAGE = 'היי, אשמח לעזרה בבחירת תכשיט';
 const SAFE_GENERIC =
   'הפרטים האלה יכולים להשתנות לפי ההזמנה, אז הכי טוב לבדוק ישירות עם דנה בוואטסאפ.';
@@ -140,12 +137,6 @@ ONE STRUCTURAL RULE:
 - When one message contains more than one request, complete every supported part before replying. You may make several website searches in the same turn; do not postpone the second part to another question when the request is already clear.
 
 Everything that is not a business fact is yours to handle as a capable assistant: greetings, small talk, clarifying questions and general jewellery knowledge. When a shopping request is too open for a useful recommendation, ask one useful question before searching instead of guessing. Keep replies concise, warm and natural in Israeli Hebrew only, addressing the shopper in feminine singular. Use no Arabic words and no vowel-point diacritics. Ask one question at a time. Vary the wording. Avoid bureaucratic language, exclamation marks, superlatives and em dashes.
-`.trim();
-
-const GATE_SYSTEM_INSTRUCTION = `
-You are Gemini speaking naturally with a shopper in concise, warm Israeli Hebrew.
-Answer greetings, small talk, clarifying questions and general jewellery knowledge yourself.
-The website is your only source for any fact about Noga Jewelry, its products, services or policies. If the current message needs any such fact, reply with exactly ${SITE_GATE_MARKER} and nothing else. Never answer a Noga business fact from memory. Decide this yourself. Earlier shopper messages are context only and never factual evidence.
 `.trim();
 
 const TOOL_DECLARATIONS = [
@@ -893,7 +884,7 @@ async function runToolLoop(
   const contents: GeminiContent[] = [{ role: 'user', parts: [{ text: contextualMessage }] }];
   let finalText = '';
 
-  for (let callNumber = 0; callNumber < MAX_SITE_GEMINI_CALLS; callNumber += 1) {
+  for (let callNumber = 0; callNumber < MAX_GEMINI_CALLS_PER_MESSAGE; callNumber += 1) {
     const hasToolResults = contents.some((content) =>
       content.parts.some((part) => Boolean(part.functionResponse)),
     );
@@ -916,9 +907,6 @@ async function runToolLoop(
       finalText = text.trim().replace(/\s*—\s*/g, ', ').replace(/[!！]/g, '');
     }
     if (calls.length === 0) {
-      if (containsSiteGateMarker(finalText)) {
-        throw new RecoverableFailure('Gemini returned an internal control marker.');
-      }
       return finalText;
     }
 
@@ -962,44 +950,6 @@ function contextualShopperMessage(message: string, context: string[]): string {
         .map((entry, index) => `${index + 1}. ${entry}`)
         .join('\n')}\n\nCurrent shopper message:\n${message}`
     : message;
-}
-
-function containsSiteGateMarker(text: string): boolean {
-  return SITE_GATE_MARKER_PATTERN.test(
-    text.replace(/[\u200B-\u200D\u2060\uFEFF]/g, '').replace(/```(?:\w+)?/g, ''),
-  );
-}
-
-async function runGeminiConversation(
-  apiKey: string,
-  message: string,
-  context: string[],
-  state: ToolState,
-  onSiteLookup: () => void,
-): Promise<string> {
-  const gateResponse = await callGemini(
-    apiKey,
-    [{ role: 'user', parts: [{ text: contextualShopperMessage(message, context) }] }],
-    { mode: 'AUTO' },
-    GATE_SYSTEM_INSTRUCTION,
-    [],
-    160,
-    GEMINI_GATE_TIMEOUT_MS,
-  );
-  const gateContent = gateResponse.candidates?.[0]?.content;
-  if (!gateContent?.parts?.length) {
-    throw new RecoverableFailure('Gemini returned no gate content.');
-  }
-  const gateText = gateContent.parts
-    .flatMap((part) => (typeof part.text === 'string' ? [part.text] : []))
-    .join(' ')
-    .trim();
-  if (!containsSiteGateMarker(gateText)) {
-    return gateText.replace(/\s*—\s*/g, ', ').replace(/[!！]/g, '');
-  }
-
-  onSiteLookup();
-  return runToolLoop(apiKey, message, context, state, onSiteLookup);
 }
 
 function createToolState(): ToolState {
@@ -1058,7 +1008,7 @@ function streamChat(
         try {
           const state = createToolState();
           let siteLookupAnnounced = false;
-          const modelText = await runGeminiConversation(apiKey, message, context, state, () => {
+          const modelText = await runToolLoop(apiKey, message, context, state, () => {
             if (siteLookupAnnounced) return;
             siteLookupAnnounced = true;
             emit({ type: 'status', status: 'checking-site' });
