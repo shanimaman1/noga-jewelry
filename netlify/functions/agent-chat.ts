@@ -41,6 +41,7 @@ const GEMINI_GATE_TIMEOUT_MS = 8_000;
 const GEMINI_REQUEST_TIMEOUT_MS = 12_000;
 const MAX_RECOMMENDATIONS = 3;
 const SITE_GATE_MARKER = '[[CONSULT_NOGA_SITE]]';
+const SITE_GATE_MARKER_PATTERN = /\[\[\s*CONSULT_NOGA_SITE\s*\]\]/i;
 const WHATSAPP_MESSAGE = 'היי, אשמח לעזרה בבחירת תכשיט';
 const SAFE_GENERIC =
   'הפרטים האלה יכולים להשתנות לפי ההזמנה, אז הכי טוב לבדוק ישירות עם דנה בוואטסאפ.';
@@ -893,7 +894,17 @@ async function runToolLoop(
   let finalText = '';
 
   for (let callNumber = 0; callNumber < MAX_SITE_GEMINI_CALLS; callNumber += 1) {
-    const response = await callGemini(apiKey, contents, { mode: 'AUTO' });
+    const hasToolResults = contents.some((content) =>
+      content.parts.some((part) => Boolean(part.functionResponse)),
+    );
+    let response: GeminiResponse;
+    try {
+      response = await callGemini(apiKey, contents, { mode: 'AUTO' });
+    } catch (error) {
+      if (!hasToolResults || !(error instanceof RecoverableFailure)) throw error;
+      console.info(JSON.stringify({ event: 'agent_retry', stage: 'after-tool-result' }));
+      response = await callGemini(apiKey, contents, { mode: 'AUTO' });
+    }
     const content = response.candidates?.[0]?.content;
     if (!content?.parts?.length) {
       throw new RecoverableFailure('Gemini returned no candidate content.');
@@ -905,6 +916,9 @@ async function runToolLoop(
       finalText = text.trim().replace(/\s*—\s*/g, ', ').replace(/[!！]/g, '');
     }
     if (calls.length === 0) {
+      if (containsSiteGateMarker(finalText)) {
+        throw new RecoverableFailure('Gemini returned an internal control marker.');
+      }
       return finalText;
     }
 
@@ -950,6 +964,12 @@ function contextualShopperMessage(message: string, context: string[]): string {
     : message;
 }
 
+function containsSiteGateMarker(text: string): boolean {
+  return SITE_GATE_MARKER_PATTERN.test(
+    text.replace(/[\u200B-\u200D\u2060\uFEFF]/g, '').replace(/```(?:\w+)?/g, ''),
+  );
+}
+
 async function runGeminiConversation(
   apiKey: string,
   message: string,
@@ -974,7 +994,7 @@ async function runGeminiConversation(
     .flatMap((part) => (typeof part.text === 'string' ? [part.text] : []))
     .join(' ')
     .trim();
-  if (gateText !== SITE_GATE_MARKER) {
+  if (!containsSiteGateMarker(gateText)) {
     return gateText.replace(/\s*—\s*/g, ', ').replace(/[!！]/g, '');
   }
 

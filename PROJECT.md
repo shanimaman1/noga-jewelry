@@ -356,7 +356,8 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   no generic thinking indicator. Gemini first receives a lightweight normal
   conversation request with no catalogue or policy tool schemas. If Gemini
   decides that Noga-specific information is needed, it returns an internal site
-  marker; the function then streams `checking-site`, loads the full site tools
+  marker; the function recognises it even with invisible characters or formatting,
+  never exposes it to the shopper, then streams `checking-site` and loads the full site tools
   and the UI shows `בודקת באתר...`. Greetings, small talk and general knowledge
   receive no lookup status. This is UI feedback only and never supplies or
   templates an assistant answer.
@@ -433,12 +434,15 @@ for server errors. Free-text query values, shopper messages, API keys and
 session identifiers are never logged.
 
 Server protections are fixed in the function: an origin allowlist, 500
-characters per message, 20 messages per signed session, at most four Gemini
-calls per message, an 8-second conversational timeout, a 12-second site-call
+characters per message, 20 messages per signed session, at most five Gemini
+calls per message when the one permitted post-tool retry is used, an 8-second
+conversational timeout, a 12-second site-call
 timeout and an atomic cap of 200 Gemini calls per UTC day in a
 strongly consistent Netlify Blobs store. Missing configuration, invalid session,
-quota/cap errors or unavailable limit storage cause permanent wizard fallback;
-a single recoverable message failure keeps the LLM path available.
+quota/cap errors or unavailable limit storage cause permanent wizard fallback.
+When site data has already been returned by a tool, one recoverable failure while
+Gemini phrases the answer is retried once; otherwise a single recoverable message
+failure keeps the LLM path available.
 
 ### Pinned versions (3D-related = EXACT, no caret) — verified vs npm 2026-07-24
 - `react` **19.2.8**, `react-dom` **19.2.8** (inside fiber peer `>=19 <19.3`)

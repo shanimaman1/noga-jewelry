@@ -10,6 +10,7 @@ import type { AgentProgress } from './types';
 
 const OPENING = 'אפשר לכתוב לי מה מחפשים, ואני אבדוק מול הקטלוג.';
 const GENTLE_ERROR = 'לא הצלחתי לענות כרגע. אפשר לנסות שוב בעוד רגע.';
+const INTERNAL_SITE_MARKER = /\[\[\s*CONSULT_NOGA_SITE\s*\]\]/i;
 
 let messageCounter = 0;
 const nextId = () => `llm-agent-${++messageCounter}`;
@@ -163,6 +164,10 @@ export function createLlmBrain(): AgentBrain {
 
     consecutiveTransportFailures = 0;
     sessionId = payload.sessionId;
+
+    if (INTERNAL_SITE_MARKER.test(payload.text)) {
+      return recoverableFailure(base);
+    }
 
     const eighteenKSlugs = new Set(payload.eighteenKSlugs ?? []);
     const recommendations = payload.recommendationSlugs.flatMap((slug) => {
