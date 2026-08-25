@@ -8,6 +8,11 @@
 
 ### Added
 
+* חיפוש תוכן כללי לעוזר: `search_site_content` מחפש בטקסט הגלוי של כל עמוד,
+  רכיב ומקור תוכן משותף, ומחזיר ל־Gemini קטעים מדויקים עם נתיב העמוד. האינדקס
+  נוצר מחדש אוטומטית בזמן build על ידי `scripts/build-site-content-index.mjs`,
+  כך שעמוד או שירות חדשים אינם דורשים כלי נושאי נוסף או העתק ידני של התוכן.
+
 * עמוד `/returns-service` עם החלפה בתוך 30 יום, החזר מלא בתוך 14 יום, שילוח
   חזרה על חשבון האטלייה ותיאום איסוף ב־WhatsApp. נוספו גם התאמת מידה ראשונה
   לטבעת ללא עלות בתוך 7–10 ימי עסקים, 12 חודשי אחריות לפגמי ייצור, תיקוני
@@ -60,12 +65,10 @@
   `netlify/functions/agent-chat.ts`, לצד האשף הקיים וללא שינוי בקומפוננטת
   הווידג׳ט. `resilientBrain` מחזיק את שני המוחות ועובר לצמיתות לאשף באותו
   סשן כאשר ה־LLM, המפתח, המכסה או אחסון המכסה אינם זמינים.
-* אחד עשר כלי שלב 2: `search_products`,‏ `get_product`,‏ `get_fulfilment`,‏
-  `get_payment_options`,‏ `get_service_policies`,‏ `get_atelier_info`,‏
-  `get_custom_design_info`,‏ `check_business_information`,‏
-  `present_recommendations`,‏ `open_size_guide` ו־`offer_whatsapp`. כל מקור אמת
-  עסקי מחובר לכלי מפורש; כלי הבדיקה מאשר כשמידע על הנחות או תמחור מיוחד אינו
-  קיים ומאפשר handoff. אף כלי אינו מבצע פעולה.
+* חמישה כלי שלב 2: `search_products`,‏ `get_product`,‏ `search_site_content`,‏
+  `present_recommendations` ו־`offer_site_action`. הקטלוג נשאר מובנה ונפרד
+  לכרטיסים מאומתים; כלי תוכן אחד החליף את כלי המסירה, התשלום, המדיניות,
+  האטלייה, העיצוב האישי ובדיקת המידע החסר. אף כלי אינו מבצע פעולה.
 * הגנות server-side לעוזר: origin allowlist, עד 500 תווים להודעה, 20 הודעות
   בסשן חתום, עד ארבע קריאות מודל להודעה ומכסה של 200 קריאות Gemini ביום UTC.
   המונים משתמשים ב־Netlify Blobs עם consistency חזק וכתיבות ETag אטומיות.

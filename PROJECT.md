@@ -327,14 +327,14 @@ unchanged: no LLM, API key or network call, and every answer is computed from
 - Every option offered is derived from the data at runtime and only when it has
   at least one matching product, so a guided path cannot reach an empty result.
   `relaxationOptions()` is the safety net, not a normal path.
-- **Content rule, non-negotiable:** availability is read from each product in
-  `products.ts`; delivery timing is read from the shared fulfilment constants.
-  Shipping cost is read from the same shared fulfilment source: home delivery
-  and studio collection are free on every order. Studio address and hours are
-  read from the shared `STUDIO` constant. Explicit 18k variant prices are real
-  catalogue data. Returns, refunds, resizing, warranty, repairs and cleaning
-  are read from `servicePolicies.ts`; discounts and other custom-order pricing
-  remain unknown and receive an honest handoff to WhatsApp. Product names,
+- **Content rule, non-negotiable:** structured product facts stay in
+  `products.ts`. Every other business fact is looked up through one generated
+  index of the visitor-facing page, component and shared-source copy. The build
+  recreates `src/generated/siteContentIndex.ts` from the actual source strings,
+  so guides, services, policies, people, contact, fulfilment and new pages do
+  not require another topic-specific assistant tool or a manually copied
+  knowledge base. Discounts and other custom-order pricing remain unknown when
+  the site search returns nothing and receive an honest WhatsApp handoff. Product names,
   catalogue numbers, prices, metals, categories, stone details and
   approximate gold weights are never written as literals in the assistant
   code; they are read from `products.ts`. General jewellery knowledge may be
@@ -370,14 +370,13 @@ unchanged: no LLM, API key or network call, and every answer is computed from
 exists only as the Netlify environment variable `GEMINI_API_KEY`; never prefix
 it with `VITE_`, place it in `netlify.toml`, or expose it to client code.
 
-The function exposes eleven non-acting tools: `search_products`, `get_product`,
-`get_fulfilment`, `get_payment_options`, `get_service_policies`,
-`get_atelier_info`, `get_custom_design_info`, `check_business_information`,
-`present_recommendations`, `open_size_guide` and `offer_whatsapp`. Each business
-source of truth therefore has an explicit tool; the custom-design facts share
-`src/lib/customDesign.ts` with the page, and the check tool records that
-discounts or unlisted custom pricing are absent. There is no second catalogue
-or policy copy. Actions remain buttons the shopper must click.
+The function exposes five non-acting tools: `search_products`, `get_product`,
+`search_site_content`, `present_recommendations` and `offer_site_action`.
+Product data remains structured for deterministic cards. `search_site_content`
+is the single search engine for everything else the site says and returns exact
+source excerpts with their page paths. The index is generated during every
+build by `scripts/build-site-content-index.mjs`; it is not a second handwritten
+catalogue or policy copy. Actions remain buttons the shopper must click.
 
 **Zero fabrication is structural wherever possible:**
 
@@ -387,7 +386,7 @@ or policy copy. Actions remain buttons the shopper must click.
   the current turn.
 - There is no server-side intent classifier, no forced `ANY`, no blocked
   `NONE`, no policy/browsing/unknown router and no post-generation question or
-  transition normaliser. Gemini receives the shopper message and all eleven site
+  transition normaliser. Gemini receives the shopper message and all five site
   tools in one normal `AUTO` request, then decides whether to answer directly or
   call the relevant source of truth.
 - The model never supplies recommendation-card data. Catalogue tools return raw
@@ -399,8 +398,8 @@ or policy copy. Actions remain buttons the shopper must click.
   `findProducts` ranks by preferred category, featured status, price and slug;
   the accepted subset is capped at three. An explicit cheapest-item search uses
   a stable price/slug order and returns one record.
-- Data tools return the raw current facts from the shared site sources, not
-  prepared answer sentences. Gemini reads those results and writes the reply in
+- Tools return raw catalogue records or exact excerpts from the current site
+  copy, not prepared answer sentences. Gemini reads those results and writes the reply in
   natural Hebrew. Product cards, including names, prices and descriptions, are
   still rendered by application code from catalogue records and never copied
   from model text. A cart request likewise presents a verified card; only the
