@@ -4,17 +4,12 @@ import { Reveal } from '@/components/common/Reveal';
 import { CatalogImage } from '@/components/common/CatalogImage';
 import { Field, TextAreaField } from '@/components/ui/Field';
 import { Seo } from '@/components/seo/Seo';
+import { CUSTOM_DESIGN } from '@/lib/customDesign';
 
 type Errors = Record<string, string>;
 
 const PHONE_RE = /^0(5\d|[2-489])[-\s]?\d{7}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-const steps = [
-  { n: '01', title: 'שיחת היכרות', text: 'נשב יחד (או בזום) ונבין מה את מחפשת, סגנון, תקציב, אבן, הזדמנות.' },
-  { n: '02', title: 'שרטוט והצעה', text: 'דנה מכינה שרטוט והדמיה, עם הצעת מחיר מדויקת. מדייקים עד שזה מרגיש נכון.' },
-  { n: '03', title: 'יצירה באטלייה', text: 'התכשיט נוצר בעבודת יד. בדרך כלל 3–4 שבועות, ואת מעודכנת לאורך הדרך.' },
-];
 
 /** Custom design — process explanation + lead form (sends nowhere in demo). */
 export function CustomDesign() {
@@ -63,8 +58,7 @@ export function CustomDesign() {
             נתכנן יחד תכשיט משלך
           </h1>
           <p className="mx-auto mt-6 max-w-xl leading-relaxed text-cream/70">
-            טבעת אירוסין, תכשיט לציון רגע, או פשוט משהו שלא מצאת בשום מקום. נתחיל
-            משיחה, ונבנה אותו מהשרטוט הראשון.
+            {CUSTOM_DESIGN.intro}
           </p>
         </Container>
       </section>
@@ -78,7 +72,7 @@ export function CustomDesign() {
             </h2>
           </Reveal>
           <ol className="mt-12 grid gap-10 md:grid-cols-3">
-            {steps.map((step, i) => (
+            {CUSTOM_DESIGN.steps.map((step, i) => (
               <li key={step.n}>
                 <Reveal delay={i * 0.06}>
                   <p className="font-heading text-3xl text-gold">{step.n}</p>

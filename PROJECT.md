@@ -364,14 +364,14 @@ unchanged: no LLM, API key or network call, and every answer is computed from
 exists only as the Netlify environment variable `GEMINI_API_KEY`; never prefix
 it with `VITE_`, place it in `netlify.toml`, or expose it to client code.
 
-The function exposes ten non-acting tools: `search_products`, `get_product`,
+The function exposes eleven non-acting tools: `search_products`, `get_product`,
 `get_fulfilment`, `get_payment_options`, `get_service_policies`,
-`get_atelier_info`, `check_business_information`, `present_recommendations`,
-`open_size_guide` and `offer_whatsapp`. Each business source of truth therefore
-has an explicit tool; the check tool records that discounts or unlisted custom
-pricing are absent and enables the handoff without inventing an answer. There
-is no second catalogue or policy copy. Actions remain buttons the shopper must
-click.
+`get_atelier_info`, `get_custom_design_info`, `check_business_information`,
+`present_recommendations`, `open_size_guide` and `offer_whatsapp`. Each business
+source of truth therefore has an explicit tool; the custom-design facts share
+`src/lib/customDesign.ts` with the page, and the check tool records that
+discounts or unlisted custom pricing are absent. There is no second catalogue
+or policy copy. Actions remain buttons the shopper must click.
 
 **Zero fabrication is structural wherever possible:**
 
@@ -384,24 +384,21 @@ click.
   post-generation question or transition normaliser. Gemini handles greetings,
   general knowledge and clarifying questions itself, and chooses a data tool
   only when it needs a business fact.
-- The model never supplies recommendation-card data. It returns tool calls;
-  the server derives card slugs only from the sorted catalogue result in that
-  turn, and the client resolves every accepted slug against `products.ts`
-  again. An unknown slug renders nothing.
+- The model never supplies recommendation-card data. Catalogue tools return raw
+  records from `products.ts`; Gemini may use those records to choose the relevant
+  subset, but the server accepts only slugs returned by a search in that turn
+  and preserves their deterministic catalogue order. The client resolves every
+  accepted slug against `products.ts` again. An unknown slug renders nothing.
 - Catalogue selection is deterministic after the model chooses filters.
   `findProducts` ranks by preferred category, featured status, price and slug;
-  the server always displays the first three. An explicit cheapest-item search
-  uses a stable price/slug order and returns one record.
-  `present_recommendations` cannot reorder or choose a different subset.
-- Product-specific prose, stone details, approximate gold weight, availability
-  and delivery lines are assembled by application code from that turn's tool
-  records. Product names, prices and
-  card descriptions are rendered from catalogue records, not model text.
-  Availability, delivery, collection, shipping-cost, payment, atelier and
-  service-policy facts use fixed code templates. The model receives only a
-  success marker and the requested topic/slug; it cannot copy those values into
-  prose. The corresponding application text is emitted only after the same-turn
-  tool call.
+  the accepted subset is capped at three. An explicit cheapest-item search uses
+  a stable price/slug order and returns one record.
+- Data tools return the raw current facts from the shared site sources, not
+  prepared answer sentences. Gemini reads those results and writes the reply in
+  natural Hebrew. Product cards, including names, prices and descriptions, are
+  still rendered by application code from catalogue records and never copied
+  from model text. A cart request likewise presents a verified card; only the
+  shopper's click on its button changes the cart.
 - Before returning, the function scans outgoing prose for `₪`, price-range
   numbers and catalogue names without matching tool evidence. It also rejects
   unbacked metal, category, stone, availability and delivery vocabulary and
@@ -409,15 +406,16 @@ click.
 - Discounts and custom-order pricing other than explicit 18k variants remain
   unknown and are handed off to WhatsApp.
 
-The remaining instruction-only boundary is Gemini's semantic decision under
-`AUTO`: whether a turn needs a tool, which tool and which fields/topics to ask
-for. There is deliberately no regex or routing layer to second-guess it. The
-residual risk is a missed or unnecessary lookup, or awkward conversational
-wording. It still cannot inject a product, price or card record; catalogue and
-policy facts are rendered by code only after same-turn tool evidence. The
-unchanged outgoing scanner remains a final backstop, and systemic failure never
-reaches the shopper: the resilient brain switches permanently to the unchanged
-wizard for that browser session after one short line.
+The instruction-only boundary is Gemini's semantic work under `AUTO`: whether a
+turn needs a tool, which tool and fields/topics to request, and whether its
+natural paraphrase stays faithful to the raw result. There is deliberately no
+regex intent router or canned-answer layer to replace that language work. The
+residual risk is a missed lookup, an unsupported paraphrase or awkward wording.
+It still cannot inject a product, price or card record: card data is rendered by
+code and the unchanged outgoing scanner rejects product and price claims without
+same-turn evidence. Systemic failure never reaches the shopper; the resilient
+brain switches permanently to the unchanged wizard for that browser session
+after one short line.
 
 Function logs record each called tool, privacy-safe arguments and result count,
 plus whether the outgoing grounding scan replaced the text and a safe category
