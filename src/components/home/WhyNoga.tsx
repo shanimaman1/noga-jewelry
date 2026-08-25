@@ -1,11 +1,13 @@
 import { type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { Container } from '@/components/common/Container';
 import { Reveal } from '@/components/common/Reveal';
 import { SectionHeading } from '@/components/common/SectionHeading';
 import { useReveal } from '@/hooks/useReveal';
 import { STAGGER } from '@/lib/motion/tokens';
+import { ROUTES } from '@/lib/constants';
 
-type Reason = { title: string; text: string; icon: ReactNode };
+type Reason = { title: string; text: string; icon: ReactNode; to?: string };
 
 const iconProps = {
   width: 28,
@@ -43,6 +45,7 @@ const reasons: Reason[] = [
   {
     title: 'החלפה תוך 30 יום',
     text: 'מידה לא מדויקת או שינוי דעה, מחליפים בלי סיבוכים.',
+    to: ROUTES.returnsService,
     icon: (
       <svg {...iconProps}>
         <path d="M25 16a9 9 0 1 1-3.2-6.9" />
@@ -96,7 +99,15 @@ function ReasonItem({ reason, index }: { reason: Reason; index: number }) {
   return (
     <li ref={ref} className="text-center">
       <span className="inline-flex text-gold">{reason.icon}</span>
-      <h3 className="mt-4 text-base text-charcoal">{reason.title}</h3>
+      <h3 className="mt-4 text-base text-charcoal">
+        {reason.to ? (
+          <Link to={reason.to} className="underline-offset-4 hover:underline">
+            {reason.title}
+          </Link>
+        ) : (
+          reason.title
+        )}
+      </h3>
       <p className="mt-2 text-sm leading-relaxed text-stone">{reason.text}</p>
     </li>
   );

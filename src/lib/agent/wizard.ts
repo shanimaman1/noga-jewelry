@@ -5,9 +5,9 @@
  * Content rules enforced here, not left to chance:
  *   • Product names, prices, categories and metals are never written as
  *     literals — they are read from the catalogue (see `./catalog`).
- *   • Availability, delivery timing and shipping cost are answered only from
- *     the catalogue and fulfilment constants. Discounts and returns remain
- *     unknown and get an honest WhatsApp handoff.
+ *   • Availability, fulfilment and service policies are answered only from
+ *     their shared data sources. Discounts remain unknown and get an honest
+ *     WhatsApp handoff.
  *   • A search with no results never dead-ends: it offers to drop exactly the
  *     filters that would genuinely produce matches.
  *
@@ -24,6 +24,13 @@ import {
   productDeliveryText,
   shippingCostText,
 } from '@/lib/fulfillment';
+import {
+  careServiceText,
+  resizingPolicyText,
+  returnsPolicyText,
+  specialOrderReturnsText,
+  warrantyPolicyText,
+} from '@/lib/servicePolicies';
 import type { AgentBrain, AgentChoice, AgentInput, AgentMessage, AgentTurn } from './types';
 import {
   CATEGORY_LABELS,
@@ -67,10 +74,13 @@ const DELIVERY_TIME_PATTERN = /משלוח|שילוח|אספקה|מתי יגיע|
 /** Topics this project still has no data for. Answered honestly, never guessed. */
 const UNSUPPORTED_TOPICS: { pattern: RegExp; topic: string }[] = [
   { pattern: /הנחה|הנחות|מבצע|מבצעים|קופון|סייל|זול יותר/, topic: 'מבצעים ומחירים מיוחדים' },
-  { pattern: /החזר|החזרה|החזרות|מדיניות החזר|ביטול הזמנה/, topic: 'החזרות וביטולים' },
 ];
 
 const SIZE_PATTERN = /מידה|מידות|סייז|למדוד|קוטר/;
+const RETURNS_PATTERN = /החזר|להחזיר|מחזיר|החזרה|החזרות|החלפ|ביטול/;
+const RESIZING_PATTERN = /הקטנ|להקטין|להגדיל|שינוי מידה|התאמת מידה|תיקון מידה/;
+const WARRANTY_PATTERN = /אחריות|פגם בייצור|פגמי ייצור|תיקון|תיקונים|נקרע|נשבר/;
+const CARE_SERVICE_PATTERN = /ניקוי|לנקות|בדיקת שיבוץ|בדיקת אבנים|פוליש/;
 
 const HEBREW_COUNT: Record<number, string> = { 1: 'הצעה אחת', 2: 'שתי הצעות', 3: 'שלוש הצעות' };
 
@@ -168,6 +178,30 @@ function deliveryReply(text: string): AgentMessage {
   return assistant(
     `משלוח עד הבית ${shippingCostText(SHIPPING.home)} ואורך ${DELIVERY_TIMES.home}. איסוף מהסטודיו ${shippingCostText(SHIPPING.collection)} ואפשרי בתוך ${DELIVERY_TIMES.collection}. לפריט שנוצר בהזמנה יש להוסיף ${DELIVERY_TIMES.madeToOrder}, ואז חל זמן המסירה שנבחר.`,
   );
+}
+
+function serviceReply(text: string): AgentMessage | null {
+  if (RETURNS_PATTERN.test(text)) {
+    return assistant(`${returnsPolicyText()} ${specialOrderReturnsText()}`, {
+      actions: [{ kind: 'whatsapp', message: 'היי, אשמח לתאם החלפה או החזרה' }],
+    });
+  }
+  if (RESIZING_PATTERN.test(text)) {
+    return assistant(resizingPolicyText(), {
+      actions: [{ kind: 'whatsapp', message: 'היי, אשמח לתאם התאמת מידה לטבעת' }],
+    });
+  }
+  if (WARRANTY_PATTERN.test(text)) {
+    return assistant(warrantyPolicyText(), {
+      actions: [{ kind: 'whatsapp', message: 'היי, אשמח לבדוק תיקון לתכשיט' }],
+    });
+  }
+  if (CARE_SERVICE_PATTERN.test(text)) {
+    return assistant(careServiceText(), {
+      actions: [{ kind: 'whatsapp', message: 'היי, אשמח לתאם ניקוי ובדיקת שיבוץ' }],
+    });
+  }
+  return null;
 }
 
 /* ── the questions ───────────────────────────────────────────────────────── */
@@ -304,6 +338,9 @@ function freeTextReply(text: string): AgentMessage[] {
   if (AVAILABILITY_PATTERN.test(text)) return [availabilityReply(text)];
 
   if (DELIVERY_TIME_PATTERN.test(text)) return [deliveryReply(text)];
+
+  const service = serviceReply(text);
+  if (service) return [service];
 
   if (SIZE_PATTERN.test(text)) {
     return [

@@ -23,6 +23,7 @@ export const ROUTES = {
   story: '/story',
   visit: '/visit',
   sizeCare: '/size-care',
+  returnsService: '/returns-service',
   cart: '/cart',
   checkout: '/checkout',
   orderConfirmation: '/order-confirmation',

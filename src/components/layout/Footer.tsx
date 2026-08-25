@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { BRAND, DEMO_CONTACT_LABEL, NAV_LINKS, ROUTES, whatsappUrl } from '@/lib/constants';
+import { BRAND, DEMO_CONTACT_LABEL, NAV_LINKS, ROUTES, STUDIO, whatsappUrl } from '@/lib/constants';
 
 const serviceLinks = [
   { to: ROUTES.sizeCare, label: 'מדריך מידות וטיפוח' },
+  { to: ROUTES.returnsService, label: 'החלפות, החזרות ושירות' },
   { to: ROUTES.accessibility, label: 'הצהרת נגישות' },
   { to: ROUTES.cart, label: 'עגלת הקניות' },
 ];
@@ -82,6 +83,21 @@ export function Footer() {
                 Instagram · @{BRAND.instagram}{' '}
                 <span className="text-cream/50">({DEMO_CONTACT_LABEL})</span>
               </a>
+            </li>
+            <li className="pt-2 text-cream/70">
+              <Link to={ROUTES.visit} className="transition-colors hover:text-cream">
+                {STUDIO.address}
+              </Link>
+            </li>
+            <li>
+              <dl className="space-y-1 text-xs text-cream/60">
+                {STUDIO.hours.map((row) => (
+                  <div key={row.days} className="flex justify-between gap-3">
+                    <dt>{row.days}</dt>
+                    <dd>{row.hours}</dd>
+                  </div>
+                ))}
+              </dl>
             </li>
           </ul>
         </div>

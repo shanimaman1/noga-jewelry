@@ -1,6 +1,9 @@
+import { Link } from 'react-router-dom';
 import { Container } from '@/components/common/Container';
 import { Seo } from '@/components/seo/Seo';
 import { ringSizes } from '@/data/sizes';
+import { ROUTES } from '@/lib/constants';
+import { careServiceText, resizingPolicyText } from '@/lib/servicePolicies';
 
 const measureSteps = [
   'גזרי רצועת נייר דקה, ברוחב כחצי סנטימטר.',
@@ -20,7 +23,7 @@ const careItems = [
   },
   {
     title: 'יהלומים',
-    text: 'יהלום מושך שומן ולכן מאבד ברק עם הזמן. ניקוי אחת לכמה שבועות מחזיר את הנצנוץ. אנחנו נשמח לנקות ולבדוק שיבוץ ללא תשלום.',
+    text: `יהלום מושך שומן ולכן מאבד ברק עם הזמן. ניקוי אחת לכמה שבועות מחזיר את הנצנוץ. ${careServiceText()}`,
   },
   {
     title: 'אחסון',
@@ -96,6 +99,15 @@ export function SizeCare() {
           </div>
         </section>
 
+        <section className="mt-14" aria-labelledby="resize-title">
+          <h2 id="resize-title" className="text-2xl">התאמת מידה לאחר הקנייה</h2>
+          <p className="mt-4 leading-relaxed text-stone">{resizingPolicyText()}</p>
+          <p className="mt-3 text-sm leading-relaxed text-stone">
+            השירות חל על טבעות. שינוי נוסף, או התאמה שמצריכה תוספת זהב משמעותית,
+            מתומחרים לאחר בדיקה.
+          </p>
+        </section>
+
         {/* Care */}
         <section className="mt-14" aria-labelledby="care-title">
           <h2 id="care-title" className="text-2xl">
@@ -111,10 +123,18 @@ export function SizeCare() {
           </dl>
         </section>
 
-        <p className="mt-14 rounded-sm border border-mist p-6 text-sm leading-relaxed text-stone">
-          לא בטוחה לגבי מידה, או שרוצה לרענן תכשיט ותיק? אפשר לכתוב לנו בוואטסאפ
-          ונעזור. וכמובן, ההחלפה אפשרית תוך 30 יום.
-        </p>
+        <div className="mt-14 rounded-sm border border-mist p-6 text-sm leading-relaxed text-stone">
+          <p>
+            לא בטוחה לגבי מידה, או שרוצה לרענן תכשיט ותיק? אפשר לכתוב לנו בוואטסאפ
+            ונעזור. החלפה אפשרית בתוך 30 יום, לפי התנאים המלאים.
+          </p>
+          <Link
+            to={ROUTES.returnsService}
+            className="mt-3 inline-block text-charcoal underline underline-offset-4"
+          >
+            להחלפות, החזרות ושירות
+          </Link>
+        </div>
       </Container>
     </div>
   );

@@ -191,6 +191,8 @@ both worlds — the dark atelier and everyday light.
 - **Story** `/story` — Dana / the atelier.
 - **Visit** `/visit` — studio address, embedded map, Waze, hours and contact.
 - **Size & care guide** `/size-care`.
+- **Returns & service** `/returns-service` — exchange, refund, resizing,
+  warranty, repairs, cleaning and setting-inspection terms.
 - **Cart** `/cart`.
 - **Checkout** `/checkout` — designed, non-functional demo.
 - **Order confirmation** `/order-confirmation`.
@@ -233,7 +235,26 @@ both worlds — the dark atelier and everyday light.
   in the cart and checkout, and by the assistant.
 - An out-of-stock product cannot be added to the cart. Its product page opens
   a small restock-email form. The form is deliberately simulated: it validates
-  and confirms locally, sends no network request and stores no address.
+  and confirms locally, sends no network request and stores no address. It does
+  not show delivery or collection information until the product is available.
+
+## Returns and aftercare
+- `src/lib/servicePolicies.ts` is the shared source for returns, resizing,
+  warranty, repairs, cleaning and setting inspection. Product pages, the
+  service page, the size guide and both assistant brains read from it.
+- Standard pieces may be exchanged within 30 days or returned for a full refund
+  within 14 days, unworn and in their original packaging. The atelier covers
+  return shipping and arranges collection through WhatsApp. Statutory consumer
+  rights continue to apply.
+- A piece made to a shopper's measurement or special requirement, including an
+  18k variant, cannot be exchanged or refunded after production starts. Every
+  effectively made-to-order product shows this before the purchase action.
+- The first ring resize is free and normally takes 7–10 business days.
+- Manufacturing defects are covered for 12 months. Wear-and-tear repairs are
+  inspected and quoted before work. Professional cleaning and setting
+  inspection are free.
+- The cart shows that free studio collection can be selected at checkout. The
+  footer repeats the studio address and opening hours.
 
 ## Product materials and catalogue identity
 - Every product has an explicit, unique `sku` in `src/data/products.ts`. The
@@ -311,9 +332,10 @@ unchanged: no LLM, API key or network call, and every answer is computed from
   Shipping cost is read from the same shared fulfilment source: home delivery
   and studio collection are free on every order. Studio address and hours are
   read from the shared `STUDIO` constant. Explicit 18k variant prices are real
-  catalogue data; discounts, returns, warranty and other custom-order pricing
-  remain unknown and receive an honest handoff to
-  WhatsApp. Product names, catalogue numbers, prices, metals, categories, stone details and
+  catalogue data. Returns, refunds, resizing, warranty, repairs and cleaning
+  are read from `servicePolicies.ts`; discounts and other custom-order pricing
+  remain unknown and receive an honest handoff to WhatsApp. Product names,
+  catalogue numbers, prices, metals, categories, stone details and
   approximate gold weights are never written as literals in the assistant
   code; they are read from `products.ts`. General jewellery knowledge may be
   answered without a tool, but it must never become a claim about a Noga product
@@ -353,8 +375,9 @@ remain buttons the shopper must click.
   `NONE` exception disables tools for a recognisably underspecified shopping
   request so it cannot dump arbitrary products before asking. A second narrow
   exception uses `ANY` with only `offer_whatsapp` allowed for recognisable
-  questions about unknown business policies such as discounts, returns,
-  warranty or custom-order pricing other than explicit 18k variants. A shipping-cost question uses a narrow
+  questions about discounts or custom-order pricing other than explicit 18k
+  variants. Questions about returns or aftercare use a narrow `ANY` call to
+  `search_products`, with the matching policy flag forced by the server. A shipping-cost question uses a narrow
   `ANY` call to `search_products`; the server guarantees that call receives the
   shipping-cost flag before the fixed code template is rendered.
 - The model never supplies recommendation-card data. It returns tool calls;
@@ -371,15 +394,15 @@ remain buttons the shopper must click.
   and delivery lines are assembled by application code from that turn's tool
   records. Product names, prices and
   card descriptions are rendered from catalogue records, not model text.
-  Availability, delivery, collection and shipping-cost facts use fixed code
-  templates. Shipping figures are appended only from the verified tool result,
-  after the unchanged model-prose grounding scan.
+  Availability, delivery, collection, shipping-cost and service-policy facts
+  use fixed code templates. Shipping and service-policy text is appended only
+  from the verified tool result, after the unchanged model-prose grounding scan.
 - Before returning, the function scans outgoing prose for `₪`, price-range
   numbers and catalogue names without matching tool evidence. It also rejects
   unbacked metal, category, stone, availability and delivery vocabulary and
   replaces the whole line with a generic WhatsApp handoff.
-- Discounts, returns, warranty and custom-order pricing other than explicit 18k
-  variants remain unknown and are handed off to WhatsApp.
+- Discounts and custom-order pricing other than explicit 18k variants remain
+  unknown and are handed off to WhatsApp.
 
 The remaining instruction-only boundary is semantic intent: under `AUTO`, the
 model decides whether a message is small talk, an open request, general
@@ -455,9 +478,8 @@ a single recoverable message failure keeps the LLM path available.
   automatically on every push. Drag-and-drop of `dist/` is no longer used.
   The live and canonical origin is `https://noga-jewelry.netlify.app`;
   `src/lib/seo.ts`, `public/sitemap.xml` and `public/robots.txt` use that same
-  origin. Build config: `netlify.toml` (build command, publish directory, and a
-  reserved functions path; no functions directory or function exists today —
-  see ARCHITECTURE.md).
+  origin. Build config: `netlify.toml` (build command, publish directory and
+  `netlify/functions/agent-chat.ts`; see ARCHITECTURE.md).
 - **Because deploys are now automatic on push, pushing to `master` IS
   deploying.** The existing "do not deploy without explicit go-ahead" rule
   now applies to the push itself, not to a separate manual deploy step.

@@ -9,6 +9,7 @@ import { CustomDesign } from '@/pages/CustomDesign';
 import { Story } from '@/pages/Story';
 import { Visit } from '@/pages/Visit';
 import { SizeCare } from '@/pages/SizeCare';
+import { ReturnsService } from '@/pages/ReturnsService';
 import { Cart } from '@/pages/Cart';
 import { Checkout } from '@/pages/Checkout';
 import { OrderConfirmation } from '@/pages/OrderConfirmation';
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
       { path: '/story', element: <Story /> },
       { path: '/visit', element: <Visit /> },
       { path: '/size-care', element: <SizeCare /> },
+      { path: '/returns-service', element: <ReturnsService /> },
       { path: '/cart', element: <Cart /> },
       { path: '/checkout', element: <Checkout /> },
       { path: '/order-confirmation', element: <OrderConfirmation /> },

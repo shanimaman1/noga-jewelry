@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useCart, useCartSubtotal } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
 import { formatPrice } from '@/lib/format';
-import { SHIPPING, shippingCostText } from '@/lib/fulfillment';
+import { DELIVERY_TIMES, SHIPPING, shippingCostText } from '@/lib/fulfillment';
 import { LineItem } from './LineItem';
 
 const FOCUSABLE =
@@ -122,6 +122,15 @@ export function CartDrawer() {
                 <span className="text-stone">משלוח עד הבית</span>
                 <span className="text-charcoal">{shippingCostText(SHIPPING.home)}</span>
               </div>
+              <div className="flex items-start justify-between gap-4 text-sm">
+                <span className="text-stone">איסוף מהסטודיו</span>
+                <span className="text-end text-charcoal">
+                  לבחירה בצ׳קאאוט · {shippingCostText(SHIPPING.collection)}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed text-stone">
+                מועד האיסוף: {DELIVERY_TIMES.collection}.
+              </p>
               <Link
                 to={ROUTES.checkout}
                 onClick={close}

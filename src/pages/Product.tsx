@@ -19,6 +19,11 @@ import { productImage } from '@/data/products';
 import { SITE_URL } from '@/lib/seo';
 import { stoneDescription } from '@/lib/productMaterials';
 import {
+  careServiceText,
+  resizingPolicyText,
+  specialOrderReturnsText,
+} from '@/lib/servicePolicies';
+import {
   DELIVERY_TIMES,
   SHIPPING,
   availabilityDetail,
@@ -304,7 +309,27 @@ function ProductView({
                       צריך לבחור {sizeLabel} לפני ההוספה לעגלה
                     </p>
                   )}
+                  {product.category === 'rings' && (
+                    <p className="mt-3 text-sm leading-relaxed text-stone">
+                      {resizingPolicyText()}
+                    </p>
+                  )}
                 </fieldset>
+              )}
+
+              {selectedAvailability === 'made-to-order' && (
+                <section className="mt-8 rounded-sm border border-mist p-4" aria-labelledby="special-order-note">
+                  <h2 id="special-order-note" className="text-sm text-charcoal">חשוב לפני ההזמנה</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-stone">
+                    {specialOrderReturnsText()}
+                  </p>
+                  <Link
+                    to={ROUTES.returnsService}
+                    className="mt-3 inline-block text-sm text-stone underline underline-offset-4 transition-colors hover:text-charcoal"
+                  >
+                    למדיניות המלאה
+                  </Link>
+                </section>
               )}
 
               {/* Purchase / restock action */}
@@ -394,6 +419,7 @@ function ProductView({
                 )}
               </div>
 
+              {selectedAvailability !== 'out-of-stock' && (
               <section className="mt-8 border-t border-mist pt-6" aria-labelledby="delivery-times-title">
                 <h2 id="delivery-times-title" className="text-base text-charcoal">
                   מסירה ואיסוף
@@ -418,6 +444,7 @@ function ProductView({
                   </p>
                 )}
               </section>
+              )}
 
               <Link
                 to={ROUTES.visit}
@@ -427,7 +454,7 @@ function ProductView({
               </Link>
 
               <div className="mt-4">
-                <TrustStrip stones={product.stones} />
+                <TrustStrip stones={product.stones} availability={selectedAvailability} />
               </div>
 
               {/* Materials & care */}
@@ -457,7 +484,7 @@ function ProductView({
                   <div className="flex gap-3">
                     <dt className="w-28 shrink-0 text-stone">טיפוח</dt>
                     <dd className="text-charcoal">
-                      להסיר לפני מקלחת וים. לניקוי, מים פושרים וסבון עדין, ולייבש במטלית רכה.
+                      להסיר לפני מקלחת וים. לניקוי, מים פושרים וסבון עדין, ולייבש במטלית רכה. {careServiceText()}
                     </dd>
                   </div>
                 </dl>

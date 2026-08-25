@@ -1,5 +1,8 @@
+import { Link } from 'react-router-dom';
 import { Modal } from '@/components/ui/Modal';
 import { ringSizes } from '@/data/sizes';
+import { ROUTES } from '@/lib/constants';
+import { resizingPolicyText } from '@/lib/servicePolicies';
 
 /** Israeli ring-size chart + how to measure at home. */
 export function SizeGuideModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -49,8 +52,16 @@ export function SizeGuideModal({ open, onClose }: { open: boolean; onClose: () =
           </div>
           <p className="mt-3">
             המידה בישראל היא הקוטר הפנימי במילימטרים. אם עדיין יש התלבטות, אפשר
-            לכתוב לנו ונעזור, ובכל מקרה ההחלפה אפשרית תוך 30 יום.
+            לכתוב לנו ונעזור.
           </p>
+          <p className="mt-3">{resizingPolicyText()}</p>
+          <Link
+            to={ROUTES.returnsService}
+            onClick={onClose}
+            className="mt-3 inline-block text-charcoal underline underline-offset-4"
+          >
+            לתנאי החלפה ושירות
+          </Link>
         </section>
       </div>
     </Modal>

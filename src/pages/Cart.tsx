@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useCart, useCartSubtotal } from '@/lib/cart/store';
 import { ROUTES } from '@/lib/constants';
 import { formatPrice } from '@/lib/format';
-import { SHIPPING, shippingCostText } from '@/lib/fulfillment';
+import { DELIVERY_TIMES, SHIPPING, shippingCostText } from '@/lib/fulfillment';
 import { Container } from '@/components/common/Container';
 import { LineItem } from '@/components/cart/LineItem';
 import { Seo } from '@/components/seo/Seo';
@@ -63,7 +63,16 @@ export function Cart() {
                   <dt className="text-stone">משלוח עד הבית</dt>
                   <dd className="text-charcoal">{shippingCostText(SHIPPING.home)}</dd>
                 </div>
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-stone">איסוף מהסטודיו</dt>
+                  <dd className="text-end text-charcoal">
+                    לבחירה בצ׳קאאוט · {shippingCostText(SHIPPING.collection)}
+                  </dd>
+                </div>
               </dl>
+              <p className="mt-3 text-xs leading-relaxed text-stone">
+                מועד האיסוף: {DELIVERY_TIMES.collection}.
+              </p>
               <Link
                 to={ROUTES.checkout}
                 className="mt-6 block rounded-full bg-charcoal px-8 py-4 text-center text-sm tracking-wide text-cream transition-colors hover:bg-charcoal/90"

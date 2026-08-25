@@ -29,6 +29,7 @@ const ROUTES = [
   ['story', '/story'],
   ['visit', '/visit'],
   ['size-care', '/size-care'],
+  ['returns-service', '/returns-service'],
   ['custom', '/custom'],
   ['accessibility', '/accessibility'],
 ];
@@ -225,6 +226,10 @@ async function checkInstallments(browser) {
   if (!/מק״ט\s*NCK-001/.test((await page.locator('body').textContent()) ?? '')) {
     fail('order-details', 'cart drawer does not show the catalogue number');
   }
+  const cartDrawerText = await page.getByRole('dialog', { name: 'עגלת הקניות' }).innerText();
+  if (!cartDrawerText.includes('איסוף מהסטודיו') || !cartDrawerText.includes('לבחירה בצ׳קאאוט')) {
+    fail('fulfilment', 'cart drawer does not explain that studio collection is chosen at checkout');
+  }
   await page.getByRole('link', { name: 'המשך לתשלום', exact: true }).click();
   await page.waitForURL('**/checkout');
   await page.locator('h1').filter({ hasText: 'תשלום' }).waitFor();
@@ -322,6 +327,83 @@ async function checkInstallments(browser) {
   if (errors.length) fail('installments', `console errors: ${errors.join(' | ')}`);
 
   await page.screenshot({ path: join(SHOTS, 'installments-375.png'), fullPage: true });
+  await ctx.close();
+}
+
+/** Policy and service connections at the shopper-facing decision points. */
+async function checkPolicies(browser) {
+  const ctx = await browser.newContext({ viewport: { width: 375, height: 812 } });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text().slice(0, 160));
+  });
+  page.on('pageerror', (error) => errors.push(`pageerror: ${String(error).slice(0, 160)}`));
+
+  await page.goto(BASE + '/returns-service', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const policyText = await page.locator('main').innerText();
+  for (const expected of [
+    'החלפה אפשרית בתוך 30 יום',
+    'החזר כספי מלא אפשרי בתוך 14 יום',
+    'עלות השילוח חזרה',
+    '12 חודשים',
+    '7–10 ימי עסקים',
+    'ניקוי ובדיקת שיבוץ',
+  ]) {
+    if (!policyText.includes(expected)) fail('policies', `returns page is missing: ${expected}`);
+  }
+  const footerText = await page.locator('footer').innerText();
+  if (
+    !footerText.includes('שבזי 45, נווה צדק, תל אביב') ||
+    !footerText.includes('ראשון–חמישי') ||
+    !footerText.includes('10:00–19:00')
+  ) {
+    fail('policies', 'footer is missing the studio address or opening hours');
+  }
+
+  await page.goto(BASE + '/product/solitaire-classic', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const ringText = await page.locator('main').innerText();
+  if (!ringText.includes('התאמת המידה הראשונה לטבעת היא ללא עלות')) {
+    fail('policies', 'ring product page is missing first-resize service');
+  }
+  if (!ringText.includes('לאחר תחילת הייצור אין אפשרות להחלפה או להחזר')) {
+    fail('policies', 'made-to-order product lacks the pre-purchase return notice');
+  }
+  const returnsLink = page.getByRole('link', { name: 'החלפה תוך 30 יום', exact: true });
+  if ((await returnsLink.getAttribute('href')) !== '/returns-service') {
+    fail('policies', 'product trust item does not link to the policy page');
+  }
+
+  await page.goto(BASE + '/product/single-diamond-necklace', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const readyText = await page.locator('main').innerText();
+  if (readyText.includes('לאחר תחילת הייצור אין אפשרות להחלפה או להחזר')) {
+    fail('policies', 'ready 14k product incorrectly shows the special-order restriction');
+  }
+  await page.getByRole('button', { name: '18 קראט', exact: true }).click();
+  const eighteenKText = await page.locator('main').innerText();
+  if (
+    !eighteenKText.includes('נוצר בהזמנה') ||
+    !eighteenKText.includes('לאחר תחילת הייצור אין אפשרות להחלפה או להחזר')
+  ) {
+    fail('policies', '18k selection does not expose made-to-order return terms');
+  }
+
+  await page.goto(BASE + '/product/floral-chain-necklace', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const outOfStockText = await page.locator('main').innerText();
+  if (outOfStockText.includes('מסירה ואיסוף') || outOfStockText.includes('משלוח חינם')) {
+    fail('policies', 'out-of-stock product still displays fulfilment information');
+  }
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+  );
+  if (overflow) fail('policies', 'horizontal overflow at 375px');
+  if ((await page.evaluate(() => document.documentElement.dir)) !== 'rtl') {
+    fail('policies', 'document direction is not RTL');
+  }
+  if (errors.length) fail('policies', `console errors: ${errors.join(' | ')}`);
+
+  await page.screenshot({ path: join(SHOTS, 'policies-375.png'), fullPage: true });
   await ctx.close();
 }
 
@@ -444,6 +526,9 @@ async function main() {
   process.stdout.write('  checking contact and demo consistency … ');
   try { await checkDemoContacts(browser); console.log('done'); } catch (e) { fail('demo-contacts', String(e).slice(0, 160)); console.log('ERROR'); }
 
+  process.stdout.write('  checking policies and service connections … ');
+  try { await checkPolicies(browser); console.log('done'); } catch (e) { fail('policies', String(e).slice(0, 160)); console.log('ERROR'); }
+
   process.stdout.write('  checking hero-3d … ');
   try { await checkHero3D(page); console.log('done'); } catch (e) { fail('hero-3d', String(e).slice(0, 160)); console.log('ERROR'); }
 
@@ -459,7 +544,7 @@ async function main() {
 
   console.log('\n' + '='.repeat(60));
   if (failures.length === 0) {
-    console.log(`PASS — ${ROUTES.length} routes, instalments 1–12, contact/demo consistency, 3D hero, reduced-motion, fail-open CSS.`);
+    console.log(`PASS — ${ROUTES.length} routes, instalments 1–12, policies, contact/demo consistency, 3D hero, reduced-motion, fail-open CSS.`);
     console.log(`Screenshots: ${SHOTS}`);
   } else {
     console.log(`FAIL — ${failures.length} problem(s):\n`);
