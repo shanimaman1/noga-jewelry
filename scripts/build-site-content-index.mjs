@@ -12,6 +12,7 @@ const contentRoots = [
   'data/sizes.ts',
   'data/testimonials.ts',
   'lib/constants.ts',
+  'lib/brandStory.ts',
   'lib/customDesign.ts',
   'lib/format.ts',
   'lib/fulfillment.ts',

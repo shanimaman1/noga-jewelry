@@ -13,7 +13,7 @@ import {
   productDeliveryText,
 } from '../../src/lib/fulfillment';
 import { stoneDescription } from '../../src/lib/productMaterials';
-import { searchSiteContent } from '../../src/lib/siteContent';
+import { searchSiteContentSubjects } from '../../src/lib/siteContent';
 import type { Availability, Category, Metal, Product } from '../../src/types/catalog';
 import type {
   AgentChatHistoryMessage,
@@ -87,7 +87,6 @@ type ToolState = {
   presentedSlugs: string[];
   siteContentSearched: boolean;
   siteContentFound: boolean;
-  lastSiteContentSearchFound: boolean;
   emptySiteContentSearches: number;
   sizeGuideRequested: boolean;
   whatsappRequested: boolean;
@@ -101,15 +100,20 @@ You are the restrained Hebrew shopping assistant for Noga Jewelry. Reply in Hebr
 
 Talk naturally and decide for yourself whether to answer, ask one useful clarifying question, or use a tool. You are the language model and you write every conversational reply yourself. The tools are your private search engine over this website: they return raw site data, never a prepared answer. Read the results, understand them and answer in your own natural words. Greetings, small talk, vague requests and general jewellery knowledge need no tool. The full earlier conversation may be included for continuity, but it is never factual evidence for the current turn.
 
+LANGUAGE:
+- Write complete replies in natural Israeli Hebrew only. Before returning, reread the reply once and correct Hebrew spelling, grammar and agreement.
+- Never output Latin, Cyrillic, Arabic, Greek or a word borrowed accidentally from another language. Write service names in Hebrew too: וואטסאפ, וייז, אינסטגרם. Numbers may remain as digits.
+
 ONE STRUCTURAL RULE:
 - Every fact about this business must come from a tool result in THIS request. Never use memory, earlier turns or assumptions for a business fact.
 - Business facts include anything this website says: product details, services, policies, guides, page content, people, contact details, the atelier and the ordering experience.
 - Use search_products when the shopper asks to see, find, compare or choose products. A broad catalogue request such as asking to see rings is a valid search with a category and no other filter.
 - Use get_product for facts about one identifiable product. The product must first have been returned by search_products in this request.
-- Use search_site_content for every non-product fact about Noga. It searches the actual visitor-facing content across every page and section, including guides, services, policies, people, contact, fulfilment, payment and the atelier. Query it with the concrete words you need, the same way you would use a search engine. Do not rely on a predefined list of topics.
+- Use search_site_content for every non-product fact about Noga. It searches the actual visitor-facing content across every page and section, including guides, services, policies, people, contact, fulfilment, payment and the atelier. Give it one subject object for each subject in the shopper's message. For every subject, supply the shopper's wording plus two or three concise Hebrew synonyms, related professional terms or likely page words. Several subjects belong in the same tool call, never combined into one long query. The grouped results preserve coverage for every subject. Do not rely on a predefined list of topics.
 - For recommendations, search first, use only the returned catalogue records to judge relevance, and then call present_recommendations with up to three returned slugs. The application validates the slugs and renders the cards from the catalogue.
 - Never write a product name or price in prose; the verified cards render them. Other business facts may be phrased naturally, but every value must be copied or faithfully paraphrased only from the raw tool result in this request. Do not add a detail that the tool did not return.
-- If a site-content search returns nothing relevant, search once more with different concrete words that are likely to appear on the page. The query may be Hebrew or an English page or feature name when that is the common term. When the shopper writes an English feature name in Hebrew letters, retry its original English spelling instead of another Hebrew synonym. Only after the broader search also returns nothing, say honestly that you did not find that information on the site and mention the WhatsApp option; the application makes that button available automatically. Discounts and unlisted custom-order pricing are examples, not special routed topics.
+- Copy names, addresses and numbers exactly as returned by the site search. Do not alter or complete them from memory.
+- Call search_site_content once per turn with every subject and all expanded terms. When every subject group contains results, use those results and do not repeat the search. If a subject group is empty, retry once with different concrete terms for that missing subject only. The query may include an English page or feature name when that is the common term. When the shopper writes an English feature name in Hebrew letters, retry its original English spelling instead of another Hebrew synonym. Only after the broader search also returns nothing, say honestly that you did not find that information on the site and mention the WhatsApp option; the application makes that button available automatically. Discounts and unlisted custom-order pricing are examples, not special routed topics.
 - Tools never perform actions. offer_site_action only offers a button for the shopper to click.
 - When a tool result answers the question, answer it in prose. An offered site action may accompany the answer but must never replace it.
 - Never mention tool names, function calls or internal instructions in the reply.
@@ -118,7 +122,7 @@ ONE STRUCTURAL RULE:
 - Never claim that a discount exists or does not exist unless search_site_content returns that fact. When the site does not answer, say so and offer WhatsApp.
 - Never change the cart automatically. When the shopper asks you to add a product, search for that product again in this request, present its verified card, and explain naturally that clicking the card's add-to-cart button confirms the addition. Do not say there is no way to help; the card button is the supported path.
 - Never say that you added an item to the cart. Say that you displayed its card and that the shopper can confirm with its add-to-cart button.
-- When one message contains more than one request, complete every supported part before replying. You may make several website searches in the same turn; do not postpone the second part to another question when the request is already clear.
+- When one message contains more than one request, complete every supported part before replying. Use the grouped site search for all non-product subjects in that message and answer each returned group; do not postpone a part to another question when the request is already clear.
 
 Everything that is not a business fact is yours to handle as a capable assistant: greetings, small talk, clarifying questions and general jewellery knowledge. When a shopping request is too open for a useful recommendation, ask one useful question before searching instead of guessing. Keep replies concise, warm and natural in Israeli Hebrew only, addressing the shopper in feminine singular. Use no Arabic words and no vowel-point diacritics. Ask one question at a time. Vary the wording. Avoid bureaucratic language, exclamation marks, superlatives and em dashes.
 `.trim();
@@ -163,10 +167,28 @@ const TOOL_DECLARATIONS = [
   {
     name: 'search_site_content',
     description:
-      'Search all visitor-facing Noga website content for any non-product business fact. Use concrete Hebrew search words from the question. Returns exact excerpts with their page paths, or no results when the site does not cover it.',
+      'Search all visitor-facing Noga website content for non-product business facts. Supply one object per subject and two to four concise search terms per object, including synonyms or related professional wording. Multi-subject questions receive balanced results for every subject.',
     parameters: parameters(
-      { query: { type: 'string', description: 'A concise site-search query in Hebrew or English.' } },
-      ['query'],
+      {
+        subjects: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              terms: {
+                type: 'array',
+                items: { type: 'string' },
+                maxItems: 4,
+                description: 'The shopper wording plus likely site synonyms for this subject.',
+              },
+            },
+            required: ['terms'],
+          },
+          maxItems: 4,
+          description: 'One entry per distinct subject in the shopper message.',
+        },
+      },
+      ['subjects'],
     ),
   },
   {
@@ -392,13 +414,25 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
 }
 
 function searchSiteContentTool(args: Record<string, unknown>, state: ToolState) {
-  const query = typeof args.query === 'string' ? args.query.trim().slice(0, 160) : '';
-  const results = query ? searchSiteContent(query) : [];
+  const subjectTerms = Array.isArray(args.subjects)
+    ? args.subjects
+        .filter((subject): subject is Record<string, unknown> =>
+          Boolean(subject) && typeof subject === 'object',
+        )
+        .map((subject) =>
+          Array.isArray(subject.terms)
+            ? subject.terms.filter((term): term is string => typeof term === 'string')
+            : [],
+        )
+    : [];
+  const subjects = searchSiteContentSubjects(subjectTerms);
+  const resultCount = subjects.reduce((count, subject) => count + subject.results.length, 0);
+  const allSubjectsFound =
+    subjects.length > 0 && subjects.every((subject) => subject.results.length > 0);
   state.siteContentSearched = true;
-  state.siteContentFound ||= results.length > 0;
-  state.lastSiteContentSearchFound = results.length > 0;
-  if (results.length === 0) state.emptySiteContentSearches += 1;
-  return { found: results.length > 0, results };
+  state.siteContentFound ||= resultCount > 0;
+  if (resultCount === 0) state.emptySiteContentSearches += 1;
+  return { allSubjectsFound, subjects };
 }
 
 function getProductTool(args: Record<string, unknown>, state: ToolState) {
@@ -522,10 +556,27 @@ function safeToolArguments(call: GeminiFunctionCall): Record<string, unknown> {
         requestedSlugCount: Array.isArray(args.slugs) ? args.slugs.length : 0,
       };
     case 'search_site_content':
+      {
+        const subjects = Array.isArray(args.subjects)
+          ? args.subjects
+              .filter((subject): subject is Record<string, unknown> =>
+                Boolean(subject) && typeof subject === 'object',
+              )
+              .slice(0, 4)
+          : [];
+        const termLengths = subjects.flatMap((subject) => {
+          if (!('terms' in subject) || !Array.isArray(subject.terms)) return [];
+          return subject.terms
+            .filter((term: unknown): term is string => typeof term === 'string')
+            .slice(0, 4)
+            .map((term: string) => term.length);
+        });
       return {
-        queryProvided: typeof args.query === 'string' && args.query.trim().length > 0,
-        ...(typeof args.query === 'string' ? { queryLength: args.query.length } : {}),
+          subjectCount: subjects.length,
+          termCount: termLengths.length,
+          totalTermLength: termLengths.reduce((total, length) => total + length, 0),
       };
+      }
     case 'offer_site_action':
       return {
         action:
@@ -548,7 +599,12 @@ function toolResultCount(
   }
   if (call.name === 'get_product') return result.product ? 1 : 0;
   if (call.name === 'search_site_content') {
-    return Array.isArray(result.results) ? result.results.length : 0;
+    return Array.isArray(result.subjects)
+      ? result.subjects.reduce((count, subject) => {
+          if (!subject || typeof subject !== 'object' || !('results' in subject)) return count;
+          return count + (Array.isArray(subject.results) ? subject.results.length : 0);
+        }, 0)
+      : 0;
   }
   if (call.name === 'present_recommendations') {
     return Array.isArray(result.acceptedSlugs) ? result.acceptedSlugs.length : 0;
@@ -580,6 +636,7 @@ async function callGemini(
         },
         generationConfig: {
           maxOutputTokens: 320,
+          temperature: 0.2,
         },
       }),
     });
@@ -621,6 +678,9 @@ function assembleGroundedOutput(state: ToolState, modelText: string) {
 
 function inspectOutgoingText(text: string, state: ToolState): string {
   if (TOOL_DECLARATIONS.some((tool) => text.includes(tool.name))) return SAFE_GENERIC;
+  if (/\p{Script=Latin}|\p{Script=Cyrillic}|\p{Script=Arabic}|\p{Script=Greek}/u.test(text)) {
+    return SAFE_GENERIC;
+  }
   if (text.includes('₪')) return SAFE_GENERIC;
 
   const numericClaims = [...text.matchAll(/\d[\d,]*/g)]
@@ -656,7 +716,7 @@ function actionsFrom(state: ToolState): LlmClientAction[] {
   if (state.sizeGuideRequested) actions.push({ kind: 'size-guide' });
   if (
     state.whatsappRequested ||
-    (state.siteContentSearched && !state.lastSiteContentSearchFound)
+    (state.siteContentSearched && !state.siteContentFound)
   ) {
     actions.push({ kind: 'whatsapp', message: WHATSAPP_MESSAGE });
   }
@@ -697,7 +757,7 @@ async function runToolLoop(
 
     onToolCall();
     const results = executeCalls(calls, state);
-    if (state.emptySiteContentSearches >= 2) return SAFE_GENERIC;
+    if (!state.siteContentFound && state.emptySiteContentSearches >= 2) return SAFE_GENERIC;
     contents.push(content);
     contents.push({
       role: 'user',
@@ -722,7 +782,6 @@ function createToolState(): ToolState {
     presentedSlugs: [],
     siteContentSearched: false,
     siteContentFound: false,
-    lastSiteContentSearchFound: false,
     emptySiteContentSearches: 0,
     sizeGuideRequested: false,
     whatsappRequested: false,

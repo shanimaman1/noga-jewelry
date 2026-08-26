@@ -374,9 +374,15 @@ The function exposes five non-acting tools: `search_products`, `get_product`,
 `search_site_content`, `present_recommendations` and `offer_site_action`.
 Product data remains structured for deterministic cards. `search_site_content`
 is the single search engine for everything else the site says and returns exact
-source excerpts with their page paths. The index is generated during every
-build by `scripts/build-site-content-index.mjs`; it is not a second handwritten
-catalogue or policy copy. Actions remain buttons the shopper must click.
+source excerpts with their page paths. A multi-subject request is sent as one
+group per subject; retrieval shares the result budget across subjects and search
+terms instead of letting the first match hide the rest. Hebrew inflections and
+site vocabulary synonyms are expanded inside retrieval, without classifying the
+shopper's intent. The static index is generated during every build by
+`scripts/build-site-content-index.mjs`. Values rendered from shared constants or
+functions, such as hours, delivery times and service terms, are added at runtime
+from those same sources of truth rather than copied into a second policy store.
+Actions remain buttons the shopper must click.
 
 **Zero fabrication is structural wherever possible:**
 
@@ -407,7 +413,9 @@ catalogue or policy copy. Actions remain buttons the shopper must click.
 - Before returning, the function scans outgoing prose for `₪`, price-range
   numbers and catalogue names without matching tool evidence. It also rejects
   unbacked metal, category, stone, availability and delivery vocabulary and
-  replaces the whole line with a generic WhatsApp handoff.
+  rejects Latin, Cyrillic, Arabic or Greek script in assistant prose, replacing
+  a failing reply with the safe generic handoff. Gemini is instructed to write
+  and proofread natural Israeli Hebrew only; digits may remain digits.
 - Discounts and custom-order pricing other than explicit 18k variants remain
   unknown and are handed off to WhatsApp.
 

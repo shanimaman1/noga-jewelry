@@ -5,6 +5,7 @@ import { Reveal } from '@/components/common/Reveal';
 import { CatalogImage } from '@/components/common/CatalogImage';
 import { AmbientRing } from '@/three/story/AmbientRing';
 import { Seo } from '@/components/seo/Seo';
+import { BRAND_STORY } from '@/lib/brandStory';
 
 /** Dana / the atelier — the trust-building story page. */
 export function Story() {
@@ -40,18 +41,11 @@ export function Story() {
             </Reveal>
             <Reveal delay={0.08} className="md:order-1">
               <h2 id="dana-title" className="text-2xl leading-snug sm:text-3xl">
-                דנה, צורפת. שתים־עשרה שנה ליד השולחן.
+                {BRAND_STORY.founderTitle}
               </h2>
               <div className="mt-6 space-y-4 leading-relaxed text-stone">
-                <p>
-                  דנה סיימה צורפות בבצלאל, ואת שתים־עשרה השנים הבאות עבדה אצל אחרים,
-                  בבתי מלאכה, בסטודיו לתכשיטים, ובמעבדות יהלומים. שם למדה את המקצוע
-                  לעומק: ליטוש, הלחמה, שיבוץ, והבנה של איך אבן יושבת נכון על מתכת.
-                </p>
-                <p>
-                  בשלב מסוים הבינה שהיא רוצה לעבוד אחרת, מול אנשים, לא מול הזמנות
-                  אנונימיות. כך נפתח האטלייה בתל אביב, ודנה קראה לו נוגה, על שם בתה.
-                </p>
+                <p>{BRAND_STORY.founderBackground}</p>
+                <p>{BRAND_STORY.nameOrigin}</p>
               </div>
             </Reveal>
           </div>
