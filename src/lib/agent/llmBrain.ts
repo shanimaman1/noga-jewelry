@@ -198,7 +198,6 @@ export function createLlmBrain(): AgentBrain {
 
     async send(input: AgentInput) {
       if (history.length === 0) reset();
-      if (input.type !== 'text') return turn();
       const text = input.text.trim();
       if (!text) return turn();
       return sendText(text, input.onProgress);

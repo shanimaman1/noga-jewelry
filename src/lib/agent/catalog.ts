@@ -10,9 +10,7 @@
  * second copy of the Hebrew labels would drift. FilterBar has no heavy
  * dependencies, so the cost of the import is a couple of KB.
  *
- * Availability is always derived from the data, never assumed: a band,
- * category or metal is only ever offered to the shopper if at least one real
- * product matches it.
+ * Catalogue results are always derived from the data and keep a stable order.
  */
 
 import type { Category, Metal, Product } from '@/types/catalog';
@@ -29,10 +27,6 @@ export type CatalogFilters = {
   category?: Category;
   metal?: Metal;
 };
-
-/** Which filters we are willing to drop, in the order we would drop them. */
-export const RELAXATION_ORDER = ['metal', 'band', 'category'] as const;
-export type RelaxableFilter = (typeof RELAXATION_ORDER)[number];
 
 const bandOf = (id: PriceBand) => PRICE_BANDS.find((b) => b.id === id);
 
@@ -84,44 +78,4 @@ export function findProducts(
         a.price - b.price ||
         a.slug.localeCompare(b.slug),
     );
-}
-
-export const countProducts = (filters: CatalogFilters): number =>
-  products.filter((product) => matchesFilters(product, filters)).length;
-
-/** Price bands that actually contain at least one product. */
-export function availableBands(base: CatalogFilters = {}): PriceBand[] {
-  return PRICE_BANDS.filter((band) => countProducts({ ...base, band: band.id }) > 0).map(
-    (band) => band.id,
-  );
-}
-
-/** Categories that actually contain at least one product under `base`. */
-export function availableCategories(base: CatalogFilters = {}): Category[] {
-  const order = Object.keys(CATEGORY_LABELS) as Category[];
-  return order.filter((category) => countProducts({ ...base, category }) > 0);
-}
-
-/** Metals genuinely photographed on at least one product under `base`. */
-export function availableMetals(base: CatalogFilters = {}): Metal[] {
-  const order = Object.keys(METAL_LABELS) as Metal[];
-  return order.filter((metal) => countProducts({ ...base, metal }) > 0);
-}
-
-export const bandLabel = (id: PriceBand): string => bandOf(id)?.label ?? '';
-
-/**
- * Which single filter could be dropped to turn an empty result into a
- * non-empty one. Returns every option that genuinely helps, cheapest
- * concession first — so the UI never offers a relaxation that still dead-ends.
- */
-export function relaxationOptions(
-  filters: CatalogFilters,
-): { filter: RelaxableFilter; matches: number }[] {
-  return RELAXATION_ORDER.filter((filter) => filters[filter] !== undefined)
-    .map((filter) => ({
-      filter,
-      matches: countProducts({ ...filters, [filter]: undefined }),
-    }))
-    .filter((option) => option.matches > 0);
 }

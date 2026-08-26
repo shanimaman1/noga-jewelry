@@ -21,18 +21,14 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /** Where focus should land once the next turn has rendered. */
-type FocusTarget = 'choices' | 'input' | null;
+type FocusTarget = 'input' | null;
 
 /** Below this width the panel is a modal bottom sheet. Matches Tailwind's `sm`. */
 const MOBILE_QUERY = '(max-width: 639px)';
 
 /**
- * Guided shopping assistant — stage 1.
- *
- * This component talks to an `AgentBrain` and nothing else: it never imports
- * the wizard, never reads wizard state, and never branches on which brain it
- * got. Swapping in a stage-2 LLM brain is a change to the factory in
- * `@/lib/agent`, not to this file.
+ * Shopping assistant panel. Conversation and terminal failure state both stay
+ * behind `AgentBrain`; this component only renders the returned turn.
  *
  * Layering: the panel sits at z-41 — deliberately above the WhatsApp FAB
  * (z-40) and below the cart drawer / size-guide modal (z-50), so the assistant
@@ -57,7 +53,7 @@ export function ShoppingAssistant() {
   const panelRef = useRef<HTMLDivElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const choicesRef = useRef<HTMLDivElement>(null);
+  const latestActionsRef = useRef<HTMLDivElement>(null);
   const focusAfter = useRef<FocusTarget>(null);
 
   const navigate = useNavigate();
@@ -84,7 +80,7 @@ export function ShoppingAssistant() {
   const openPanel = () => {
     setOpen(true);
     // The transcript survives a close, so only greet on a genuinely fresh start.
-    if (!turn) void runTurn((b) => b.start(), 'choices');
+    if (!turn) void runTurn((b) => b.start(), 'input');
   };
 
   /**
@@ -122,10 +118,12 @@ export function ShoppingAssistant() {
     const target = focusAfter.current;
     focusAfter.current = null;
     if (target === 'input') {
-      inputRef.current?.focus();
-    } else if (target === 'choices') {
-      const first = choicesRef.current?.querySelector<HTMLElement>('button');
-      (first ?? panelRef.current)?.focus();
+      const input = inputRef.current;
+      if (input && !input.disabled) input.focus();
+      else {
+        const firstAction = latestActionsRef.current?.querySelector<HTMLElement>('a, button');
+        (firstAction ?? panelRef.current)?.focus();
+      }
     }
   }, [turn, open, reduced]);
 
@@ -294,8 +292,9 @@ export function ShoppingAssistant() {
         setSizeGuideOpen(true);
         break;
 
-      case 'restart':
-        void runTurn((b) => b.start(), 'choices');
+      case 'catalog':
+        setOpen(false);
+        navigate(ROUTES.catalog);
         break;
 
       case 'whatsapp':
@@ -354,7 +353,7 @@ export function ShoppingAssistant() {
           {turn?.canGoBack && (
             <button
               type="button"
-              onClick={() => void runTurn((b) => b.back(), 'choices')}
+              onClick={() => void runTurn((b) => b.back(), 'input')}
               disabled={pending}
               aria-label="חזרה לשאלה הקודמת"
               className="shrink-0 rounded-full p-1.5 text-stone hover:text-charcoal disabled:opacity-40"
@@ -415,7 +414,7 @@ export function ShoppingAssistant() {
                       ? // Avoid Safari's `fit-content` sizing bug in RTL. The fixed
                         // maximum plus explicit wrapping contains every bubble.
                         'ms-auto block max-w-[85%] whitespace-pre-wrap rounded-lg bg-charcoal px-3 py-2 text-sm text-cream break-words [overflow-wrap:anywhere]'
-                      : 'me-auto block max-w-[90%] whitespace-pre-wrap text-sm leading-relaxed text-charcoal break-words [overflow-wrap:anywhere]'
+                      : 'me-auto block max-w-[90%] whitespace-pre-wrap text-right text-sm leading-relaxed text-charcoal break-words [overflow-wrap:anywhere]'
                   }
                 >
                   <bdi className="block max-w-full break-words [overflow-wrap:anywhere]">
@@ -436,31 +435,11 @@ export function ShoppingAssistant() {
                   </div>
                 )}
 
-                {/* Only the newest question stays answerable — an old step's
-                    buttons would contradict the state the brain has moved on to. */}
-                {message.choices && isLast && (
-                  <div ref={choicesRef} className="flex flex-wrap gap-2 pt-1">
-                    {message.choices.map((choice) => (
-                      <button
-                        key={choice.id}
-                        type="button"
-                        disabled={pending}
-                        onClick={() =>
-                          void runTurn(
-                            (b) => b.send({ type: 'choice', choiceId: choice.id }),
-                            'choices',
-                          )
-                        }
-                        className="rounded-full border border-mist px-3.5 py-1.5 text-sm text-charcoal hover:border-stone disabled:opacity-40"
-                      >
-                        <bdi>{choice.label}</bdi>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
                 {message.actions && (
-                  <div className="flex flex-wrap gap-2 pt-1">
+                  <div
+                    ref={isLast ? latestActionsRef : undefined}
+                    className="flex flex-wrap justify-start gap-2 pt-1"
+                  >
                     {message.actions.map((action) =>
                       action.kind === 'whatsapp' ? (
                         <a
@@ -479,7 +458,7 @@ export function ShoppingAssistant() {
                           onClick={() => runAction(action)}
                           className="rounded-full border border-mist px-3.5 py-1.5 text-sm text-charcoal hover:border-stone"
                         >
-                          {action.kind === 'size-guide' ? 'מדריך מידות' : 'להתחיל מחדש'}
+                          {action.kind === 'size-guide' ? 'מדריך מידות' : 'לקטלוג'}
                         </button>
                       ),
                     )}

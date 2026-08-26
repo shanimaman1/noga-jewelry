@@ -92,6 +92,68 @@ type ToolState = {
   whatsappRequested: boolean;
 };
 
+type ModelCallTiming = {
+  callNumber: number;
+  reason: 'initial' | 'after-tools';
+  totalMs: number;
+  usageCounterMs: number;
+  geminiHttpMs: number;
+  outcome:
+    | 'ok'
+    | 'usage-cap'
+    | 'usage-counter-error'
+    | 'transport-error'
+    | 'unreadable-json'
+    | 'http-error';
+  httpStatus?: number;
+  retried: false;
+  retryReason: null;
+};
+
+type ToolCallTiming = {
+  modelCallNumber: number;
+  tool: string;
+  durationMs: number;
+  resultCount: number;
+};
+
+type TurnTiming = {
+  startedAt: number;
+  modelCalls: ModelCallTiming[];
+  toolCalls: ToolCallTiming[];
+};
+
+type TurnOutcome = 'ok' | 'fallback' | 'retryable-error' | 'rejected';
+
+const timingNow = () => performance.now();
+const elapsedMs = (startedAt: number) => Number((performance.now() - startedAt).toFixed(2));
+const createTurnTiming = (): TurnTiming => ({
+  startedAt: timingNow(),
+  modelCalls: [],
+  toolCalls: [],
+});
+
+function logTurnTiming(
+  timing: TurnTiming,
+  outcome: TurnOutcome,
+  failureReason: string | null = null,
+) {
+  console.info(
+    JSON.stringify({
+      event: 'agent_turn_timing',
+      outcome,
+      failureReason,
+      totalWallMs: elapsedMs(timing.startedAt),
+      modelCallCount: timing.modelCalls.length,
+      toolCallCount: timing.toolCalls.length,
+      retryCount: 0,
+      retryReasons: [],
+      modelCalls: timing.modelCalls,
+      toolCalls: timing.toolCalls,
+    }),
+  );
+}
+
 class SystemicFailure extends Error {}
 class RecoverableFailure extends Error {}
 
@@ -488,24 +550,45 @@ function executeTool(call: GeminiFunctionCall, state: ToolState): Record<string,
   }
 }
 
-function executeCalls(calls: GeminiFunctionCall[], state: ToolState): Record<string, unknown>[] {
+function executeCalls(
+  calls: GeminiFunctionCall[],
+  state: ToolState,
+  modelCallNumber: number,
+  timing: TurnTiming,
+): Record<string, unknown>[] {
   const results: Record<string, unknown>[] = new Array(calls.length);
+  const callTimings: ToolCallTiming[] = new Array(calls.length);
   const isDataCall = (call: GeminiFunctionCall) =>
     call.name !== 'present_recommendations';
 
+  const executeMeasured = (call: GeminiFunctionCall, index: number) => {
+    const startedAt = timingNow();
+    results[index] = executeTool(call, state);
+    const entry: ToolCallTiming = {
+      modelCallNumber,
+      tool: safeToolName(call.name),
+      durationMs: elapsedMs(startedAt),
+      resultCount: toolResultCount(call, results[index]),
+    };
+    callTimings[index] = entry;
+    timing.toolCalls.push(entry);
+  };
+
   calls.forEach((call, index) => {
-    if (isDataCall(call)) results[index] = executeTool(call, state);
+    if (isDataCall(call)) executeMeasured(call, index);
   });
   calls.forEach((call, index) => {
-    if (!isDataCall(call)) results[index] = executeTool(call, state);
+    if (!isDataCall(call)) executeMeasured(call, index);
   });
   calls.forEach((call, index) => {
     console.info(
       JSON.stringify({
         event: 'agent_tool_call',
+        modelCallNumber,
         tool: safeToolName(call.name),
         arguments: safeToolArguments(call),
         resultCount: toolResultCount(call, results[index]),
+        durationMs: callTimings[index]?.durationMs ?? 0,
       }),
     );
   });
@@ -615,11 +698,49 @@ function toolResultCount(
 async function callGemini(
   apiKey: string,
   contents: GeminiContent[],
+  callNumber: number,
+  reason: ModelCallTiming['reason'],
+  timing: TurnTiming,
 ): Promise<GeminiResponse> {
-  const available = await consumeCounter(`daily/${utcDay()}`, DAILY_REQUEST_CAP);
-  if (!available) throw new SystemicFailure('Daily request cap reached.');
+  const callStartedAt = timingNow();
+  const counterStartedAt = timingNow();
+  let available: boolean;
+  try {
+    available = await consumeCounter(`daily/${utcDay()}`, DAILY_REQUEST_CAP);
+  } catch (error) {
+    const entry: ModelCallTiming = {
+      callNumber,
+      reason,
+      totalMs: elapsedMs(callStartedAt),
+      usageCounterMs: elapsedMs(counterStartedAt),
+      geminiHttpMs: 0,
+      outcome: 'usage-counter-error',
+      retried: false,
+      retryReason: null,
+    };
+    timing.modelCalls.push(entry);
+    console.info(JSON.stringify({ event: 'agent_model_call_timing', ...entry }));
+    throw error;
+  }
+  const usageCounterMs = elapsedMs(counterStartedAt);
+  if (!available) {
+    const entry: ModelCallTiming = {
+      callNumber,
+      reason,
+      totalMs: elapsedMs(callStartedAt),
+      usageCounterMs,
+      geminiHttpMs: 0,
+      outcome: 'usage-cap',
+      retried: false,
+      retryReason: null,
+    };
+    timing.modelCalls.push(entry);
+    console.info(JSON.stringify({ event: 'agent_model_call_timing', ...entry }));
+    throw new SystemicFailure('Daily request cap reached.');
+  }
 
   let response: Response;
+  const httpStartedAt = timingNow();
   try {
     response = await fetch(GEMINI_ENDPOINT, {
       method: 'POST',
@@ -641,6 +762,18 @@ async function callGemini(
       }),
     });
   } catch {
+    const entry: ModelCallTiming = {
+      callNumber,
+      reason,
+      totalMs: elapsedMs(callStartedAt),
+      usageCounterMs,
+      geminiHttpMs: elapsedMs(httpStartedAt),
+      outcome: 'transport-error',
+      retried: false,
+      retryReason: null,
+    };
+    timing.modelCalls.push(entry);
+    console.info(JSON.stringify({ event: 'agent_model_call_timing', ...entry }));
     throw new RecoverableFailure('Gemini transport error.');
   }
 
@@ -648,8 +781,35 @@ async function callGemini(
   try {
     payload = (await response.json()) as GeminiResponse;
   } catch {
+    const entry: ModelCallTiming = {
+      callNumber,
+      reason,
+      totalMs: elapsedMs(callStartedAt),
+      usageCounterMs,
+      geminiHttpMs: elapsedMs(httpStartedAt),
+      outcome: 'unreadable-json',
+      httpStatus: response.status,
+      retried: false,
+      retryReason: null,
+    };
+    timing.modelCalls.push(entry);
+    console.info(JSON.stringify({ event: 'agent_model_call_timing', ...entry }));
     throw new RecoverableFailure('Gemini returned unreadable JSON.');
   }
+
+  const entry: ModelCallTiming = {
+    callNumber,
+    reason,
+    totalMs: elapsedMs(callStartedAt),
+    usageCounterMs,
+    geminiHttpMs: elapsedMs(httpStartedAt),
+    outcome: response.ok ? 'ok' : 'http-error',
+    httpStatus: response.status,
+    retried: false,
+    retryReason: null,
+  };
+  timing.modelCalls.push(entry);
+  console.info(JSON.stringify({ event: 'agent_model_call_timing', ...entry }));
 
   if (response.ok) return payload;
   if (response.status === 429 || response.status === 401 || response.status === 403 || response.status === 404) {
@@ -729,6 +889,7 @@ async function runToolLoop(
   history: AgentChatHistoryMessage[],
   state: ToolState,
   onToolCall: () => void,
+  timing: TurnTiming,
 ) {
   const contents: GeminiContent[] = [
     ...history.map((entry): GeminiContent => ({
@@ -740,7 +901,14 @@ async function runToolLoop(
   let finalText = '';
 
   for (let callNumber = 0; callNumber < MAX_GEMINI_CALLS_PER_MESSAGE; callNumber += 1) {
-    const response = await callGemini(apiKey, contents);
+    const modelCallNumber = callNumber + 1;
+    const response = await callGemini(
+      apiKey,
+      contents,
+      modelCallNumber,
+      callNumber === 0 ? 'initial' : 'after-tools',
+      timing,
+    );
     const content = response.candidates?.[0]?.content;
     if (!content?.parts?.length) {
       throw new RecoverableFailure('Gemini returned no candidate content.');
@@ -756,7 +924,7 @@ async function runToolLoop(
     }
 
     onToolCall();
-    const results = executeCalls(calls, state);
+    const results = executeCalls(calls, state, modelCallNumber, timing);
     if (!state.siteContentFound && state.emptySiteContentSearches >= 2) return SAFE_GENERIC;
     contents.push(content);
     contents.push({
@@ -808,6 +976,7 @@ function streamChat(
   sessionToken: string,
   message: string,
   history: AgentChatHistoryMessage[],
+  timing: TurnTiming,
 ): Response {
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
@@ -816,14 +985,23 @@ function streamChat(
         controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
 
       void (async () => {
+        let outcome: TurnOutcome = 'ok';
+        let failureReason: string | null = null;
         try {
           const state = createToolState();
           let announced = false;
-          const modelText = await runToolLoop(apiKey, message, history, state, () => {
-            if (announced) return;
-            announced = true;
-            emit({ type: 'status', status: 'checking-site' });
-          });
+          const modelText = await runToolLoop(
+            apiKey,
+            message,
+            history,
+            state,
+            () => {
+              if (announced) return;
+              announced = true;
+              emit({ type: 'status', status: 'checking-site' });
+            },
+            timing,
+          );
           const output = assembleGroundedOutput(state, modelText);
           const inspectedText = inspectOutgoingText(output.text, state);
           console.info(
@@ -852,6 +1030,8 @@ function streamChat(
           });
         } catch (error) {
           logAgentError(error);
+          outcome = error instanceof SystemicFailure ? 'fallback' : 'retryable-error';
+          failureReason = error instanceof Error ? error.message : 'Unknown error.';
           emit({
             type: 'result',
             response:
@@ -860,6 +1040,7 @@ function streamChat(
                 : { mode: 'retryable-error', sessionId: sessionToken },
           });
         } finally {
+          logTurnTiming(timing, outcome, failureReason);
           controller.close();
         }
       })();
@@ -886,33 +1067,53 @@ function isHistoryMessage(value: unknown): value is AgentChatHistoryMessage {
 }
 
 export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
-  if (!originIsAllowed(request)) return new Response('Forbidden', { status: 403 });
+  const timing = createTurnTiming();
+  if (request.method !== 'POST') {
+    logTurnTiming(timing, 'rejected', 'method-not-allowed');
+    return new Response('Method not allowed', { status: 405 });
+  }
+  if (!originIsAllowed(request)) {
+    logTurnTiming(timing, 'rejected', 'origin-not-allowed');
+    return new Response('Forbidden', { status: 403 });
+  }
 
   const apiKey = environment().GEMINI_API_KEY;
-  if (!apiKey) return json({ mode: 'fallback' });
+  if (!apiKey) {
+    logTurnTiming(timing, 'fallback', 'missing-api-key');
+    return json({ mode: 'fallback' });
+  }
 
   let body: { sessionId?: unknown; message?: unknown; history?: unknown };
   try {
     const rawBody = await request.text();
-    if (rawBody.length > 32_000) return json({ mode: 'retryable-error' }, 413);
+    if (rawBody.length > 32_000) {
+      logTurnTiming(timing, 'rejected', 'request-body-too-long');
+      return json({ mode: 'retryable-error' }, 413);
+    }
     body = JSON.parse(rawBody) as typeof body;
   } catch {
+    logTurnTiming(timing, 'rejected', 'invalid-json');
     return json({ mode: 'retryable-error' }, 400);
   }
 
   const session = await readSession(body.sessionId, apiKey);
-  if (!session) return json({ mode: 'fallback' });
+  if (!session) {
+    logTurnTiming(timing, 'fallback', 'invalid-session');
+    return json({ mode: 'fallback' });
+  }
   if (typeof body.message !== 'string' || body.message.trim().length === 0) {
+    logTurnTiming(timing, 'rejected', 'empty-message');
     return json({ mode: 'retryable-error', sessionId: session.token }, 400);
   }
   const message = body.message.trim();
   if (message.length > MAX_MESSAGE_LENGTH) {
+    logTurnTiming(timing, 'rejected', 'message-too-long');
     return json({ mode: 'retryable-error', sessionId: session.token }, 413);
   }
 
   const rawHistory = body.history ?? [];
   if (!Array.isArray(rawHistory) || rawHistory.some((entry) => !isHistoryMessage(entry))) {
+    logTurnTiming(timing, 'rejected', 'invalid-history');
     return json({ mode: 'retryable-error', sessionId: session.token }, 400);
   }
   const history = rawHistory.map((entry) => ({
@@ -924,14 +1125,24 @@ export default async function handler(request: Request): Promise<Response> {
     history.some((entry) => entry.text.length > 2_000) ||
     history.reduce((total, entry) => total + entry.text.length, 0) > MAX_HISTORY_LENGTH
   ) {
+    logTurnTiming(timing, 'rejected', 'history-too-long');
     return json({ mode: 'retryable-error', sessionId: session.token }, 413);
   }
 
   try {
     const available = await consumeCounter(`sessions/${session.id}`, MAX_MESSAGES_PER_SESSION);
-    if (!available) return json({ mode: 'fallback' });
+    if (!available) {
+      logTurnTiming(timing, 'fallback', 'session-message-cap');
+      return json({ mode: 'fallback' });
+    }
   } catch (error) {
     logAgentError(error);
+    const outcome = error instanceof SystemicFailure ? 'fallback' : 'retryable-error';
+    logTurnTiming(
+      timing,
+      outcome,
+      error instanceof Error ? error.message : 'Unknown error.',
+    );
     return json(
       error instanceof SystemicFailure
         ? { mode: 'fallback' }
@@ -940,5 +1151,5 @@ export default async function handler(request: Request): Promise<Response> {
     );
   }
 
-  return streamChat(apiKey, session.token, message, history);
+  return streamChat(apiKey, session.token, message, history, timing);
 }

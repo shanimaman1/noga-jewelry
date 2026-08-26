@@ -1,26 +1,15 @@
 /**
  * Shopping-assistant contract.
  *
- * The chat UI talks ONLY to `AgentBrain` — it never imports the wizard, never
- * inspects wizard state, and never branches on which brain it received. That
- * is what lets the serverless-backed `llmBrain` and the deterministic fallback
- * sit behind the same interface with zero UI changes.
- *
- * Every method is async even though the stage-1 wizard answers synchronously:
- * the LLM brain awaits a network call, while the UI uses the same pending state
- * for either implementation.
+ * The chat UI talks only to `AgentBrain` and never owns model or failure state.
+ * Every method is asynchronous because normal turns await the serverless LLM
+ * endpoint while the UI uses one pending state for the whole interaction.
  *
  * A turn returns the FULL transcript rather than a delta. The brain owns
  * conversation state; the UI is a pure renderer of the last turn it received.
  */
 
 export type AgentSender = 'assistant' | 'user';
-
-/** A tappable answer. `id` is opaque to the UI and round-trips to the brain. */
-export type AgentChoice = {
-  id: string;
-  label: string;
-};
 
 /**
  * Something the assistant can do to the real app. The UI owns the Hebrew
@@ -32,7 +21,7 @@ export type AgentAction =
   | { kind: 'add-to-cart'; slug: string; karat?: 14 | 18 }
   | { kind: 'size-guide' }
   | { kind: 'whatsapp'; message: string }
-  | { kind: 'restart' };
+  | { kind: 'catalog' };
 
 /**
  * A recommended piece. Carries only the slug — the UI resolves name, price,
@@ -51,8 +40,6 @@ export type AgentMessage = {
   id: string;
   sender: AgentSender;
   text: string;
-  /** Present while the assistant is waiting on an answer. */
-  choices?: AgentChoice[];
   recommendations?: AgentRecommendation[];
   actions?: AgentAction[];
 };
@@ -68,16 +55,18 @@ export type AgentTurn = {
 
 export type AgentProgress = 'checking-site';
 
-export type AgentInput =
-  | { type: 'choice'; choiceId: string }
-  | { type: 'text'; text: string; onProgress?: (progress: AgentProgress) => void };
+export type AgentInput = {
+  type: 'text';
+  text: string;
+  onProgress?: (progress: AgentProgress) => void;
+};
 
 export interface AgentBrain {
   /** Stable identifier, for diagnostics only. Never branched on by the UI. */
   readonly id: string;
-  /** Opening turn. Safe to call more than once — it resets the conversation. */
+  /** Opening turn. Safe to call more than once. */
   start(): Promise<AgentTurn>;
   send(input: AgentInput): Promise<AgentTurn>;
-  /** Steps back one question. No-op turn when there is nothing to go back to. */
+  /** Steps back one conversation snapshot. */
   back(): Promise<AgentTurn>;
 }

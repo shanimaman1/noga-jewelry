@@ -387,6 +387,115 @@ async function checkAssistantMobile(browser) {
   await ctx.close();
 }
 
+/** Assistant history stays navigable; only a terminal LLM failure offers catalog. */
+async function checkAssistantFailureAndBack(browser) {
+  const backContext = await browser.newContext({ viewport: { width: 375, height: 812 } });
+  const backPage = await backContext.newPage();
+  let replyNumber = 0;
+  await backPage.route('**/.netlify/functions/agent-chat', (route) => {
+    replyNumber += 1;
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        mode: 'ok',
+        sessionId: 'back-verification',
+        text: replyNumber === 1 ? 'תשובה ראשונה לבדיקה.' : 'תשובה שנייה לבדיקה.',
+        recommendationSlugs: [],
+        eighteenKSlugs: [],
+        actions: [],
+      }),
+    });
+  });
+
+  await backPage.goto(BASE + '/story', { waitUntil: 'networkidle', timeout: 30000 });
+  await backPage.getByRole('button', { name: 'פתיחת עוזר בחירה' }).click();
+  const backInput = backPage.getByLabel('הודעה לעוזר הבחירה', { exact: true });
+  await backInput.fill('שאלה ראשונה');
+  await backPage.getByRole('button', { name: 'שליחת ההודעה' }).click();
+  await backPage.getByText('תשובה ראשונה לבדיקה.', { exact: true }).waitFor();
+  await backInput.fill('שאלה שנייה');
+  await backPage.getByRole('button', { name: 'שליחת ההודעה' }).click();
+  await backPage.getByText('תשובה שנייה לבדיקה.', { exact: true }).waitFor();
+  await backPage.getByRole('button', { name: 'חזרה לשאלה הקודמת' }).click();
+
+  if (await backPage.getByText('תשובה שנייה לבדיקה.', { exact: true }).count()) {
+    fail('assistant-failure', 'back() left the newer Gemini snapshot visible');
+  }
+  if (!(await backPage.getByText('תשובה ראשונה לבדיקה.', { exact: true }).isVisible())) {
+    fail('assistant-failure', 'back() did not restore the previous Gemini snapshot');
+  }
+  if (!(await backInput.evaluate((element) => document.activeElement === element))) {
+    fail('assistant-failure', 'focus did not return to the composer after back()');
+  }
+  await backContext.close();
+
+  const failureContext = await browser.newContext({ viewport: { width: 375, height: 812 } });
+  const failurePage = await failureContext.newPage();
+  await failurePage.route('**/.netlify/functions/agent-chat', (route) => route.abort('failed'));
+  await failurePage.goto(BASE + '/story', { waitUntil: 'networkidle', timeout: 30000 });
+  await failurePage.getByRole('button', { name: 'פתיחת עוזר בחירה' }).click();
+  const failureInput = failurePage.getByLabel('הודעה לעוזר הבחירה', { exact: true });
+
+  await failureInput.fill('בדיקת כשל ראשון');
+  await failurePage.getByRole('button', { name: 'שליחת ההודעה' }).click();
+  await failurePage
+    .getByText('לא הצלחתי לענות כרגע. אפשר לנסות שוב בעוד רגע.', { exact: true })
+    .waitFor();
+  if (await failureInput.isDisabled()) {
+    fail('assistant-failure', 'the first transport failure closed the Gemini path');
+  }
+  if (await failurePage.getByRole('button', { name: 'לקטלוג' }).count()) {
+    fail('assistant-failure', 'the first transport failure exposed the terminal catalog action');
+  }
+
+  await failureInput.fill('בדיקת כשל שני');
+  await failurePage.getByRole('button', { name: 'שליחת ההודעה' }).click();
+  const unavailable = failurePage.getByText(
+    'לא הצלחתי לענות כרגע. אפשר לנסות שוב עוד רגע, או לעבור לקטלוג.',
+    { exact: true },
+  );
+  await unavailable.waitFor();
+  const catalogButton = failurePage.getByRole('button', { name: 'לקטלוג' });
+  await catalogButton.waitFor();
+
+  if (!(await failureInput.isDisabled())) {
+    fail('assistant-failure', 'the terminal failure left the composer enabled');
+  }
+  if (!(await catalogButton.evaluate((element) => document.activeElement === element))) {
+    fail('assistant-failure', 'focus did not move to the catalog action after terminal failure');
+  }
+  const terminalLayout = await failurePage.evaluate(() => {
+    const message = [...document.querySelectorAll('[role="log"] p')].find((element) =>
+      element.textContent?.startsWith('לא הצלחתי לענות כרגע. אפשר לנסות שוב עוד רגע'),
+    );
+    const button = [...document.querySelectorAll('[role="log"] button')].find(
+      (element) => element.textContent?.trim() === 'לקטלוג',
+    );
+    const panel = document.querySelector('[role="dialog"][aria-label="עוזר בחירה"]');
+    if (!message || !button || !panel) return null;
+    const buttonRect = button.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    return {
+      direction: getComputedStyle(panel).direction,
+      textAlign: getComputedStyle(message).textAlign,
+      buttonOnInlineStart: buttonRect.right > panelRect.left + panelRect.width / 2,
+    };
+  });
+  if (
+    !terminalLayout ||
+    terminalLayout.direction !== 'rtl' ||
+    terminalLayout.textAlign !== 'right' ||
+    !terminalLayout.buttonOnInlineStart
+  ) {
+    fail('assistant-failure', `terminal state is not naturally aligned in RTL: ${JSON.stringify(terminalLayout)}`);
+  }
+
+  await catalogButton.click();
+  await failurePage.waitForURL('**/catalog');
+  await failureContext.close();
+}
+
 /** Credit-card instalments: every count keeps the total exact and survives confirmation. */
 async function checkInstallments(browser) {
   const ctx = await browser.newContext({ viewport: { width: 375, height: 812 } });
@@ -749,6 +858,9 @@ async function main() {
   process.stdout.write('  checking assistant containment at 375px … ');
   try { await checkAssistantMobile(browser); console.log('done'); } catch (e) { fail('assistant-mobile', String(e).slice(0, 160)); console.log('ERROR'); }
 
+  process.stdout.write('  checking assistant failure and back navigation … ');
+  try { await checkAssistantFailureAndBack(browser); console.log('done'); } catch (e) { fail('assistant-failure', String(e).slice(0, 160)); console.log('ERROR'); }
+
   process.stdout.write('  checking hero-3d … ');
   try { await checkHero3D(page); console.log('done'); } catch (e) { fail('hero-3d', String(e).slice(0, 160)); console.log('ERROR'); }
 
@@ -764,7 +876,7 @@ async function main() {
 
   console.log('\n' + '='.repeat(60));
   if (failures.length === 0) {
-    console.log(`PASS — ${ROUTES.length} routes, instalments 1–12, policies, assistant mobile layout, contact/demo consistency, 3D hero, reduced-motion, fail-open CSS.`);
+    console.log(`PASS — ${ROUTES.length} routes, instalments 1–12, policies, assistant mobile layout, assistant failure/back flow, contact/demo consistency, 3D hero, reduced-motion, fail-open CSS.`);
     console.log(`Screenshots: ${SHOTS}`);
   } else {
     console.log(`FAIL — ${failures.length} problem(s):\n`);

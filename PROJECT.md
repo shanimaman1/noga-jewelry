@@ -241,7 +241,7 @@ both worlds — the dark atelier and everyday light.
 ## Returns and aftercare
 - `src/lib/servicePolicies.ts` is the shared source for returns, resizing,
   warranty, repairs, cleaning and setting inspection. Product pages, the
-  service page, the size guide and both assistant brains read from it.
+  service page, the size guide and the assistant's site search read from it.
 - Standard pieces may be exchanged within 30 days or returned for a full refund
   within 14 days, unworn and in their original packaging. The atelier covers
   return shipping and arranges collection through WhatsApp. Statutory consumer
@@ -309,24 +309,18 @@ Cart in `localStorage`. Checkout is a designed, non-functional demo. The only
 backend surface is `netlify/functions/agent-chat.ts`, used by the shopping
 assistant; it holds the Gemini key and usage limits outside the client bundle.
 
-### Shopping assistant — hybrid Stage 2 (approved 2026-08-20)
-`src/lib/agent/` + `src/components/agent/`. A guided shopping assistant that
-uses an LLM for free text and retains the four-question deterministic wizard as
-a permanent session fallback. Both recommend up to three pieces.
+### Shopping assistant — Gemini agent (approved 2026-08-20)
+`src/lib/agent/` + `src/components/agent/`. A free-text shopping assistant that
+uses Gemini with the site's catalogue and visitor-facing content as its tools.
+It recommends up to three pieces through catalogue-backed cards.
 
 The widget is mounted once in `RootLayout` (so it is absent from `/lab`, which
-sits outside that layout). It still calls only `createAgentBrain()` and does not
-know there are two brains. Stage 1 itself remains fully client-side and
-unchanged: no LLM, API key or network call, and every answer is computed from
-`src/data/products.ts` at runtime.
+sits outside that layout). It calls only `createAgentBrain()` and does not own
+model or failure state.
 
 - The chat UI talks ONLY to the `AgentBrain` interface (`lib/agent/types.ts`).
-  It never imports the wizard and never branches on which brain it got. Brain
-  selection lives in exactly one place: `createAgentBrain()` in
-  `lib/agent/index.ts`. Keep it that way — it is what makes stage 2 additive.
-- Every option offered is derived from the data at runtime and only when it has
-  at least one matching product, so a guided path cannot reach an empty result.
-  `relaxationOptions()` is the safety net, not a normal path.
+  It never owns Gemini state or branches on server failure modes. Brain creation
+  lives in exactly one place: `createAgentBrain()` in `lib/agent/index.ts`.
 - **Content rule, non-negotiable:** structured product facts stay in
   `products.ts`. Every other business fact is looked up through one generated
   index of the visitor-facing page, component and shared-source copy. The build
@@ -426,9 +420,10 @@ regex intent router or canned-answer layer to replace that language work. The
 residual risk is a missed lookup, an unsupported paraphrase or awkward wording.
 It still cannot inject a product, price or card record: card data is rendered by
 code and the unchanged outgoing scanner rejects product and price claims without
-same-turn evidence. Systemic failure never reaches the shopper; the resilient
-brain switches permanently to the unchanged wizard for that browser session
-after one short line.
+same-turn evidence. A first transport failure stays on the Gemini path through
+the existing recoverable-error ladder. A terminal failure shows one short Hebrew
+message and one typed action to `/catalog`; it never starts a second
+conversation flow or returns unverified products.
 
 Function logs record each called tool, privacy-safe arguments and result count,
 plus whether the outgoing grounding scan replaced the text and a safe category
@@ -439,7 +434,8 @@ Server protections are fixed in the function: an origin allowlist, 500
 characters per message, 20 messages per signed session, at most four Gemini
 tool-loop calls per message and an atomic cap of 200 Gemini calls per UTC day in a
 strongly consistent Netlify Blobs store. Missing configuration, invalid session,
-quota/cap errors or unavailable limit storage cause permanent wizard fallback.
+quota/cap errors or unavailable limit storage cause the same terminal unavailable
+state with the catalogue action.
 There is no application timeout or retry layer around the model call; provider
 or platform limits remain the outer boundary.
 

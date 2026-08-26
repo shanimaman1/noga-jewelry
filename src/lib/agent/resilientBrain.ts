@@ -1,39 +1,36 @@
 import type { AgentBrain, AgentInput, AgentMessage, AgentTurn } from './types';
 import { createLlmBrain, PermanentLlmFailure } from './llmBrain';
-import { createWizardBrain } from './wizard';
 
-const FALLBACK_LINE = 'הבדיקה החכמה לא זמינה כרגע, אז נעבור לעזרה הקצרה מהקטלוג.';
+const UNAVAILABLE_LINE =
+  'לא הצלחתי לענות כרגע. אפשר לנסות שוב עוד רגע, או לעבור לקטלוג.';
 
-let fallbackCounter = 0;
-const fallbackMessage = (): AgentMessage => ({
-  id: `agent-fallback-${++fallbackCounter}`,
+let unavailableCounter = 0;
+const unavailableMessage = (): AgentMessage => ({
+  id: `agent-unavailable-${++unavailableCounter}`,
   sender: 'assistant',
-  text: FALLBACK_LINE,
+  text: UNAVAILABLE_LINE,
+  actions: [{ kind: 'catalog' }],
 });
 
-/** Holds both brains. Once the LLM path fails systemically, this instance never retries it. */
+/** Keeps recoverable failures on Gemini and closes only after a permanent failure. */
 export function createResilientBrain(): AgentBrain {
   const llm = createLlmBrain();
-  const wizard = createWizardBrain();
-  let active: 'llm' | 'wizard' = 'llm';
-  let wizardPrefix: AgentMessage[] = [];
+  let unavailableTurn: AgentTurn | null = null;
 
-  const withPrefix = (turn: AgentTurn): AgentTurn => ({
-    ...turn,
-    messages: [...wizardPrefix, ...turn.messages],
-  });
-
-  const switchToWizard = async (failure: PermanentLlmFailure): Promise<AgentTurn> => {
-    active = 'wizard';
-    wizardPrefix = [...failure.messages, fallbackMessage()];
-    return withPrefix(await wizard.start());
+  const closeConversation = (failure: PermanentLlmFailure): AgentTurn => {
+    unavailableTurn = {
+      messages: [...failure.messages, unavailableMessage()],
+      canGoBack: false,
+      acceptsText: false,
+    };
+    return unavailableTurn;
   };
 
   const runLlm = async (operation: () => Promise<AgentTurn>): Promise<AgentTurn> => {
     try {
       return await operation();
     } catch (error) {
-      if (error instanceof PermanentLlmFailure) return switchToWizard(error);
+      if (error instanceof PermanentLlmFailure) return closeConversation(error);
       throw error;
     }
   };
@@ -42,19 +39,18 @@ export function createResilientBrain(): AgentBrain {
     id: 'resilient',
 
     async start() {
-      if (active === 'llm') return runLlm(() => llm.start());
-      wizardPrefix = [fallbackMessage()];
-      return withPrefix(await wizard.start());
+      if (unavailableTurn) return unavailableTurn;
+      return runLlm(() => llm.start());
     },
 
     async send(input: AgentInput) {
-      if (active === 'llm') return runLlm(() => llm.send(input));
-      return withPrefix(await wizard.send(input));
+      if (unavailableTurn) return unavailableTurn;
+      return runLlm(() => llm.send(input));
     },
 
     async back() {
-      if (active === 'llm') return runLlm(() => llm.back());
-      return withPrefix(await wizard.back());
+      if (unavailableTurn) return unavailableTurn;
+      return runLlm(() => llm.back());
     },
   };
 }
