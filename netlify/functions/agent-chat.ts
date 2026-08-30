@@ -3,6 +3,7 @@ import { products, getProduct } from '../../src/data/products';
 import {
   CATEGORY_LABELS,
   METAL_LABELS,
+  PRICE_BANDS,
   findProducts,
   type CatalogFilters,
   type PriceBand,
@@ -80,11 +81,17 @@ type RequestedField =
   | 'delivery'
   | 'price';
 
+type EmptyProductSearchEvidence = {
+  terms: string[];
+  priceBounds: number[];
+};
+
 type ToolState = {
   evidence: Map<string, Product>;
   requestedFields: Map<string, Set<RequestedField>>;
   searchedSlugs: string[];
   presentedSlugs: string[];
+  emptyProductSearches: EmptyProductSearchEvidence[];
   siteContentSearched: boolean;
   siteContentFound: boolean;
   emptySiteContentSearches: number;
@@ -173,6 +180,7 @@ ONE STRUCTURAL RULE:
 - Use get_product for facts about one identifiable product. The product must first have been returned by search_products in this request.
 - Use search_site_content for every non-product fact about Noga. It searches the actual visitor-facing content across every page and section, including guides, services, policies, people, contact, fulfilment, payment and the atelier. Give it one subject object for each subject in the shopper's message. For every subject, supply the shopper's wording plus two or three concise Hebrew synonyms, related professional terms or likely page words. Several subjects belong in the same tool call, never combined into one long query. The grouped results preserve coverage for every subject. Do not rely on a predefined list of topics.
 - For recommendations, search first, use only the returned catalogue records to judge relevance, and then call present_recommendations with up to three returned slugs. The application validates the slugs and renders the cards from the catalogue.
+- A product search returning zero products is a valid answer. Do not search again with relaxed constraints until the shopper agrees. When a search returns zero products, name the unmet constraint and ask one short question about widening it. A later affirmative reply to that question requires this exact sequence before any final prose: recover the original request from the conversation history; copy every original non-price filter into two search_products calls, so a ring request must include category rings in both calls and the same rule applies to metal, availability and query; search below with max_price equal to the original minimum; search above with min_price equal to the original maximum; omit selection from both calls; compare prices with the nearest original boundary; if each side has a result, call present_recommendations with at least the nearest product below and the nearest product above. Never substitute another category and never show only one side when both sides have results. As a narrow exception to the next rule, the final reply must name every presented product, give its evidence-backed price in digits followed by the word שקלים, and say whether it is below or above the requested range. Write exactly one or two short sentences of natural spoken Israeli Hebrew, without procedural wording or a filler opener. Never describe a product as matching a budget, category or other constraint it does not meet.
 - Never write a product name or price in prose; the verified cards render them. Other business facts may be phrased naturally, but every value must be copied or faithfully paraphrased only from the raw tool result in this request. Do not add a detail that the tool did not return.
 - Copy names, addresses and numbers exactly as returned by the site search. Do not alter or complete them from memory.
 - Call search_site_content once per turn with every subject and all expanded terms. When every subject group contains results, use those results and do not repeat the search. If a subject group is empty, retry once with different concrete terms for that missing subject only. The query may include an English page or feature name when that is the common term. When the shopper writes an English feature name in Hebrew letters, retry its original English spelling instead of another Hebrew synonym. Only after the broader search also returns nothing, say honestly that you did not find that information on the site and mention the WhatsApp option; the application makes that button available automatically. Discounts and unlisted custom-order pricing are examples, not special routed topics.
@@ -464,6 +472,20 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
     args.selection === 'lowest_price'
       ? [...filtered].sort((a, b) => a.price - b.price || a.slug.localeCompare(b.slug)).slice(0, 1)
       : filtered.slice(0, 8);
+
+  if (matches.length === 0) {
+    const band = filters.band ? PRICE_BANDS.find((entry) => entry.id === filters.band) : undefined;
+    state.emptyProductSearches.push({
+      terms: [
+        ...(filters.category ? CATEGORY_NO_MATCH_TERMS[filters.category] : []),
+        ...(filters.metal ? [METAL_LABELS[filters.metal]] : []),
+        ...(availability ? [AVAILABILITY_LABELS[availability]] : []),
+      ],
+      priceBounds: [band?.min, band?.max, minPrice, maxPrice].filter(
+        (value): value is number => value !== undefined,
+      ),
+    });
+  }
 
   // `findProducts` has a stable rank (preferred category, featured, price,
   // slug). Multiple searches may contribute candidates in one turn, while
@@ -845,14 +867,69 @@ function assembleGroundedOutput(state: ToolState, modelText: string) {
   };
 }
 
+const CATEGORY_NO_MATCH_TERMS: Record<Category, string[]> = {
+  rings: ['טבעת', 'טבעות'],
+  necklaces: ['שרשרת', 'שרשראות'],
+  earrings: ['עגיל', 'עגילים'],
+  bracelets: ['צמיד', 'צמידים'],
+};
+
+const EXPLICIT_NO_MATCH = /(?:^|[\s,.;:!?])(?:לא|אין|אף)(?=$|[\s,.;:!?])/;
+
+function textWithoutGroundedNoMatchClaims(text: string, state: ToolState): string {
+  if (state.emptyProductSearches.length === 0) return text;
+
+  return text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((sentence) => {
+      if (!EXPLICIT_NO_MATCH.test(sentence)) return sentence;
+
+      for (const search of state.emptyProductSearches) {
+        let sanitized = sentence;
+        let supportedConstraintFound = false;
+
+        for (const term of search.terms) {
+          if (!sanitized.includes(term)) continue;
+          sanitized = sanitized.replaceAll(term, '');
+          supportedConstraintFound = true;
+        }
+
+        const allowedBounds = new Set(search.priceBounds);
+        const priceClaims = [...sentence.matchAll(/\d[\d,]*/g)]
+          .map((match) => Number.parseInt(match[0].replace(/,/g, ''), 10))
+          .filter(
+            (value) =>
+              value >= Math.min(...products.map((product) => product.price)) &&
+              value <= Math.max(...products.map((product) => product.price)),
+          );
+        const pricesAreGrounded =
+          priceClaims.length > 0 && priceClaims.every((value) => allowedBounds.has(value));
+        if (pricesAreGrounded) {
+          sanitized = sanitized
+            .replace(/\d[\d,]*/g, (value) =>
+              allowedBounds.has(Number.parseInt(value.replace(/,/g, ''), 10)) ? '' : value,
+            )
+            .replaceAll('₪', '');
+          supportedConstraintFound = true;
+        }
+
+        if (supportedConstraintFound) return sanitized;
+      }
+
+      return sentence;
+    })
+    .join(' ');
+}
+
 function inspectOutgoingText(text: string, state: ToolState): string {
   if (TOOL_DECLARATIONS.some((tool) => text.includes(tool.name))) return SAFE_GENERIC;
   if (/\p{Script=Latin}|\p{Script=Cyrillic}|\p{Script=Arabic}|\p{Script=Greek}/u.test(text)) {
     return SAFE_GENERIC;
   }
-  if (text.includes('₪')) return SAFE_GENERIC;
+  const claimScanText = textWithoutGroundedNoMatchClaims(text, state);
+  if (claimScanText.includes('₪')) return SAFE_GENERIC;
 
-  const numericClaims = [...text.matchAll(/\d[\d,]*/g)]
+  const numericClaims = [...claimScanText.matchAll(/\d[\d,]*/g)]
     .map((match) => Number.parseInt(match[0].replace(/,/g, ''), 10))
     .filter((value) => value >= Math.min(...products.map((product) => product.price)) && value <= Math.max(...products.map((product) => product.price)));
   const evidencePrices = new Set([...state.evidence.values()].map((product) => product.price));
@@ -874,7 +951,7 @@ function inspectOutgoingText(text: string, state: ToolState): string {
   ) {
     const unbackedAttribute =
       /זהב צהוב|זהב אדום|זהב לבן|טבעות|שרשראות|עגילים|צמידים|יהלום|יהלומים|פנינה|אבנים|מוכן בסטודיו|נוצר בהזמנה|אזל זמנית|ימי עסקים|שבועיים/;
-    if (unbackedAttribute.test(text)) return SAFE_GENERIC;
+    if (unbackedAttribute.test(claimScanText)) return SAFE_GENERIC;
   }
 
   return text;
@@ -957,6 +1034,7 @@ function createToolState(): ToolState {
     requestedFields: new Map(),
     searchedSlugs: [],
     presentedSlugs: [],
+    emptyProductSearches: [],
     siteContentSearched: false,
     siteContentFound: false,
     emptySiteContentSearches: 0,
