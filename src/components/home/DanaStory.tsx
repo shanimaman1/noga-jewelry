@@ -48,21 +48,30 @@ export function DanaStory() {
               <div>
                 <dt className="sr-only">שנות ניסיון</dt>
                 <dd className="font-heading text-3xl text-gold">
-                  <CountUp value={12} />
+                  <span aria-hidden="true">
+                    <CountUp value={12} />
+                  </span>
+                  <span className="sr-only">שתים־עשרה</span>
                 </dd>
                 <p className="mt-1 text-xs tracking-wide text-cream/60">שנות ניסיון</p>
               </div>
               <div>
                 <dt className="sr-only">קראט זהב</dt>
                 <dd className="font-heading text-3xl text-gold">
-                  <CountUp value={14} suffix="/18" />
+                  <span aria-hidden="true">
+                    <CountUp value={14} suffix="/18" />
+                  </span>
+                  <span className="sr-only">ארבעה־עשר ושמונה־עשר</span>
                 </dd>
                 <p className="mt-1 text-xs tracking-wide text-cream/60">קראט, זהב מלא</p>
               </div>
               <div>
                 <dt className="sr-only">ימי החלפה</dt>
                 <dd className="font-heading text-3xl text-gold">
-                  <CountUp value={30} />
+                  <span aria-hidden="true">
+                    <CountUp value={30} />
+                  </span>
+                  <span className="sr-only">שלושים</span>
                 </dd>
                 <p className="mt-1 text-xs tracking-wide text-cream/60">ימי החלפה</p>
               </div>
