@@ -200,12 +200,13 @@ const TOOL_DECLARATIONS = [
   {
     name: 'search_products',
     description:
-      'Search the live catalogue for requests to see, find, compare or choose products. Broad searches are valid. Use query only for exact catalogue words.',
+      'Search the live catalogue for requests to see, find, compare or choose products. Broad searches are valid. Use query only for exact catalogue words. Map a stated price range to both min_price and max_price.',
     parameters: parameters({
       query: { type: 'string', description: 'Words from the shopper request.' },
       category: enumString(['rings', 'necklaces', 'earrings', 'bracelets']),
       metal: enumString(['yellow', 'rose', 'white']),
       price_band: enumString(['under1500', 'mid', 'over3000']),
+      min_price: { type: 'number', description: 'Minimum price stated by the shopper.' },
       max_price: { type: 'number', description: 'Maximum price stated by the shopper.' },
       availability: enumString(['ready', 'made-to-order', 'out-of-stock']),
       selection: enumString(['lowest_price']),
@@ -443,12 +444,17 @@ function searchProductsTool(args: Record<string, unknown>, state: ToolState) {
   const query = typeof args.query === 'string' ? normalize(args.query).slice(0, 120) : '';
   const words = query.split(' ').filter(Boolean);
   const availability = isAvailability(args.availability) ? args.availability : undefined;
+  const minPrice =
+    typeof args.min_price === 'number' && Number.isFinite(args.min_price) && args.min_price > 0
+      ? args.min_price
+      : undefined;
   const maxPrice =
     typeof args.max_price === 'number' && Number.isFinite(args.max_price) && args.max_price > 0
       ? args.max_price
       : undefined;
   const filtered = findProducts(filters)
     .filter((product) => !availability || product.availability === availability)
+    .filter((product) => minPrice === undefined || product.price >= minPrice)
     .filter((product) => maxPrice === undefined || product.price <= maxPrice)
     .filter(
       (product) =>
@@ -607,6 +613,9 @@ function safeToolArguments(call: GeminiFunctionCall): Record<string, unknown> {
         ...(isCategory(args.category) ? { category: args.category } : {}),
         ...(isMetal(args.metal) ? { metal: args.metal } : {}),
         ...(isPriceBand(args.price_band) ? { priceBand: args.price_band } : {}),
+        ...(typeof args.min_price === 'number' && Number.isFinite(args.min_price)
+          ? { minPriceProvided: true }
+          : {}),
         ...(typeof args.max_price === 'number' && Number.isFinite(args.max_price)
           ? { maxPriceProvided: true }
           : {}),
