@@ -51,7 +51,7 @@ export function DanaStory() {
                   <span aria-hidden="true">
                     <CountUp value={12} />
                   </span>
-                  <span className="sr-only">שתים־עשרה</span>
+                  <span className="sr-only">12</span>
                 </dd>
                 <p className="mt-1 text-xs tracking-wide text-cream/60">שנות ניסיון</p>
               </div>
@@ -61,7 +61,7 @@ export function DanaStory() {
                   <span aria-hidden="true">
                     <CountUp value={14} suffix="/18" />
                   </span>
-                  <span className="sr-only">ארבעה־עשר ושמונה־עשר</span>
+                  <span className="sr-only">14 קראט, עם אפשרות ל-18 קראט</span>
                 </dd>
                 <p className="mt-1 text-xs tracking-wide text-cream/60">קראט, זהב מלא</p>
               </div>
@@ -71,7 +71,7 @@ export function DanaStory() {
                   <span aria-hidden="true">
                     <CountUp value={30} />
                   </span>
-                  <span className="sr-only">שלושים</span>
+                  <span className="sr-only">30</span>
                 </dd>
                 <p className="mt-1 text-xs tracking-wide text-cream/60">ימי החלפה</p>
               </div>
